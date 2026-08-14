@@ -1,1 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <title>Injury Risk Detection</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f7fb;
+            color: #1f2937;
+        }
+
+        nav {
+            height: 70px;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 60px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        .nav-buttons a {
+            text-decoration: none;
+            margin-left: 20px;
+        }
+
+        .login-btn {
+            color: #2563eb;
+        }
+
+        .register-btn {
+            padding: 10px 20px;
+            background: #2563eb;
+            color: white;
+            border-radius: 8px;
+        }
+
+        .hero {
+            min-height: calc(100vh - 70px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 60px 10%;
+        }
+
+        .hero-content {
+            max-width: 600px;
+        }
+
+        .hero-content h1 {
+            font-size: 52px;
+            line-height: 1.15;
+            margin-bottom: 20px;
+        }
+
+        .hero-content h1 span {
+            color: #2563eb;
+        }
+
+        .hero-content p {
+            font-size: 18px;
+            line-height: 1.7;
+            color: #6b7280;
+            margin-bottom: 30px;
+        }
+
+        .get-started {
+            display: inline-block;
+            padding: 14px 28px;
+            background: #2563eb;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+        }
+
+        .hero-card {
+            width: 380px;
+            background: white;
+            padding: 35px;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+        }
+
+        .hero-card h3 {
+            margin-bottom: 25px;
+        }
+
+        .risk {
+            background: #f3f4f6;
+            padding: 18px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        .risk strong {
+            display: block;
+            font-size: 28px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav>
+
+        <div class="logo">
+            SportSafe
+        </div>
+
+        <div class="nav-buttons">
+
+            <a href="login.html" class="login-btn">
+                Login
+            </a>
+
+            <a href="register.html" class="register-btn">
+                Register
+            </a>
+
+        </div>
+
+    </nav>
+
+
+    <section class="hero">
+
+        <div class="hero-content">
+
+            <h1>
+                AI-Powered
+                <span>Sports Injury</span>
+                Risk Detection
+            </h1>
+
+            <p>
+                Analyze athlete movement and identify potential
+                injury risk using computer vision and machine learning.
+            </p>
+
+            <a href="register.html" class="get-started">
+                Get Started →
+            </a>
+
+        </div>
+
+
+        <div class="hero-card">
+
+            <h3>Example Assessment</h3>
+
+            <div class="risk">
+                Injury Risk
+                <strong>78%</strong>
+            </div>
+
+            <div class="risk">
+                Risk Level
+                <strong>High</strong>
+            </div>
+
+            <div class="risk">
+                Analysis Status
+                <strong>Completed</strong>
+            </div>
+
+        </div>
+
+    </section>
+
+</body>
+</html>
