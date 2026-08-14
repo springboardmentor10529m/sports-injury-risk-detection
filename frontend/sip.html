@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sports Injury Risk Detection</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; }
+  body {
+    background: #f4f6f8;
+    color: #1f2937;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .card {
+    background: #ffffff;
+    width: 100%;
+    max-width: 420px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    padding: 32px;
+  }
+  h1 { font-size: 20px; margin-bottom: 4px; text-align: center; }
+  .subtitle { font-size: 13px; color: #6b7280; text-align: center; margin-bottom: 24px; }
+  .tabs {
+    display: flex;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .tabs button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    color: #374151;
+  }
+  .tabs button.active { background: #2563eb; color: #fff; }
+  label { display: block; font-size: 13px; margin-bottom: 6px; color: #374151; }
+  input, select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  button.submit {
+    width: 100%;
+    padding: 11px;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  button.submit:hover { background: #1d4ed8; }
+  .toggle-link { text-align: center; font-size: 13px; margin-top: 16px; color: #6b7280; }
+  .toggle-link button {
+    background: none;
+    border: none;
+    color: #2563eb;
+    cursor: pointer;
+    font-size: 13px;
+    padding: 0;
+    text-decoration: underline;
+  }
+  .msg { font-size: 13px; margin-bottom: 12px; padding: 8px 10px; border-radius: 6px; display: none; }
+  .msg.error { background: #fef2f2; color: #dc2626; }
+  .msg.success { background: #ecfdf5; color: #047857; }
+
+  /* Dashboard */
+  #dashboard { display: none; max-width: 560px; }
+  .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .dash-header div h2 { font-size: 18px; }
+  .dash-header div p { font-size: 13px; color: #6b7280; }
+  .role-badge {
+    display: inline-block;
+    background: #eef2ff;
+    color: #4338ca;
+    font-size: 12px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    margin-top: 4px;
+  }
+  .logout {
+    background: none;
+    border: 1px solid #d1d5db;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    color: #374151;
+  }
+  .upload-box {
+    border: 2px dashed #cbd5e1;
+    border-radius: 8px;
+    padding: 30px;
+    text-align: center;
+    color: #6b7280;
+    margin-bottom: 16px;
+    cursor: pointer;
+  }
+  .upload-box.dragover { border-color: #2563eb; background: #eff6ff; }
+  .upload-box input[type=file] { display: none; }
+  .file-info {
+    font-size: 13px;
+    background: #f1f5f9;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .video-preview { width: 100%; border-radius: 8px; margin-bottom: 16px; display: none; max-height: 280px; }
+  .status { font-size: 13px; padding: 10px; border-radius: 6px; margin-top: 10px; display: none; }
+  .status.success { background: #ecfdf5; color: #047857; display: block; }
+</style>
+</head>
+<body>
+
+<!-- AUTH CARD -->
+<div class="card" id="authCard">
+  <h1>Sports Injury Risk Detection</h1>
+  <p class="subtitle">Sign in to upload and analyze movement videos</p>
+
+  <div class="tabs">
+    <button type="button" id="loginTabBtn" class="active">Login</button>
+    <button type="button" id="registerTabBtn">Register</button>
+  </div>
+
+  <p class="msg error" id="errorMsg"></p>
+  <p class="msg success" id="successMsg"></p>
+
+  <!-- LOGIN FORM -->
+  <form id="loginForm">
+    <label for="loginEmail">Email</label>
+    <input type="email" id="loginEmail" required placeholder="you@example.com">
+
+    <label for="loginPassword">Password</label>
+    <input type="password" id="loginPassword" required placeholder="••••••••">
+
+    <label for="loginRole">Login as</label>
+    <select id="loginRole">
+      <option value="athlete">Athlete</option>
+      <option value="coach">Coach</option>
+    </select>
+
+    <button type="submit" class="submit">Login</button>
+  </form>
+
+  <!-- REGISTER FORM -->
+  <form id="registerForm" style="display:none;">
+    <label for="regName">Full Name</label>
+    <input type="text" id="regName" required placeholder="Jane Doe">
+
+    <label for="regEmail">Email</label>
+    <input type="email" id="regEmail" required placeholder="you@example.com">
+
+    <label for="regPassword">Password</label>
+    <input type="password" id="regPassword" required placeholder="Create a password">
+
+    <label for="regRole">I am a</label>
+    <select id="regRole">
+      <option value="athlete">Athlete</option>
+      <option value="coach">Coach</option>
+    </select>
+
+    <button type="submit" class="submit">Create account</button>
+  </form>
+
+  <p class="toggle-link" id="loginToggle">
+    Don't have an account? <button type="button" id="goToRegister">Register</button>
+  </p>
+  <p class="toggle-link" id="registerToggle" style="display:none;">
+    Already have an account? <button type="button" id="goToLogin">Login</button>
+  </p>
+</div>
+
+<!-- DASHBOARD -->
+<div class="card" id="dashboard">
+  <div class="dash-header">
+    <div>
+      <h2 id="welcomeText">Welcome</h2>
+      <p id="welcomeEmail"></p>
+      <span class="role-badge" id="roleBadge"></span>
+    </div>
+    <button type="button" class="logout" id="logoutBtn">Log out</button>
+  </div>
+
+  <label>Upload movement video for analysis</label>
+  <div class="upload-box" id="uploadBox">
+    <p>Click to select a video, or drag and drop here</p>
+    <p style="font-size:12px;margin-top:6px;">MP4, MOV, or AVI</p>
+    <input type="file" id="videoInput" accept="video/*">
+  </div>
+
+  <div class="file-info" id="fileInfo"></div>
+  <video class="video-preview" id="videoPreview" controls></video>
+
+  <button type="button" class="submit" id="analyzeBtn" style="display:none;">Analyze video</button>
+  <div class="status" id="statusMsg"></div>
+</div>
+
+<script>
+(function () {
+  // ---- in-memory "database" of users (demo only, no backend/persistence) ----
+  var users = [];
+  var currentUser = null;
+
+  var authCard = document.getElementById('authCard');
+  var dashboard = document.getElementById('dashboard');
+
+  var loginTabBtn = document.getElementById('loginTabBtn');
+  var registerTabBtn = document.getElementById('registerTabBtn');
+  var loginForm = document.getElementById('loginForm');
+  var registerForm = document.getElementById('registerForm');
+  var loginToggle = document.getElementById('loginToggle');
+  var registerToggle = document.getElementById('registerToggle');
+  var errorMsg = document.getElementById('errorMsg');
+  var successMsg = document.getElementById('successMsg');
+
+  function clearMessages() {
+    errorMsg.style.display = 'none';
+    successMsg.style.display = 'none';
+  }
+
+  function showError(msg) {
+    clearMessages();
+    errorMsg.textContent = msg;
+    errorMsg.style.display = 'block';
+  }
+
+  function showSuccess(msg) {
+    clearMessages();
+    successMsg.textContent = msg;
+    successMsg.style.display = 'block';
+  }
+
+  function showLoginTab() {
+    clearMessages();
+    loginForm.style.display = 'block';
+    registerForm.style.display = 'none';
+    loginTabBtn.classList.add('active');
+    registerTabBtn.classList.remove('active');
+    loginToggle.style.display = 'block';
+    registerToggle.style.display = 'none';
+  }
+
+  function showRegisterTab() {
+    clearMessages();
+    loginForm.style.display = 'none';
+    registerForm.style.display = 'block';
+    loginTabBtn.classList.remove('active');
+    registerTabBtn.classList.add('active');
+    loginToggle.style.display = 'none';
+    registerToggle.style.display = 'block';
+  }
+
+  loginTabBtn.addEventListener('click', showLoginTab);
+  registerTabBtn.addEventListener('click', showRegisterTab);
+  document.getElementById('goToRegister').addEventListener('click', showRegisterTab);
+  document.getElementById('goToLogin').addEventListener('click', showLoginTab);
+
+  registerForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var name = document.getElementById('regName').value.trim();
+    var email = document.getElementById('regEmail').value.trim().toLowerCase();
+    var password = document.getElementById('regPassword').value;
+    var role = document.getElementById('regRole').value;
+
+    if (!name || !email || !password) {
+      showError('Please fill in all fields.');
+      return;
+    }
+
+    var exists = users.some(function (u) { return u.email === email; });
+    if (exists) {
+      showError('An account with this email already exists.');
+      return;
+    }
+
+    users.push({ name: name, email: email, password: password, role: role });
+    registerForm.reset();
+    showLoginTab();
+    document.getElementById('loginEmail').value = email;
+    showSuccess('Account created. You can log in now.');
+  });
+
+  loginForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var email = document.getElementById('loginEmail').value.trim().toLowerCase();
+    var password = document.getElementById('loginPassword').value;
+    var role = document.getElementById('loginRole').value;
+
+    var user = users.filter(function (u) {
+      return u.email === email && u.password === password && u.role === role;
+    })[0];
+
+    if (!user) {
+      showError('No matching account found. Check your email, password, and role, or register first.');
+      return;
+    }
+
+    currentUser = user;
+    clearMessages();
+    authCard.style.display = 'none';
+    dashboard.style.display = 'block';
+    document.getElementById('welcomeText').textContent = 'Welcome, ' + user.name;
+    document.getElementById('welcomeEmail').textContent = user.email;
+    document.getElementById('roleBadge').textContent = user.role === 'athlete' ? 'Athlete' : 'Coach';
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', function () {
+    currentUser = null;
+    dashboard.style.display = 'none';
+    authCard.style.display = 'block';
+    loginForm.reset();
+    resetUpload();
+    showLoginTab();
+  });
+
+  // ---- video upload ----
+  var uploadBox = document.getElementById('uploadBox');
+  var videoInput = document.getElementById('videoInput');
+  var fileInfo = document.getElementById('fileInfo');
+  var videoPreview = document.getElementById('videoPreview');
+  var analyzeBtn = document.getElementById('analyzeBtn');
+  var statusMsg = document.getElementById('statusMsg');
+
+  uploadBox.addEventListener('click', function () { videoInput.click(); });
+
+  uploadBox.addEventListener('dragover', function (e) {
+    e.preventDefault();
+    uploadBox.classList.add('dragover');
+  });
+  uploadBox.addEventListener('dragleave', function () {
+    uploadBox.classList.remove('dragover');
+  });
+  uploadBox.addEventListener('drop', function (e) {
+    e.preventDefault();
+    uploadBox.classList.remove('dragover');
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  });
+
+  videoInput.addEventListener('change', function () {
+    if (videoInput.files.length) handleFile(videoInput.files[0]);
+  });
+
+  function handleFile(file) {
+    if (!file) return;
+    statusMsg.style.display = 'none';
+    fileInfo.style.display = 'block';
+    fileInfo.textContent = file.name + ' — ' + (file.size / (1024 * 1024)).toFixed(2) + ' MB';
+
+    var url = URL.createObjectURL(file);
+    videoPreview.src = url;
+    videoPreview.style.display = 'block';
+    analyzeBtn.style.display = 'block';
+  }
+
+  function resetUpload() {
+    fileInfo.style.display = 'none';
+    videoPreview.style.display = 'none';
+    analyzeBtn.style.display = 'none';
+    statusMsg.style.display = 'none';
+    videoInput.value = '';
+  }
+
+  analyzeBtn.addEventListener('click', function () {
+    statusMsg.className = 'status success';
+    statusMsg.textContent = 'Video uploaded. Analysis would run here (pose estimation, biomechanics, and injury risk scoring).';
+    statusMsg.style.display = 'block';
+  });
+})();
+</script>
+
+</body>
+</html>
