@@ -7,6 +7,7 @@ from sqlalchemy import (
     Date,
     DateTime,
     JSON,
+    Uuid,
     ForeignKey,
     func,
 )
@@ -25,8 +26,8 @@ class PhysicalAssessment(Base):
         index=True,
     )
     assessor_id = Column(
-        Integer,
-        ForeignKey("users.id", ondelete="SET NULL"),
+        Uuid,
+        ForeignKey("users.user_id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )

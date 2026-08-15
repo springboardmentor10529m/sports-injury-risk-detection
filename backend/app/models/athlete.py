@@ -5,6 +5,7 @@ from sqlalchemy import (
     Float,
     Date,
     DateTime,
+    Uuid,
     ForeignKey,
     func,
 )
@@ -17,8 +18,8 @@ class AthleteProfile(Base):
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     user_id = Column(
-        Integer,
-        ForeignKey("users.id", ondelete="CASCADE"),
+        Uuid,
+        ForeignKey("users.user_id", ondelete="CASCADE"),
         unique=True,
         nullable=False,
         index=True,

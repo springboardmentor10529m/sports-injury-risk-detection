@@ -5,6 +5,7 @@ from sqlalchemy import (
     Text,
     Date,
     DateTime,
+    Uuid,
     ForeignKey,
     func,
 )
@@ -23,8 +24,8 @@ class InjuryRecord(Base):
         index=True,
     )
     recorded_by_id = Column(
-        Integer,
-        ForeignKey("users.id", ondelete="SET NULL"),
+        Uuid,
+        ForeignKey("users.user_id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )

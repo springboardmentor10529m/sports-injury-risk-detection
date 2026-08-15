@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.config import settings
 from app.database import get_db
+from app.api.auth import router as auth_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -21,6 +22,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include Authentication Routes under both /api/v1 and root
+app.include_router(auth_router, prefix=settings.API_V1_STR)
+app.include_router(auth_router)
 
 
 @app.get("/", tags=["Root"])
