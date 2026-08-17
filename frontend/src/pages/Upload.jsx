@@ -71,7 +71,7 @@ const Upload = () => {
       }, 150);
 
       await api.post('/video/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-tdata' }
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
       
       clearInterval(interval);
