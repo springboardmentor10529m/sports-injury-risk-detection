@@ -1,16 +1,27 @@
 from app.database import Base
-from app.models.user import User, RoleEnum
-from app.models.athlete import AthleteProfile
-from app.models.injury import InjuryRecord
-from app.models.training import TrainingLoad
-from app.models.assessment import PhysicalAssessment
+
+from app.models.user import User
+from app.models.athlete import Athlete
+from app.models.injury_history import InjuryHistory
+from app.models.video import Video
+from app.models.analysis_result import AnalysisResult
+from app.models.injury_prediction import InjuryPrediction
+from app.models.recommendation import Recommendation
+from app.models.notification import Notification
+from app.models.report import Report
+from app.models.performance_record import PerformanceRecord
+
 
 __all__ = [
     "Base",
     "User",
-    "RoleEnum",
-    "AthleteProfile",
-    "InjuryRecord",
-    "TrainingLoad",
-    "PhysicalAssessment",
+    "Athlete",
+    "InjuryHistory",
+    "Video",
+    "AnalysisResult",
+    "InjuryPrediction",
+    "Recommendation",
+    "Notification",
+    "Report",
+    "PerformanceRecord",
 ]

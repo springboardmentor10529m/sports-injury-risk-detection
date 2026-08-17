@@ -4,6 +4,9 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 from alembic import context
 
+from app.database import Base
+from app import models
+
 # Ensure backend root is on sys.path
 sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 

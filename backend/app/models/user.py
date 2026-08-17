@@ -1,20 +1,18 @@
-import enum
 import uuid
-from sqlalchemy import (
-    Column,
-    String,
-    Boolean,
-    DateTime,
-    Text,
-    Uuid,
-    Enum as SQLEnum,
-    func,
-)
-from sqlalchemy.orm import relationship
+from datetime import datetime
+from enum import Enum
+
+from sqlalchemy import Column, String, Text, DateTime, Boolean, Enum as SQLEnum
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import String, Text, DateTime, Boolean, Enum as SQLEnum, func
+
+from sqlalchemy import Boolean
+
 from app.database import Base
 
 
-class RoleEnum(str, enum.Enum):
+class RoleEnum(str, Enum):
     ATHLETE = "Athlete"
     COACH = "Coach"
     PHYSIOTHERAPIST = "Physiotherapist"
@@ -25,64 +23,63 @@ class RoleEnum(str, enum.Enum):
 class User(Base):
     __tablename__ = "users"
 
-    user_id = Column(
-        Uuid,
+    is_active = Column(Boolean, nullable=False, default=True)
+    is_verified = Column(Boolean, nullable=False, default=False)
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
+    )
+
+    name: Mapped[str] = mapped_column(
+        String,
+        nullable=False,
+    )
+
+    email: Mapped[str] = mapped_column(
+        String,
+        unique=True,
+        nullable=False,
         index=True,
     )
-    name = Column(String(255), nullable=False)
-    email = Column(String(255), unique=True, index=True, nullable=False)
-    password = Column(Text, nullable=True)  # Stores secure password hash; nullable for OAuth-only users
-    role = Column(
-        SQLEnum(
-            RoleEnum,
-            name="user_role_enum",
-            native_enum=True,
-            values_callable=lambda obj: [e.value for e in obj],
-        ),
-        nullable=False,
-        default=RoleEnum.ATHLETE,
-    )
-    phone = Column(String(50), nullable=True)
-    profile_image = Column(Text, nullable=True)
 
-    # Preserved authentication & operational fields
-    is_active = Column(Boolean, default=True, nullable=False)
-    is_verified = Column(Boolean, default=False, nullable=False)
-    oauth_provider = Column(String(50), nullable=True)  # e.g., 'google', 'local'
-    oauth_id = Column(String(255), nullable=True, index=True)
-
-    # Timestamps
-    created_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        nullable=False,
-    )
-    updated_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
+    password: Mapped[str] = mapped_column(
+        Text,
         nullable=False,
     )
 
-    # Relationships
-    athlete_profile = relationship(
-        "AthleteProfile",
-        back_populates="user",
-        uselist=False,
-        cascade="all, delete-orphan",
-    )
-    recorded_injuries = relationship(
-        "InjuryRecord",
-        back_populates="recorder",
-        foreign_keys="[InjuryRecord.recorded_by_id]",
-    )
-    recorded_assessments = relationship(
-        "PhysicalAssessment",
-        back_populates="assessor",
-        foreign_keys="[PhysicalAssessment.assessor_id]",
+    role: Mapped[RoleEnum] = mapped_column(
+    SQLEnum(
+        RoleEnum,
+        name="user_role_enum",
+        native_enum=True,
+    ),
+    nullable=False,
+)
+
+    phone: Mapped[str | None] = mapped_column(
+        String,
+        nullable=True,
     )
 
-    def __repr__(self) -> str:
-        return f"<User user_id={self.user_id} email='{self.email}' role='{self.role}'>"
+    profile_image: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+    DateTime(timezone=True),
+    server_default=func.now(),
+    nullable=False,
+    )
+
+    is_active: Mapped[bool] = mapped_column(
+        default=True,
+        nullable=False,
+    )
+
+    is_verified: Mapped[bool] = mapped_column(
+        default=False,
+        nullable=False,
+    )

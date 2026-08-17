@@ -60,7 +60,9 @@ from app.models.user import RoleEnum, User
 
 # ``tokenUrl`` is the login endpoint – used exclusively by the Swagger UI
 # "Authorize" dialog so it knows where to send credentials.
-_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+_oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl="/api/v1/auth/login"
+)
 
 
 # ---------------------------------------------------------------------------

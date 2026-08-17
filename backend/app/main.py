@@ -1,10 +1,16 @@
+# pyrefly: ignore [missing-import]
 from fastapi import FastAPI, Depends, status
+# pyrefly: ignore [missing-import]
 from fastapi.middleware.cors import CORSMiddleware
+# pyrefly: ignore [missing-import]
 from sqlalchemy.orm import Session
+# pyrefly: ignore [missing-import]
 from sqlalchemy import text
+
 from app.config import settings
 from app.database import get_db
 from app.api.auth import router as auth_router
+from app.api.athletes import router as athletes_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -27,6 +33,9 @@ app.add_middleware(
 app.include_router(auth_router, prefix=settings.API_V1_STR)
 app.include_router(auth_router)
 
+# Include Athlete Routes under both /api/v1 and root
+app.include_router(athletes_router, prefix=settings.API_V1_STR)
+app.include_router(athletes_router)
 
 @app.get("/", tags=["Root"])
 def read_root():
