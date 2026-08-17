@@ -8,6 +8,12 @@ services:
       - influxdb-data:/var/lib/influxdb2
     environment:
       - INFLUXDB_HTTP_BIND_ADDRESS=:8086
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=sportsinjurytoken
+      - DOCKER_INFLUXDB_INIT_ORG=sports-injury-lab
+      - DOCKER_INFLUXDB_INIT_BUCKET=movement_metrics
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=sportsinjurytoken
 
   backend:
     build:
