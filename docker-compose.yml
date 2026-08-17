@@ -1,0 +1,37 @@
+version: '3.8'
+services:
+  influxdb:
+    image: influxdb:2.7
+    container_name: influxdb
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+    environment:
+      - INFLUXDB_HTTP_BIND_ADDRESS=:8086
+
+  backend:
+    build:
+      context: ./backend
+    container_name: sir_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - INFLUX_URL=http://influxdb:8086
+      - INFLUX_TOKEN=
+      - INFLUX_ORG=
+      - INFLUX_BUCKET=
+    depends_on:
+      - influxdb
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: sir_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  influxdb-data:
