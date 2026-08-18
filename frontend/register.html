@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Register - SportSafe</title>
+    <title>Register - Smart Athlete</title>
 
     <style>
+
         * {
             margin: 0;
             padding: 0;
@@ -19,6 +21,7 @@
             color: #1f2937;
 
             min-height: 100vh;
+
             display: flex;
             justify-content: center;
             align-items: center;
@@ -26,28 +29,39 @@
 
         .register-container {
             width: 420px;
+
             background: white;
+
             padding: 40px;
+
             border-radius: 16px;
+
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
         }
 
         .logo {
             text-align: center;
+
             color: #2563eb;
+
             font-size: 28px;
+
             font-weight: bold;
+
             margin-bottom: 10px;
         }
 
         h2 {
             text-align: center;
+
             margin-bottom: 10px;
         }
 
         .subtitle {
             text-align: center;
+
             color: #6b7280;
+
             margin-bottom: 30px;
         }
 
@@ -57,32 +71,47 @@
 
         label {
             display: block;
+
             margin-bottom: 7px;
+
             font-weight: 600;
         }
 
         input {
             width: 100%;
+
             padding: 12px;
+
             border: 1px solid #d1d5db;
+
             border-radius: 8px;
+
             font-size: 15px;
         }
 
         input:focus {
             outline: none;
+
             border-color: #2563eb;
         }
 
         .register-btn {
             width: 100%;
+
             padding: 13px;
+
             background: #2563eb;
+
             color: white;
+
             border: none;
+
             border-radius: 8px;
+
             font-size: 16px;
+
             cursor: pointer;
+
             margin-top: 10px;
         }
 
@@ -92,37 +121,54 @@
 
         .login-link {
             text-align: center;
+
             margin-top: 20px;
+
             color: #6b7280;
         }
 
         .login-link a {
             color: #2563eb;
+
             text-decoration: none;
+
             font-weight: 600;
         }
+
     </style>
+
 </head>
+
 
 <body>
 
+
     <div class="register-container">
 
+
         <div class="logo">
-            SportSafe
+            Smart Athlete
         </div>
 
-        <h2>Create Account</h2>
+
+        <h2>
+            Create Account
+        </h2>
+
 
         <p class="subtitle">
             Create your athlete account
         </p>
 
 
-        <form>
+        <form id="registerForm">
+
 
             <div class="form-group">
-                <label for="name">Full Name</label>
+
+                <label for="name">
+                    Full Name
+                </label>
 
                 <input
                     type="text"
@@ -130,11 +176,15 @@
                     placeholder="Enter your full name"
                     required
                 >
+
             </div>
 
 
             <div class="form-group">
-                <label for="email">Email</label>
+
+                <label for="email">
+                    Email
+                </label>
 
                 <input
                     type="email"
@@ -142,11 +192,15 @@
                     placeholder="Enter your email"
                     required
                 >
+
             </div>
 
 
             <div class="form-group">
-                <label for="password">Password</label>
+
+                <label for="password">
+                    Password
+                </label>
 
                 <input
                     type="password"
@@ -154,10 +208,12 @@
                     placeholder="Create a password"
                     required
                 >
+
             </div>
 
 
             <div class="form-group">
+
                 <label for="confirm-password">
                     Confirm Password
                 </label>
@@ -168,12 +224,18 @@
                     placeholder="Confirm your password"
                     required
                 >
+
             </div>
 
 
-            <button type="submit" class="register-btn">
+            <button
+                type="submit"
+                class="register-btn"
+                id="registerButton"
+            >
                 Create Account
             </button>
+
 
         </form>
 
@@ -188,7 +250,208 @@
 
         </div>
 
+
     </div>
 
+
+    <script>
+
+        const registerForm = document.getElementById("registerForm");
+
+        const registerButton = document.getElementById("registerButton");
+
+
+        registerForm.addEventListener("submit", async function(event) {
+
+            event.preventDefault();
+
+
+            const fullName =
+                document.getElementById("name").value.trim();
+
+
+            const email =
+                document.getElementById("email").value.trim();
+
+
+            const password =
+                document.getElementById("password").value;
+
+
+            const confirmPassword =
+                document.getElementById("confirm-password").value;
+
+
+            /*
+                Check whether passwords match
+            */
+
+            if (password !== confirmPassword) {
+
+                alert("Passwords do not match.");
+
+                return;
+            }
+
+
+            /*
+                Disable button while request is being processed
+            */
+
+            registerButton.disabled = true;
+
+            registerButton.textContent = "Creating Account...";
+
+
+            try {
+
+
+                /*
+                    Send registration data to Django backend
+                */
+
+                const response = await fetch(
+                    "http://127.0.0.1:8000/api/register/",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+
+                        body: JSON.stringify({
+
+                            full_name: fullName,
+
+                            email: email,
+
+                            password: password,
+
+                            confirm_password: confirmPassword
+
+                        })
+                    }
+                );
+
+
+                /*
+                    Convert Django response to JSON
+                */
+
+                const data = await response.json();
+
+
+                /*
+                    Account successfully created
+                */
+
+                if (response.ok) {
+
+                    alert(
+                        data.message ||
+                        "Account created successfully."
+                    );
+
+
+                    /*
+                        Go to login page
+                    */
+
+                    window.location.href = "login.html";
+
+                }
+
+
+                /*
+                    Registration failed
+                */
+
+                else {
+
+
+                    /*
+                        Existing email
+                    */
+
+                    if (data.email) {
+
+                        alert(data.email[0]);
+
+                    }
+
+
+                    /*
+                        Password confirmation error
+                    */
+
+                    else if (data.confirm_password) {
+
+                        alert(data.confirm_password[0]);
+
+                    }
+
+
+                    /*
+                        Password validation error
+                    */
+
+                    else if (data.password) {
+
+                        alert(data.password[0]);
+
+                    }
+
+
+                    /*
+                        Any other validation error
+                    */
+
+                    else {
+
+                        alert(
+                            "Registration failed. Please check your details."
+                        );
+
+                    }
+
+                }
+
+
+            }
+
+
+            /*
+                Backend cannot be reached
+            */
+
+            catch (error) {
+
+                console.error("Registration error:", error);
+
+                alert(
+                    "Unable to connect to the server. Please make sure the Django server is running."
+                );
+
+            }
+
+
+            /*
+                Enable button again
+            */
+
+            finally {
+
+                registerButton.disabled = false;
+
+                registerButton.textContent = "Create Account";
+
+            }
+
+        });
+
+    </script>
+
+
 </body>
+
 </html>
