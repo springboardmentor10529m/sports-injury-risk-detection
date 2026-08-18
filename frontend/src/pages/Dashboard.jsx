@@ -28,7 +28,7 @@ function Dashboard() {
 
                         <h1>
                             Good to see you
-                            {user?.full_name
+                            {user?.name
                                 ? `, ${user.full_name}`
                                 : ""}
                         </h1>

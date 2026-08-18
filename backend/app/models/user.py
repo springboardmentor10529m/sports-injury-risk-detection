@@ -50,13 +50,14 @@ class User(Base):
     )
 
     role: Mapped[RoleEnum] = mapped_column(
-    SQLEnum(
-        RoleEnum,
-        name="user_role_enum",
-        native_enum=True,
-    ),
-    nullable=False,
-)
+        SQLEnum(
+            RoleEnum,
+            name="user_role_enum",
+            native_enum=True,
+            values_callable=lambda enum_class: [member.value for member in enum_class],
+        ),
+        nullable=False,
+    )
 
     phone: Mapped[str | None] = mapped_column(
         String,
