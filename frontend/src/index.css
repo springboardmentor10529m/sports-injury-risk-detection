@@ -77,7 +77,7 @@ button {
 
     border-radius: 10px;
 
-    background: #162c4d;
+    background: #7A5D84;
     color: white;
 }
 
@@ -90,9 +90,38 @@ button {
     font-weight: 500;
 }
 
+.nav-link {
+    color: #556275;
+    font-weight: 500;
+    padding: 6px 2px;
+    position: relative;
+    transition: color 0.2s ease;
+}
+
+.nav-link:hover {
+    color: #172033;
+}
+
+.nav-link.active {
+    color: #7A5D84;
+    font-weight: 600;
+}
+
+.nav-link.active::after {
+    content: "";
+    position: absolute;
+    bottom: -24px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #7A5D84;
+    border-radius: 3px 3px 0 0;
+}
+
+
 .nav-button,
 .primary-button {
-    background: #162c4d;
+    background: #7A5D84;
     color: white;
 
     border: none;
@@ -478,7 +507,7 @@ button {
 
     border-radius: 12px;
 
-    background: #162c4d;
+    background: #7A5D84;
     color: white;
 
     margin-bottom: 20px;
@@ -633,8 +662,8 @@ button {
 }
 
 .sidebar-logo {
-    width: 34px;
-    height: 34px;
+    width: 48px;
+    height: 48px;
 
     border-radius: 9px;
 
@@ -642,7 +671,7 @@ button {
     align-items: center;
     justify-content: center;
 
-    background: #162c4d;
+    background: #7A5D84;
     color: white;
 
     font-size: 11px;
@@ -678,7 +707,7 @@ button {
 .sidebar-link.active {
     background: #edf1f5;
 
-    color: #162c4d;
+    color: #737d8d;
 }
 
 .dashboard {
@@ -1420,3 +1449,312 @@ button {
     gap: 15px;
     align-items: flex-end;
 }
+
+/* ── Athlete profile form ─────────────────────────────────── */
+
+.section-description {
+    color: #7b8494;
+    font-size: 13px;
+    margin: 0 0 20px;
+}
+
+/* 2-column grid for the five editable athlete fields */
+.athlete-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.form-field label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #4a5568;
+}
+
+.form-field label small {
+    font-weight: 400;
+    color: #8992a0;
+    margin-left: 3px;
+}
+
+.form-field input {
+    padding: 10px 13px;
+    border: 1px solid #dce1e8;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s;
+    background: #fafbfc;
+}
+
+.form-field input:focus {
+    border-color: #7a5d84;
+    background: white;
+}
+
+/* Read-only UUID display */
+.profile-id {
+    font-size: 11px;
+    font-family: "Courier New", monospace;
+    color: #55749b;
+    word-break: break-all;
+}
+
+/* Profile completeness badges */
+.status-complete {
+    color: #4b7659;
+    font-size: 13px;
+}
+
+.status-incomplete {
+    color: #8a7335;
+    font-size: 13px;
+}
+
+/* ── Success / Error feedback boxes ───────────────────────── */
+
+.success-box {
+    margin-top: 14px;
+    padding: 12px 16px;
+    background: #e9f2ec;
+    color: #3a6647;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.error-box {
+    margin-top: 14px;
+    padding: 12px 16px;
+    background: #f7e7e7;
+    color: #9a4c4c;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* ── Video Analysis — athlete summary ─────────────────────── */
+
+.athlete-summary-panel {
+    margin-bottom: 20px;
+}
+
+.athlete-summary-panel h2 {
+    font-size: 16px;
+    margin: 0 0 18px;
+}
+
+.athlete-details-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 15px;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.detail-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #8992a0;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.detail-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: #172033;
+}
+
+/* ── Incomplete profile warning banner ────────────────────── */
+
+.incomplete-profile-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+
+    padding: 24px 26px;
+
+    background: #fffbf0;
+    border: 1px solid #e8d9a0;
+    border-radius: 13px;
+
+    margin-bottom: 20px;
+}
+
+.incomplete-profile-icon {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #f5f0df;
+    color: #8a7335;
+    border-radius: 10px;
+}
+
+.incomplete-profile-body h3 {
+    font-size: 16px;
+    margin: 0 0 8px;
+    color: #5a4a20;
+}
+
+.incomplete-profile-body p {
+    font-size: 13px;
+    color: #7a6835;
+    margin: 0 0 16px;
+    line-height: 1.6;
+}
+
+.incomplete-profile-body .primary-button {
+    display: inline-flex;
+}
+
+/* ── Responsive tweaks ────────────────────────────────────── */
+
+@media (max-width: 1000px) {
+    .athlete-details-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 750px) {
+    .athlete-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .athlete-details-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .incomplete-profile-banner {
+        flex-direction: column;
+    }
+}
+
+/* ── Upload progress bar ─────────────────────────────────────── */
+
+.upload-progress-wrap {
+    width: 100%;
+    max-width: 460px;
+    margin: 18px auto 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+}
+
+.upload-progress-bar {
+    width: 100%;
+    height: 6px;
+    background: #e4e8ee;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.upload-progress-fill {
+    height: 100%;
+    background: #7a5d84;
+    border-radius: inherit;
+    transition: width 0.2s ease;
+}
+
+.upload-progress-label {
+    font-size: 12px;
+    color: #7b8494;
+    font-weight: 500;
+}
+
+/* ── Video upload success panel ──────────────────────────────── */
+
+.video-success-panel {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+
+    padding: 22px 24px;
+    margin-top: 20px;
+
+    background: #f0f7f2;
+    border: 1px solid #b8d9c4;
+    border-radius: 13px;
+}
+
+.video-success-icon {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #d4edd8;
+    color: #3a6647;
+    border-radius: 10px;
+}
+
+.video-success-body h3 {
+    font-size: 15px;
+    margin: 0 0 14px;
+    color: #2e5239;
+}
+
+.video-meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 24px;
+}
+
+.video-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.video-meta-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #6a8472;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.video-meta-value {
+    font-size: 13px;
+    font-weight: 500;
+    color: #2e5239;
+    word-break: break-all;
+}
+
+.video-filename {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* ── Responsive tweaks for new panels ────────────────────────── */
+
+@media (max-width: 750px) {
+    .video-meta-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .video-success-panel {
+        flex-direction: column;
+    }
+}
+

@@ -9,11 +9,6 @@ class AthleteCreate(BaseModel):
     Schema for creating an athlete profile.
     """
 
-    user_id: UUID = Field(
-        ...,
-        description="UUID of the user account associated with this athlete",
-    )
-
     sport: Optional[str] = Field(
         default=None,
         max_length=100,
@@ -74,6 +69,59 @@ class AthleteCreate(BaseModel):
     coach_notes: Optional[str] = None
 
     @field_validator("sport", "position", "coach_notes")
+    @classmethod
+    def strip_strings(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return None
+
+        cleaned = value.strip()
+
+        if not cleaned:
+            return None
+
+        return cleaned
+
+class AthleteSelfCreate(BaseModel):
+    """
+    Schema for an Athlete creating their own profile.
+
+    user_id is intentionally excluded because it is obtained
+    from the authenticated user's JWT.
+    """
+
+    sport: Optional[str] = Field(
+        default=None,
+        max_length=100,
+        examples=["Football"],
+    )
+
+    position: Optional[str] = Field(
+        default=None,
+        max_length=100,
+        examples=["Midfielder"],
+    )
+
+    age: Optional[int] = Field(
+        default=None,
+        ge=0,
+        le=120,
+    )
+
+    height: Optional[float] = Field(
+        default=None,
+        gt=0,
+        le=300,
+        description="Height in centimeters",
+    )
+
+    weight: Optional[float] = Field(
+        default=None,
+        gt=0,
+        le=500,
+        description="Weight in kilograms",
+    )
+
+    @field_validator("sport", "position")
     @classmethod
     def strip_strings(cls, value: Optional[str]) -> Optional[str]:
         if value is None:

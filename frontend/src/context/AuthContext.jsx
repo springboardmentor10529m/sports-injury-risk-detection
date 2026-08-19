@@ -71,7 +71,9 @@ export function AuthProvider({ children }) {
     }
 
     async function register(data) {
-        return await registerUser(data);
+    const registeredUser = await registerUser(data);
+
+    return registeredUser;
     }
 
     function logout() {

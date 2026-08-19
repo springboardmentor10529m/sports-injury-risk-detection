@@ -1,22 +1,26 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
 
 function Register() {
   const navigate = useNavigate();
 
-  const { register } = useAuth();
+  const { register, isAuthenticated } = useAuth();
 
   const [form, setForm] = useState({
     email: "",
     password: "",
-    full_name: "",
+    name: "",
     role: "Athlete"
   });
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   function updateField(event) {
     setForm({
@@ -64,8 +68,8 @@ function Register() {
           <label>Full Name</label>
 
           <input
-            name="full_name"
-            value={form.full_name}
+            name="name"
+            value={form.name}
             onChange={updateField}
             placeholder="Your name"
             required
@@ -103,9 +107,8 @@ function Register() {
           >
             <option value="Athlete">Athlete</option>
             <option value="Coach">Coach</option>
-            <option value="Physiotherapist">
-              Physiotherapist
-            </option>
+            <option value="Physiotherapist">Physiotherapist</option>
+            <option value="Sports Scientist">Sports Scientist</option>
           </select>
 
           <button

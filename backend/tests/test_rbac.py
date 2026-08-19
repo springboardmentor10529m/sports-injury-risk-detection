@@ -1,7 +1,7 @@
 """
 tests/test_rbac.py
 ------------------
-Phase 2 Step 4 — Reusable Role-Based Access Control (RBAC) tests.
+Reusable Role-Based Access Control (RBAC) tests.
 
 Tests:
 1. Correct role is allowed (200).
@@ -13,6 +13,7 @@ Tests:
 7. require_roles() rejects Athlete.
 8. Database role is authoritative, not the JWT role claim.
 9. All five individual role dependencies work correctly.
+10. Resource-level ownership & RBAC boundary tests.
 
 All test users are cleaned up after the test module.
 """
@@ -31,6 +32,7 @@ from app.core.security import get_password_hash
 from app.database import SessionLocal
 from app.main import app
 from app.models.user import RoleEnum, User
+from app.models.athlete import Athlete
 
 
 client = TestClient(app)
@@ -68,6 +70,27 @@ def _create_test_user(
         _CLEANUP_EMAILS.append(email)
 
         return user
+    finally:
+        db.close()
+
+
+def _create_test_athlete(user: User, sport: str = "Soccer") -> Athlete:
+    """Create a test athlete profile linked to user."""
+    db = SessionLocal()
+    try:
+        athlete = Athlete(
+            athlete_id=uuid.uuid4(),
+            user_id=user.user_id,
+            sport=sport,
+            position="Forward",
+            age=22,
+            height=175.0,
+            weight=70.0,
+        )
+        db.add(athlete)
+        db.commit()
+        db.refresh(athlete)
+        return athlete
     finally:
         db.close()
 
@@ -113,10 +136,13 @@ def cleanup_test_users():
     db = SessionLocal()
     try:
         if _CLEANUP_EMAILS:
-            db.query(User).filter(
-                User.email.in_(_CLEANUP_EMAILS)
-            ).delete(synchronize_session=False)
-            db.commit()
+            user_ids = [
+                u.user_id for u in db.query(User).filter(User.email.in_(_CLEANUP_EMAILS)).all()
+            ]
+            if user_ids:
+                db.query(Athlete).filter(Athlete.user_id.in_(user_ids)).delete(synchronize_session=False)
+                db.query(User).filter(User.user_id.in_(user_ids)).delete(synchronize_session=False)
+                db.commit()
     finally:
         db.close()
 
@@ -367,3 +393,123 @@ class TestRBACUserValidation:
         )
 
         assert response.status_code == 401
+
+
+# ---------------------------------------------------------------------------
+# Resource-level & endpoint RBAC boundary tests
+# ---------------------------------------------------------------------------
+
+class TestResourceLevelRBAC:
+    """Tests for resource ownership & endpoint-specific authorization rules."""
+
+    def test_athlete_cannot_access_other_athlete_profile(self):
+        """Athlete A cannot access Athlete B's profile via GET /athletes/{id} -> 403."""
+        user_a = _create_test_user("Athlete A", "athlete.a@test.invalid", RoleEnum.ATHLETE)
+        user_b = _create_test_user("Athlete B", "athlete.b@test.invalid", RoleEnum.ATHLETE)
+
+        _create_test_athlete(user_a)
+        athlete_b = _create_test_athlete(user_b)
+
+        token_a = _make_token(str(user_a.user_id), role=RoleEnum.ATHLETE.value)
+
+        response = client.get(
+            f"/api/v1/athletes/{athlete_b.athlete_id}",
+            headers=_auth_header(token_a),
+        )
+
+        assert response.status_code == 403
+        assert "only access your own" in response.json()["detail"]
+
+    def test_athlete_can_access_own_athlete_profile(self):
+        """Athlete A can access own profile via GET /athletes/{id} -> 200."""
+        user_a = _create_test_user("Athlete Own Profile", "athlete.own@test.invalid", RoleEnum.ATHLETE)
+        athlete_a = _create_test_athlete(user_a)
+
+        token_a = _make_token(str(user_a.user_id), role=RoleEnum.ATHLETE.value)
+
+        response = client.get(
+            f"/api/v1/athletes/{athlete_a.athlete_id}",
+            headers=_auth_header(token_a),
+        )
+
+        assert response.status_code == 200
+        assert response.json()["athlete_id"] == str(athlete_a.athlete_id)
+
+    def test_staff_role_can_access_any_athlete_profile(self):
+        """Coach can access Athlete A's profile via GET /athletes/{id} -> 200."""
+        user_a = _create_test_user("Athlete for Coach", "athlete.coach.target@test.invalid", RoleEnum.ATHLETE)
+        athlete_a = _create_test_athlete(user_a)
+
+        coach_user = _create_test_user("Staff Coach", "coach.staff@test.invalid", RoleEnum.COACH)
+        coach_token = _make_token(str(coach_user.user_id), role=RoleEnum.COACH.value)
+
+        response = client.get(
+            f"/api/v1/athletes/{athlete_a.athlete_id}",
+            headers=_auth_header(coach_token),
+        )
+
+        assert response.status_code == 200
+        assert response.json()["athlete_id"] == str(athlete_a.athlete_id)
+
+    def test_non_athlete_cannot_upload_video(self):
+        """Coach role attempting POST /videos receives HTTP 403."""
+        coach_user = _create_test_user("Coach Video Upload", "coach.upload@test.invalid", RoleEnum.COACH)
+        coach_token = _make_token(str(coach_user.user_id), role=RoleEnum.COACH.value)
+
+        files = {"file": ("test.mp4", b"dummy video bytes", "video/mp4")}
+        response = client.post(
+            "/api/v1/videos",
+            headers=_auth_header(coach_token),
+            files=files,
+        )
+
+        assert response.status_code == 403
+        assert "Only Athlete users" in response.json()["detail"]
+
+    def test_non_admin_cannot_delete_athlete_profile(self):
+        """Coach attempting DELETE /athletes/{id} receives HTTP 403."""
+        user_a = _create_test_user("Athlete to Delete Test", "athlete.nodelete@test.invalid", RoleEnum.ATHLETE)
+        athlete_a = _create_test_athlete(user_a)
+
+        coach_user = _create_test_user("Coach No Admin", "coach.noadmin@test.invalid", RoleEnum.COACH)
+        coach_token = _make_token(str(coach_user.user_id), role=RoleEnum.COACH.value)
+
+        response = client.delete(
+            f"/api/v1/athletes/{athlete_a.athlete_id}",
+            headers=_auth_header(coach_token),
+        )
+
+        assert response.status_code == 403
+        assert "Access denied" in response.json()["detail"]
+
+    def test_admin_can_delete_athlete_profile(self):
+        """Administrator attempting DELETE /athletes/{id} receives HTTP 204."""
+        user_a = _create_test_user("Athlete to Delete Admin", "athlete.delete.admin@test.invalid", RoleEnum.ATHLETE)
+        athlete_a = _create_test_athlete(user_a)
+
+        admin_user = _create_test_user("Admin Delete User", "admin.delete@test.invalid", RoleEnum.ADMINISTRATOR)
+        admin_token = _make_token(str(admin_user.user_id), role=RoleEnum.ADMINISTRATOR.value)
+
+        response = client.delete(
+            f"/api/v1/athletes/{athlete_a.athlete_id}",
+            headers=_auth_header(admin_token),
+        )
+
+        assert response.status_code == 204
+
+    def test_athlete_list_returns_only_own_profile(self):
+        """Athlete calling GET /athletes receives list containing only their own record."""
+        user_a = _create_test_user("Athlete List Self", "athlete.list.self@test.invalid", RoleEnum.ATHLETE)
+        athlete_a = _create_test_athlete(user_a)
+
+        token_a = _make_token(str(user_a.user_id), role=RoleEnum.ATHLETE.value)
+
+        response = client.get(
+            "/api/v1/athletes",
+            headers=_auth_header(token_a),
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+        assert data[0]["athlete_id"] == str(athlete_a.athlete_id)

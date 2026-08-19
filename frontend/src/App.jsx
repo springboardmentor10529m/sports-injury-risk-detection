@@ -13,6 +13,14 @@ import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 
+// Roles definition for route protection
+const STAFF_ROLES = [
+  "Coach",
+  "Physiotherapist",
+  "Sports Scientist",
+  "Administrator",
+];
+
 function App() {
   return (
     <>
@@ -46,7 +54,7 @@ function App() {
         <Route
           path="/athletes"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={STAFF_ROLES}>
               <Athletes />
             </ProtectedRoute>
           }
@@ -64,7 +72,7 @@ function App() {
         <Route
           path="/analysis"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["Athlete"]}>
               <VideoAnalysis />
             </ProtectedRoute>
           }

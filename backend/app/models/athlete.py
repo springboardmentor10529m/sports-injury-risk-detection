@@ -1,7 +1,10 @@
 import uuid
 
+# pyrefly: ignore [missing-import]
 from sqlalchemy import String, Text, Float, Integer, ForeignKey
+# pyrefly: ignore [missing-import]
 from sqlalchemy.dialects.postgresql import UUID
+# pyrefly: ignore [missing-import]
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base

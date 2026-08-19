@@ -38,7 +38,7 @@ function Athletes() {
 
   const filteredAthletes = athletes.filter(
     (athlete) =>
-      athlete.full_name
+      athlete.name
         ?.toLowerCase()
         .includes(search.toLowerCase()) ||
       athlete.email
@@ -111,12 +111,12 @@ function Athletes() {
                     >
                       <div className="person-cell">
                         <div className="avatar">
-                          {(athlete.full_name ||
+                          {(athlete.name ||
                             "A").charAt(0)}
                         </div>
 
                         <strong>
-                          {athlete.full_name ||
+                          {athlete.name ||
                             "Unnamed Athlete"}
                         </strong>
                       </div>

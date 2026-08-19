@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { NavLink, Link, useNavigate } from "react-router-dom";
 import { Activity, LogOut } from "lucide-react";
 
 import { useAuth } from "../context/AuthContext";
@@ -19,22 +19,65 @@ function Navbar() {
                     <Activity size={22} />
                 </div>
 
-                <span>Sports Injury Risk Detection from Video</span>
+                <span>AthleSense</span>
             </Link>
 
             <nav className="nav-links">
                 {!user ? (
                     <>
-                        <Link to="/">Home</Link>
-                        <Link to="/login">Login</Link>
-                        <Link to="/register" className="nav-button">
+                        <NavLink
+                            to="/"
+                            end
+                            className={({ isActive }) =>
+                                `nav-link ${isActive ? "active" : ""}`
+                            }
+                        >
+                            Home
+                        </NavLink>
+                        <NavLink
+                            to="/login"
+                            className={({ isActive }) =>
+                                `nav-link ${isActive ? "active" : ""}`
+                            }
+                        >
+                            Login
+                        </NavLink>
+                        <NavLink
+                            to="/register"
+                            className={({ isActive }) =>
+                                `nav-button ${isActive ? "active" : ""}`
+                            }
+                        >
                             Get Started
-                        </Link>
+                        </NavLink>
                     </>
                 ) : (
                     <>
-                        <Link to="/dashboard">Dashboard</Link>
-                        <Link to="/profile">Profile</Link>
+                        <NavLink
+                            to="/"
+                            end
+                            className={({ isActive }) =>
+                                `nav-link ${isActive ? "active" : ""}`
+                            }
+                        >
+                            Home
+                        </NavLink>
+                        <NavLink
+                            to="/dashboard"
+                            className={({ isActive }) =>
+                                `nav-link ${isActive ? "active" : ""}`
+                            }
+                        >
+                            Dashboard
+                        </NavLink>
+                        <NavLink
+                            to="/profile"
+                            className={({ isActive }) =>
+                                `nav-link ${isActive ? "active" : ""}`
+                            }
+                        >
+                            Profile
+                        </NavLink>
 
                         <button
                             className="logout-button"

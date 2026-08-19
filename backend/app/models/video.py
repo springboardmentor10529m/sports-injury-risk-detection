@@ -1,8 +1,11 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import String, Text, Float, Integer, DateTime, ForeignKey
+# pyrefly: ignore [missing-import]
+from sqlalchemy import String, Text, Float, Integer, DateTime, ForeignKey, BigInteger, LargeBinary
+# pyrefly: ignore [missing-import]
 from sqlalchemy.dialects.postgresql import UUID
+# pyrefly: ignore [missing-import]
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -62,4 +65,29 @@ class Video(Base):
         DateTime,
         default=datetime.utcnow,
         nullable=False
+    )
+
+    # ── Binary storage columns (added via migration) ──────────
+    # Stores the raw video bytes in PostgreSQL BYTEA.
+    file_data: Mapped[bytes | None] = mapped_column(
+        LargeBinary,
+        nullable=True
+    )
+
+    # Original filename as uploaded by the client.
+    original_filename: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True
+    )
+
+    # MIME content type e.g. "video/mp4".
+    content_type: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True
+    )
+
+    # File size in bytes.
+    file_size: Mapped[int | None] = mapped_column(
+        BigInteger,
+        nullable=True
     )

@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-
 import {
   Activity,
   Video,
@@ -8,7 +7,11 @@ import {
   ArrowRight
 } from "lucide-react";
 
+import { useAuth } from "../context/AuthContext";
+
 function Landing() {
+  const { isAuthenticated } = useAuth();
+
   return (
     <main>
       <section className="hero">
@@ -32,14 +35,29 @@ function Landing() {
           </p>
 
           <div className="hero-actions">
-            <Link to="/register" className="primary-button">
-              Start Analysis
-              <ArrowRight size={18} />
-            </Link>
+            {!isAuthenticated ? (
+              <>
+                <Link to="/register" className="primary-button">
+                  Start Analysis
+                  <ArrowRight size={18} />
+                </Link>
 
-            <Link to="/login" className="secondary-button">
-              Sign In
-            </Link>
+                <Link to="/login" className="secondary-button">
+                  Sign In
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link to="/dashboard" className="primary-button">
+                  Go to Dashboard
+                  <ArrowRight size={18} />
+                </Link>
+
+                <Link to="/profile" className="secondary-button">
+                  View Profile
+                </Link>
+              </>
+            )}
           </div>
         </div>
 

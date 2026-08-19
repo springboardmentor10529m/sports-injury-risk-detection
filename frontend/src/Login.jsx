@@ -49,7 +49,7 @@ function Login() {
                     <h1>Welcome back</h1>
 
                     <p>
-                        Sign in to your Sports Injury Risk Detection
+                        Sign in to your AthleSense
                         account.
                     </p>
                 </div>

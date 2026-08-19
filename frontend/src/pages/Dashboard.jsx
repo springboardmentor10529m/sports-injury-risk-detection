@@ -3,7 +3,9 @@ import {
     Users,
     ClipboardCheck,
     AlertTriangle,
-    ArrowUpRight
+    ArrowUpRight,
+    UserCircle,
+    Video
 } from "lucide-react";
 
 import Sidebar from "../components/Sidebar";
@@ -14,6 +16,7 @@ import { useAuth } from "../context/AuthContext";
 
 function Dashboard() {
     const { user } = useAuth();
+    const isAthlete = user?.role === "Athlete";
 
     return (
         <div className="app-layout">
@@ -23,37 +26,40 @@ function Dashboard() {
                 <div className="page-header">
                     <div>
                         <span className="eyebrow">
-                            OVERVIEW
+                            {user?.role ? `${user.role.toUpperCase()} DASHBOARD` : "OVERVIEW"}
                         </span>
 
                         <h1>
-                            Good to see you
-                            {user?.name
-                                ? `, ${user.full_name}`
-                                : ""}
+                            Welcome back
+                            {user?.name ? `, ${user.name}` : ""}
                         </h1>
 
                         <p>
-                            Monitor athlete movement and injury-risk
-                            assessments.
+                            {isAthlete
+                                ? "Manage your athlete profile and movement risk assessments."
+                                : "Monitor team roster movement analysis and injury-risk evaluations."}
                         </p>
                     </div>
 
-                    <a
-                        href="/analysis"
-                        className="primary-button"
-                    >
-                        <Activity size={18} />
-                        New Analysis
-                    </a>
+                    {isAthlete ? (
+                        <a href="/analysis" className="primary-button">
+                            <Video size={18} />
+                            Upload Video Analysis
+                        </a>
+                    ) : (
+                        <a href="/athletes" className="primary-button">
+                            <Users size={18} />
+                            View Athletes Roster
+                        </a>
+                    )}
                 </div>
 
                 <div className="stats-grid">
                     <StatCard
-                        title="Athletes"
-                        value="24"
-                        subtitle="+4 this month"
-                        icon={Users}
+                        title={isAthlete ? "Your Profile" : "Active Athletes"}
+                        value={isAthlete ? "Configured" : "24"}
+                        subtitle={isAthlete ? `Role: ${user?.role}` : "+4 this month"}
+                        icon={isAthlete ? UserCircle : Users}
                     />
 
                     <StatCard
@@ -71,7 +77,7 @@ function Dashboard() {
                     />
 
                     <StatCard
-                        title="High Risk"
+                        title="High Risk Alerts"
                         value="5"
                         subtitle="Requires attention"
                         icon={AlertTriangle}
@@ -128,7 +134,7 @@ function Dashboard() {
                             <div>
                                 <h2>Risk Overview</h2>
                                 <p>
-                                    Current athlete distribution
+                                    Current athlete risk distribution
                                 </p>
                             </div>
                         </div>

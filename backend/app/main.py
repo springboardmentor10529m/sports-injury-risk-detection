@@ -11,6 +11,7 @@ from app.config import settings
 from app.database import get_db
 from app.api.auth import router as auth_router
 from app.api.athletes import router as athletes_router
+from app.api.videos import router as videos_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -36,6 +37,10 @@ app.include_router(auth_router)
 # Include Athlete Routes under both /api/v1 and root
 app.include_router(athletes_router, prefix=settings.API_V1_STR)
 app.include_router(athletes_router)
+
+# Include Video Routes under both /api/v1 and root
+app.include_router(videos_router, prefix=settings.API_V1_STR)
+app.include_router(videos_router)
 
 @app.get("/", tags=["Root"])
 def read_root():

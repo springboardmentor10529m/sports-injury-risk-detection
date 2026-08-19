@@ -25,7 +25,9 @@ No database schema migrations are required.
 import uuid
 from datetime import timedelta, datetime, timezone
 
+# pyrefly: ignore [missing-import]
 import pytest
+# pyrefly: ignore [missing-import]
 from fastapi.testclient import TestClient
 from jose import jwt
 

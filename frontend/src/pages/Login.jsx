@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 import { Activity, Eye, EyeOff } from "lucide-react";
 
 import { useAuth } from "../context/AuthContext";
@@ -7,7 +7,7 @@ import { useAuth } from "../context/AuthContext";
 function Login() {
   const navigate = useNavigate();
 
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,6 +17,10 @@ function Login() {
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -48,7 +52,7 @@ function Login() {
         <h1>Welcome back</h1>
 
         <p className="auth-subtitle">
-          Sign in to your Sports Injury Risk Detection account.
+          Sign in to your AthleSense account.
         </p>
 
         {error && (
