@@ -1,0 +1,95 @@
+erDiagram
+    USERS {
+        UUID user_id PK
+        string name
+        string email UK
+        text password
+        string role
+        string phone
+        text profile_image
+        datetime created_at
+    }
+
+    ATHLETES {
+        UUID athlete_id PK
+        UUID user_id FK
+        string sport
+        string position
+        int age
+        float height
+        float weight
+        float training_load
+        float flexibility
+        float strength
+        float balance
+        float endurance
+        text coach_notes
+    }
+
+    PERFORMANCE_RECORDS {
+        UUID record_id PK
+        UUID athlete_id FK
+        string activity
+        float score
+        text remarks
+        datetime recorded_at
+    }
+
+    VIDEOS {
+        UUID video_id PK
+        UUID athlete_id FK
+        string activity
+        text video_url
+        float duration
+        int fps
+        string resolution
+        float quality_score
+        string processing_status
+        datetime uploaded_at
+    }
+
+    ANALYSIS_RESULTS {
+        UUID analysis_id PK
+        UUID video_id FK
+        UUID athlete_id FK
+        float knee_valgus
+        float hip_stability
+        float trunk_lean
+        float stride_length
+        float joint_alignment
+        float symmetry_score
+        float fatigue_score
+        float movement_quality
+        float overall_risk_score
+        string risk_level
+        datetime created_at
+    }
+
+    INJURY_PREDICTIONS {
+        UUID prediction_id PK
+        UUID analysis_id FK
+        float acl_risk
+        float hamstring_risk
+        float ankle_risk
+        float shoulder_risk
+        float lower_back_risk
+        float overuse_risk
+    }
+
+    RECOMMENDATIONS {
+        UUID recommendation_id PK
+        UUID prediction_id FK
+        text exercise
+        text mobility
+        text strengthening
+        text recovery
+        text training_modification
+    }
+
+    USERS ||--o{ ATHLETES : "has"
+    ATHLETES ||--o{ PERFORMANCE_RECORDS : "logs"
+    ATHLETES ||--o{ VIDEOS : "uploads"
+    ATHLETES ||--o{ ANALYSIS_RESULTS : "receives"
+    VIDEOS ||--o{ ANALYSIS_RESULTS : "analyzed_in"
+    ANALYSIS_RESULTS ||--o| INJURY_PREDICTIONS : "predicts"
+    INJURY_PREDICTIONS ||--o| RECOMMENDATIONS : "generates"

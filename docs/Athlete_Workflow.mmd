@@ -1,0 +1,25 @@
+flowchart TD
+    A[Athlete] --> B[Registration]
+    B --> C[Login]
+    C --> D[Athlete Profile Setup]
+    D --> E[Dashboard]
+    E --> F[Performance Tracking]
+    E --> G[Video Upload]
+    G --> H[Movement Analysis]
+    H --> I[Injury Risk Prediction]
+    I --> J[Personalized Recommendations]
+    J --> K[Training / Recovery Decisions]
+    F --> E
+    J --> E
+
+    subgraph Platform["SportShield Platform"]
+        B
+        C
+        D
+        E
+        F
+        G
+        H
+        I
+        J
+    end

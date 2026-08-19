@@ -216,3 +216,19 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# SportShield project
+backend/.env
+backend/frontend/.env
+backend/frontend/.env.local
+backend/frontend/node_modules/
+backend/frontend/dist/
+backend/uploads/*
+!backend/uploads/.gitkeep
+.venv/
+venv/
+*.mp4
+*.mov
+*.webm
+*.mkv
+
