@@ -1,0 +1,68 @@
+.athlete-account-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid #dbe3ee;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #2563eb;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.athlete-account-link:hover {
+  border-color: #2563eb;
+  background: #f4f8ff;
+  color: #1d4ed8;
+}
+
+.athlete-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.athlete-dashboard-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+}
+
+.athlete-dashboard-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border-radius: 11px;
+  background: #e5efff;
+  color: #2563eb;
+}
+
+.athlete-dashboard-card h3 {
+  margin: 0 0 6px;
+  color: #0f2747;
+  font-size: 0.95rem;
+}
+
+.athlete-dashboard-card p {
+  margin: 0 0 11px;
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.athlete-dashboard-card a {
+  color: #2563eb;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+@media (max-width: 640px) {
+  .athlete-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}

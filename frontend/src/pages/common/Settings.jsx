@@ -1,8 +1,16 @@
-import Sidebar from '../components/Sidebar'
-import ThemeToggle from '../components/ThemeToggle'
-import './Settings.css'
+import Sidebar from '../../components/Sidebar'
+import ThemeToggle from '../../components/ThemeToggle'
+import '../Settings.css'
+import { useAuth } from '../../context/AuthContext'
+import { ROLE_LABELS } from '../../config/roles'
 
 function Settings() {
+  const { currentUser, userName, userRole } = useAuth()
+  const organizationLabel = currentUser?.organizationName || 'Independent'
+  const membershipLabel = currentUser?.membershipStatus === 'active'
+    ? 'Verified · Active'
+    : 'Independent'
+
   return (
     <div className="dashboard-page">
 
@@ -40,18 +48,18 @@ function Settings() {
 
 
             <div className="user-avatar">
-              S
+              {userName.charAt(0).toUpperCase() || 'U'}
             </div>
 
 
             <div className="user-info">
 
               <strong>
-                Soumyajit
+                {userName}
               </strong>
 
               <small>
-                Coach
+                {ROLE_LABELS[userRole]}
               </small>
 
             </div>
@@ -186,7 +194,7 @@ function Settings() {
                   </strong>
 
                   <span>
-                    Soumyajit
+                    {currentUser?.name || userName}
                   </span>
 
                 </div>
@@ -213,14 +221,38 @@ function Settings() {
                   </strong>
 
                   <span>
-                    Coach account
+                    {ROLE_LABELS[userRole]} account
                   </span>
 
                 </div>
 
 
                 <span className="settings-value-badge">
-                  Coach
+                  {ROLE_LABELS[userRole]}
+                </span>
+
+              </div>
+
+
+              {/* ORGANIZATION MEMBERSHIP */}
+
+              <div className="settings-list-row">
+
+                <div className="settings-row-content">
+
+                  <strong>
+                    Organization
+                  </strong>
+
+                  <span>
+                    {organizationLabel}
+                  </span>
+
+                </div>
+
+
+                <span className="settings-value-badge">
+                  {membershipLabel}
                 </span>
 
               </div>

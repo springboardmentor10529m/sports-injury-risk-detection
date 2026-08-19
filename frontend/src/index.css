@@ -339,6 +339,98 @@ a {
   box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.12);
 }
 
+.password-input-wrapper {
+  position: relative;
+}
+
+.password-input-wrapper .form-control {
+  padding-right: 3.5rem;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.75rem;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0.25rem;
+}
+
+.password-toggle:hover,
+.password-toggle:focus-visible {
+  color: #2563eb;
+}
+
+.role-selection {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.role-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.role-selection-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 78px;
+  padding: 1rem;
+  border: 1px solid #dbe3ee;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #334155;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.role-selection-card input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+.role-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: #eef5ff;
+  color: #2563eb;
+  font-size: 1.25rem;
+}
+
+.role-card-name {
+  font-weight: 600;
+}
+
+.role-selection-card:hover,
+.role-selection-card.selected {
+  border-color: #2563eb;
+  background: #f4f8ff;
+}
+
+.role-selection-card.selected {
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+}
+
+.role-selection-card:focus-within {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
 .forgot-link,
 .register-link {
   color: #2563eb;
@@ -1236,6 +1328,23 @@ a {
   border-color: #26364d;
 }
 
+.dark-theme .role-selection-card {
+  border-color: #26364d;
+  background: #172337;
+  color: #e2e8f0;
+}
+
+.dark-theme .role-card-icon {
+  background: #24354d;
+  color: #60a5fa;
+}
+
+.dark-theme .role-selection-card:hover,
+.dark-theme .role-selection-card.selected {
+  border-color: #60a5fa;
+  background: #1b2a42;
+}
+
 
 /* =====================================================
    RESPONSIVE
@@ -1333,6 +1442,10 @@ a {
 
 
 @media (max-width: 480px) {
+
+  .role-card-grid {
+    grid-template-columns: 1fr;
+  }
 
   .dashboard-topbar,
   .dashboard-content {

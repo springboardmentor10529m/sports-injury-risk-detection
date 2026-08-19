@@ -1,243 +1,36 @@
 import { NavLink, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { ROLES } from '../config/roles'
+
+const navigationByRole = {
+  [ROLES.ATHLETE]: [['Dashboard', '/athlete/dashboard', '▦'], ['My Profile', '/athlete/profile', '♙'], ['Injury History', '/athlete/injury-history', '♥'], ['Risk Assessments', '/athlete/risk-assessments', '◉'], ['Performance', '/athlete/performance', '↗'], ['Video Analysis', '/athlete/video-analysis', '▶'], ['Recommendations', '/athlete/recommendations', '✦'], ['Reports', '/athlete/reports', '▤']],
+  [ROLES.COACH]: [['Dashboard', '/coach/dashboard', '▦'], ['Team Athletes', '/coach/athletes', '♟'], ['Injury Monitoring', '/coach/injury-monitoring', '♥'], ['Risk Assessments', '/coach/risk-assessments', '◉'], ['Performance', '/coach/performance', '↗'], ['Video Analysis', '/coach/video-analysis', '▶'], ['Risk Alerts', '/coach/risk-alerts', '⚠'], ['Reports', '/coach/reports', '▤']],
+  [ROLES.PHYSIOTHERAPIST]: [['Dashboard', '/physiotherapist/dashboard', '▦'], ['Assigned Athletes', '/physiotherapist/athletes', '♟'], ['Injury Management', '/physiotherapist/injury-management', '♥'], ['Recovery & Rehabilitation', '/physiotherapist/recovery', '↗'], ['Risk Assessments', '/physiotherapist/risk-assessments', '◉'], ['Video Analysis', '/physiotherapist/video-analysis', '▶'], ['Recommendations', '/physiotherapist/recommendations', '✦'], ['Reports', '/physiotherapist/reports', '▤']],
+  [ROLES.ADMIN]: [['Dashboard', '/admin/dashboard', '▦'], ['Organization Analytics', '/admin/analytics', '↗'], ['Users', '/admin/users', '♙'], ['Athletes', '/admin/athletes', '♟'], ['Coaches', '/admin/coaches', '♞'], ['Physiotherapists', '/admin/physiotherapists', '⚕'], ['Teams / Groups', '/admin/teams', '◫'], ['Reports', '/admin/reports', '▤'], ['Access & Permissions', '/admin/access-permissions', '⚿'], ['Organization Settings', '/admin/organization-settings', '⚙']],
+}
 
 function Sidebar() {
   const navigate = useNavigate()
-
-  const getNavClass = ({ isActive }) => {
-    return `sidebar-link ${isActive ? 'active' : ''}`
-  }
+  const { logout, userRole } = useAuth()
+  const links = navigationByRole[userRole] || []
+  const getNavClass = ({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`
 
   const handleLogout = () => {
-    localStorage.removeItem('currentUser')
+    logout()
     navigate('/login')
   }
 
   return (
     <aside className="dashboard-sidebar">
-
-      {/* =========================================
-          LOGO
-      ========================================= */}
-
-      <div className="sidebar-brand">
-
-        <div className="sidebar-brand-title">
-          Sports Injury
-        </div>
-
-        <div className="sidebar-brand-subtitle">
-          Risk Prediction
-        </div>
-
-      </div>
-
-
-      {/* =========================================
-          NAVIGATION
-      ========================================= */}
-
+      <div className="sidebar-brand"><div className="sidebar-brand-title">Sports Injury</div><div className="sidebar-brand-subtitle">Risk Prediction</div></div>
       <nav className="sidebar-nav">
-
-
-        {/* =========================================
-            MAIN
-        ========================================= */}
-
-        <div className="sidebar-section-title">
-          MAIN
-        </div>
-
-
-        {/* DASHBOARD */}
-
-        <NavLink
-          to="/dashboard"
-          className={getNavClass}
-        >
-          <span className="sidebar-icon">
-            ▦
-          </span>
-
-          <span>
-            Dashboard
-          </span>
-        </NavLink>
-
-
-        {/* ATHLETES */}
-
-        <NavLink
-          to="/athletes"
-          className={getNavClass}
-        >
-          <span className="sidebar-icon">
-            ♟
-          </span>
-
-          <span>
-            Athletes
-          </span>
-        </NavLink>
-
-
-        {/* INJURY HISTORY */}
-
-        <NavLink
-          to="/injury-history"
-          className={getNavClass}
-        >
-          <span className="sidebar-icon">
-            ♥
-          </span>
-
-          <span>
-            Injury History
-          </span>
-        </NavLink>
-
-
-        {/* =========================================
-            ANALYSIS
-        ========================================= */}
-
-        <div className="sidebar-section-title">
-          ANALYSIS
-        </div>
-
-
-        {/* VIDEO ANALYSIS */}
-
-        <NavLink
-          to="/video-analysis"
-          className={getNavClass}
-        >
-          <span className="sidebar-icon">
-            ▶
-          </span>
-
-          <span>
-            Video Analysis
-          </span>
-        </NavLink>
-
-
-        {/* RISK PREDICTION */}
-
-        <NavLink
-          to="/risk-prediction"
-          className={getNavClass}
-        >
-          <span className="sidebar-icon">
-            ◉
-          </span>
-
-          <span>
-            Risk Prediction
-          </span>
-        </NavLink>
-
-
-        {/* PERFORMANCE */}
-
-        <NavLink
-          to="/performance"
-          className={getNavClass}
-        >
-          <span className="sidebar-icon">
-            ↗
-          </span>
-
-          <span>
-            Performance
-          </span>
-        </NavLink>
-
-
-        {/* =========================================
-            MANAGEMENT
-        ========================================= */}
-
-        <div className="sidebar-section-title">
-          MANAGEMENT
-        </div>
-
-
-        {/* RECOMMENDATIONS */}
-
-        <NavLink
-          to="/recommendations"
-          className={getNavClass}
-        >
-          <span className="sidebar-icon">
-            ✦
-          </span>
-
-          <span>
-            Recommendations
-          </span>
-        </NavLink>
-
-
-        {/* REPORTS */}
-
-        <NavLink
-          to="/reports"
-          className={getNavClass}
-        >
-          <span className="sidebar-icon">
-            ▤
-          </span>
-
-          <span>
-            Reports
-          </span>
-        </NavLink>
-
-
-        {/* =========================================
-            BOTTOM
-        ========================================= */}
-
+        <div className="sidebar-section-title">MAIN</div>
+        {links.map(([label, path, icon]) => <NavLink key={path} to={path} className={getNavClass}><span className="sidebar-icon">{icon}</span><span>{label}</span></NavLink>)}
         <div className="sidebar-bottom">
-
-
-          {/* SETTINGS */}
-
-          <NavLink
-            to="/settings"
-            className={getNavClass}
-          >
-            <span className="sidebar-icon">
-              ⚙
-            </span>
-
-            <span>
-              Settings
-            </span>
-          </NavLink>
-
-
-          {/* LOGOUT */}
-
-          <button
-            type="button"
-            className="sidebar-link sidebar-logout"
-            onClick={handleLogout}
-          >
-            <span className="sidebar-icon">
-              ↪
-            </span>
-
-            <span>
-              Logout
-            </span>
-          </button>
-
-
+          {userRole !== ROLES.ADMIN && <NavLink to="/settings" className={getNavClass}><span className="sidebar-icon">⚙</span><span>Settings</span></NavLink>}
+          <button type="button" className="sidebar-link sidebar-logout" onClick={handleLogout}><span className="sidebar-icon">↪</span><span>Logout</span></button>
         </div>
-
       </nav>
-
     </aside>
   )
 }

@@ -1,9 +1,12 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import Sidebar from '../components/Sidebar'
-import './Athletes.css'
+import Sidebar from '../../components/Sidebar'
+import '../Athletes.css'
+import { useAuth } from '../../context/AuthContext'
+import { ROLE_LABELS } from '../../config/roles'
 
 function Athletes() {
+  const { userName, userRole } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
   const [sportFilter, setSportFilter] = useState('All Sports')
   const [riskFilter, setRiskFilter] = useState('All Risk Levels')
@@ -120,16 +123,16 @@ function Athletes() {
             </button>
 
             <div className="user-avatar">
-              S
+              {userName.charAt(0).toUpperCase() || 'U'}
             </div>
 
             <div className="user-info">
               <strong>
-                Soumyajit
+                {userName}
               </strong>
 
               <small>
-                Coach
+                {ROLE_LABELS[userRole]}
               </small>
             </div>
 

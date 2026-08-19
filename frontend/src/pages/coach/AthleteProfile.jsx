@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import Sidebar from '../components/Sidebar'
-import './AthletePages.css'
+import Sidebar from '../../components/Sidebar'
+import '../AthletePages.css'
+import { useAuth } from '../../context/AuthContext'
+import { ROLE_LABELS } from '../../config/roles'
 
 const defaultAthletes = {
   'ATH-001': {
@@ -90,6 +92,7 @@ const defaultAthletes = {
 }
 
 function AthleteProfile() {
+  const { userName, userRole } = useAuth()
   const { id } = useParams()
 
   const [athlete, setAthlete] = useState(null)
@@ -151,17 +154,17 @@ function AthleteProfile() {
               </button>
 
               <div className="user-avatar">
-                S
+                {userName.charAt(0).toUpperCase() || 'U'}
               </div>
 
               <div className="user-info">
 
                 <strong>
-                  Soumyajit
+                  {userName}
                 </strong>
 
                 <small>
-                  Coach
+                  {ROLE_LABELS[userRole]}
                 </small>
 
               </div>
@@ -242,18 +245,18 @@ function AthleteProfile() {
 
 
             <div className="user-avatar">
-              S
+              {userName.charAt(0).toUpperCase() || 'U'}
             </div>
 
 
             <div className="user-info">
 
               <strong>
-                Soumyajit
+                {userName}
               </strong>
 
               <small>
-                Coach
+                {ROLE_LABELS[userRole]}
               </small>
 
             </div>

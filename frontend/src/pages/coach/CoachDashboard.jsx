@@ -9,8 +9,10 @@ import {
   BarElement
 } from 'chart.js'
 
-import Sidebar from '../components/Sidebar'
-import './Dashboard.css'
+import Sidebar from '../../components/Sidebar'
+import '../Dashboard.css'
+import { useAuth } from '../../context/AuthContext'
+import { ROLE_LABELS } from '../../config/roles'
 
 ChartJS.register(
   ArcElement,
@@ -22,6 +24,7 @@ ChartJS.register(
 )
 
 function Dashboard() {
+  const { userName, userRole } = useAuth()
 
   /* =====================================================
      SAMPLE DATA
@@ -197,18 +200,18 @@ function Dashboard() {
 
 
             <div className="user-avatar">
-              S
+              {userName.charAt(0).toUpperCase() || 'U'}
             </div>
 
 
             <div className="user-info">
 
               <strong>
-                Soumyajit
+                {userName}
               </strong>
 
               <small>
-                Coach
+                {ROLE_LABELS[userRole]}
               </small>
 
             </div>
@@ -235,7 +238,7 @@ function Dashboard() {
             <div>
 
               <h2>
-                Good afternoon, Soumyajit 👋
+                Good afternoon, {userName} 👋
               </h2>
 
               <p>

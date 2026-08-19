@@ -1,0 +1,124 @@
+.athlete-profile-content {
+  max-width: 1200px;
+}
+
+.athlete-own-profile-header {
+  margin-bottom: 22px;
+}
+
+.athlete-profile-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr);
+  gap: 22px;
+}
+
+.athlete-profile-details {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.athlete-profile-summary {
+  grid-template-columns: 1fr;
+}
+
+.athlete-profile-form {
+  padding-top: 18px;
+}
+
+.athlete-profile-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.athlete-form-group-full {
+  grid-column: 1 / -1;
+}
+
+.athlete-profile-readonly {
+  min-height: 44px;
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+  padding: 8px 13px;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+.athlete-profile-readonly strong {
+  color: #0f2747;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.athlete-profile-readonly span,
+.athlete-readonly-hint {
+  display: block;
+  color: #64748b;
+  font-size: 0.68rem;
+  margin-top: 3px;
+}
+
+.athlete-profile-form-actions {
+  margin-top: 18px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.athlete-primary-button,
+.athlete-secondary-button {
+  height: 38px;
+  border-radius: 8px;
+  padding: 0 14px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.athlete-primary-button {
+  border: 1px solid #2563eb;
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.athlete-primary-button:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.athlete-secondary-button {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+}
+
+.athlete-secondary-button:hover {
+  border-color: #94a3b8;
+}
+
+@media (max-width: 900px) {
+  .athlete-profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .athlete-profile-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .athlete-profile-details {
+    grid-template-columns: 1fr;
+  }
+
+  .athlete-profile-form-actions {
+    justify-content: stretch;
+  }
+
+  .athlete-primary-button,
+  .athlete-secondary-button {
+    flex: 1;
+  }
+}
