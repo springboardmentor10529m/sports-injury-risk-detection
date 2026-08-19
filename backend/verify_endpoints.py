@@ -97,6 +97,72 @@ def test_full_workflow():
     assert videos_list[0]["video_id"] == video_data["video_id"]
     print("✅ Video list retrieved successfully.")
 
+    # 6. Register Coach User
+    print("👉 Registering new coach...")
+    coach_register_payload = {
+        "name": "Coach Carter",
+        "email": "coach.carter@example.com",
+        "password": "securepassword123",
+        "role": "coach"
+    }
+    response = client.post("/api/auth/register", json=coach_register_payload)
+    assert response.status_code == 201, f"Coach registration failed: {response.text}"
+    print("✅ Coach registered successfully.")
+
+    # 7. Login Coach User
+    print("👉 Logging in as coach...")
+    coach_login_payload = {
+        "email": "coach.carter@example.com",
+        "password": "securepassword123"
+    }
+    response = client.post("/api/auth/login", json=coach_login_payload)
+    assert response.status_code == 200, f"Coach login failed: {response.text}"
+    coach_token_data = response.json()
+    coach_headers = {"Authorization": f"Bearer {coach_token_data['access_token']}"}
+    print("✅ Coach login successful.")
+
+    # 8. Fetch Athlete List as Coach
+    print("👉 Fetching athlete list as coach...")
+    response = client.get("/api/athlete/list", headers=coach_headers)
+    assert response.status_code == 200, f"Fetch athlete list failed: {response.text}"
+    athlete_list = response.json()
+    assert len(athlete_list) == 1
+    athlete_id = athlete_list[0]["athlete_id"]
+    assert athlete_list[0]["user"]["email"] == "alex.hunter@example.com"
+    print("✅ Athlete list successfully retrieved by coach.")
+
+    # 9. Fetch Athlete Videos as Coach
+    print("👉 Fetching athlete videos as coach...")
+    response = client.get(f"/api/athlete/{athlete_id}/videos", headers=coach_headers)
+    assert response.status_code == 200, f"Fetch athlete videos failed: {response.text}"
+    athlete_videos = response.json()
+    assert len(athlete_videos) == 1
+    assert athlete_videos[0]["video_id"] == video_data["video_id"]
+    print("✅ Athlete videos successfully retrieved by coach.")
+
+    # 10. Update Coach Notes as Coach
+    print("👉 Updating coach notes as coach...")
+    notes_payload = {
+        "coach_notes": "Updated remarks: Needs more work on jump landing mechanics."
+    }
+    response = client.put(f"/api/athlete/{athlete_id}/notes", json=notes_payload, headers=coach_headers)
+    assert response.status_code == 200, f"Updating coach notes failed: {response.text}"
+    updated_profile = response.json()
+    assert updated_profile["coach_notes"] == notes_payload["coach_notes"]
+    print("✅ Coach notes updated successfully by coach.")
+
+    # 11. Verify Authorization Restrictions (Athlete trying to access expert endpoints)
+    print("👉 Verifying athlete cannot access expert endpoints...")
+    response = client.get("/api/athlete/list", headers=headers)
+    assert response.status_code == 403, "Athlete was incorrectly allowed to fetch athlete list"
+    
+    response = client.get(f"/api/athlete/{athlete_id}/videos", headers=headers)
+    assert response.status_code == 403, "Athlete was incorrectly allowed to fetch other athlete's videos"
+    
+    response = client.put(f"/api/athlete/{athlete_id}/notes", json=notes_payload, headers=headers)
+    assert response.status_code == 403, "Athlete was incorrectly allowed to write coach notes"
+    print("✅ Endpoint security successfully verified.")
+
     print("\n🎉 ALL BACKEND VERIFICATIONS PASSED SUCCESSFULLY!")
 
 if __name__ == "__main__":

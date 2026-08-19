@@ -71,6 +71,28 @@ class AthleteResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class CoachNotesUpdate(BaseModel):
+    coach_notes: str
+
+class AthleteDetailedResponse(BaseModel):
+    athlete_id: str
+    user_id: str
+    sport: Optional[str] = None
+    position: Optional[str] = None
+    age: Optional[int] = None
+    height: Optional[float] = None
+    weight: Optional[float] = None
+    training_load: Optional[float] = 0.0
+    flexibility: Optional[float] = None
+    strength: Optional[float] = None
+    balance: Optional[float] = None
+    endurance: Optional[float] = None
+    coach_notes: Optional[str] = None
+    user: UserResponse
+
+    class Config:
+        from_attributes = True
+
 # --- Video Schemas ---
 class VideoResponse(BaseModel):
     video_id: str

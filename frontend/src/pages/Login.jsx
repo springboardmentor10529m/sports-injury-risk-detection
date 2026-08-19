@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import api from '../api';
+import api, { getErrorMessage } from '../api';
 import { LogIn, Mail, Lock, Activity } from 'lucide-react';
 
 const Login = () => {
@@ -40,11 +40,12 @@ const Login = () => {
       
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.detail || 'Invalid email or password.');
+      setError(getErrorMessage(err, 'Invalid email or password.'));
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#070b13] relative overflow-hidden px-4">

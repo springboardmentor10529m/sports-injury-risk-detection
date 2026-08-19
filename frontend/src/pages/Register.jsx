@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import api from '../api';
+import api, { getErrorMessage } from '../api';
 import { UserPlus, Mail, Lock, Phone, User, Activity } from 'lucide-react';
 
 const Register = () => {
@@ -28,11 +28,12 @@ const Register = () => {
       await api.post('/auth/register', formData);
       navigate('/login', { state: { success: 'Registration successful! Please login.' } });
     } catch (err) {
-      setError(err.response?.data?.detail || 'An error occurred during registration.');
+      setError(getErrorMessage(err, 'An error occurred during registration.'));
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#070b13] relative overflow-hidden px-4">

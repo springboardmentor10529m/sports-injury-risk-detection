@@ -1,7 +1,10 @@
 # Python virtual environment
 backend/venv/
-backend/__pycache__/
+**/__pycache__/
+*.pyc
 backend/sports_injury.db
+sports_injury.db
+*.db
 backend/uploads/
 
 # Node modules and build output
@@ -13,6 +16,7 @@ frontend/*.local
 # OS files
 .DS_Store
 Thumbs.db
+.vscode/
 
 # Other
 dummy_video.mp4

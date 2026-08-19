@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../api';
+import api, { getErrorMessage } from '../api';
 import { UploadCloud, Film, Play, AlertCircle, CheckCircle2, ChevronLeft } from 'lucide-react';
 
 const ACTIVITIES = [
@@ -80,12 +80,13 @@ const Upload = () => {
       setFile(null);
       setTimeout(() => navigate('/dashboard'), 1500);
     } catch (err) {
-      setError(err.response?.data?.detail || 'An error occurred during video upload. Please complete your athlete profile first.');
+      setError(getErrorMessage(err, 'An error occurred during video upload. Please complete your athlete profile first.'));
       setProgress(0);
     } finally {
       setUploading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-[#070b13] py-12 px-4 relative overflow-hidden">

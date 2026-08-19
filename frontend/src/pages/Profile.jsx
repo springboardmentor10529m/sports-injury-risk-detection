@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../api';
+import api, { getErrorMessage } from '../api';
 import { Save, Award, User, ChevronLeft, Shield } from 'lucide-react';
 
 const Profile = () => {
@@ -87,11 +87,12 @@ const Profile = () => {
       setSuccess('Athlete profile updated successfully!');
       setTimeout(() => navigate('/dashboard'), 1500);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to save athlete profile.');
+      setError(getErrorMessage(err, 'Failed to save athlete profile.'));
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-[#070b13] py-12 px-4 relative overflow-hidden">
@@ -224,6 +225,10 @@ const Profile = () => {
                     min="1" max="10"
                     className="w-full bg-[#152033]/50 border border-white/5 rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm"
                   />
+                  <p className="text-[10px] text-gray-500 mt-2 leading-relaxed">
+                    Joint range of motion (e.g., Sit & Reach). <br/>
+                    1 = Stiff, 10 = Hypermobile.
+                  </p>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Strength</label>
@@ -237,6 +242,10 @@ const Profile = () => {
                     min="1" max="10"
                     className="w-full bg-[#152033]/50 border border-white/5 rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm"
                   />
+                  <p className="text-[10px] text-gray-500 mt-2 leading-relaxed">
+                    General muscle power (e.g., Push-ups / 1RM). <br/>
+                    1 = Low, 10 = Elite.
+                  </p>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Balance</label>
@@ -250,6 +259,10 @@ const Profile = () => {
                     min="1" max="10"
                     className="w-full bg-[#152033]/50 border border-white/5 rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm"
                   />
+                  <p className="text-[10px] text-gray-500 mt-2 leading-relaxed">
+                    Postural stability (e.g., Single-Leg Stand). <br/>
+                    1 = Unstable, 10 = Perfect balance.
+                  </p>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Endurance</label>
@@ -263,6 +276,10 @@ const Profile = () => {
                     min="1" max="10"
                     className="w-full bg-[#152033]/50 border border-white/5 rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm"
                   />
+                  <p className="text-[10px] text-gray-500 mt-2 leading-relaxed">
+                    Stamina capacity (e.g., Beep test / VO2 Max). <br/>
+                    1 = Low stamina, 10 = Elite.
+                  </p>
                 </div>
               </div>
             </div>
