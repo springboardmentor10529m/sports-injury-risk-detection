@@ -216,3 +216,23 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# ML models
+*.pt
+*.pth
+*.onnx
+*.h5
+*.keras
+*.pkl
+*.joblib
+
+# ML model directories
+checkpoints/
+weights/
