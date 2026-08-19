@@ -1,0 +1,45 @@
+services:
+
+  db:
+    image: postgres:16
+
+    container_name: sportsafety_db
+
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: sportsafety
+      POSTGRES_USER: sportsuser
+      POSTGRES_PASSWORD: sportspassword
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    ports:
+      - "5432:5432"
+
+
+  web:
+    build: .
+
+    container_name: sportsafety_backend
+
+    restart: unless-stopped
+
+    command: python manage.py runserver 0.0.0.0:8000
+
+    ports:
+      - "8000:8000"
+
+    volumes:
+      - media_data:/app/media
+
+    depends_on:
+      - db
+
+
+volumes:
+
+  postgres_data:
+
+  media_data:

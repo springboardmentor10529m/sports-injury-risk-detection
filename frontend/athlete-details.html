@@ -1,12 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Athlete Details - Smart Athlete</title>
 
     <style>
+
         * {
             margin: 0;
             padding: 0;
@@ -125,7 +129,13 @@
             background: #1d4ed8;
         }
 
+        .continue-btn:disabled {
+            background: #93c5fd;
+            cursor: not-allowed;
+        }
+
         @media (max-width: 650px) {
+
             .form-row {
                 grid-template-columns: 1fr;
                 gap: 0;
@@ -138,9 +148,13 @@
             .form-card {
                 padding: 25px;
             }
+
         }
+
     </style>
+
 </head>
+
 
 <body>
 
@@ -150,7 +164,10 @@
             Smart Athlete
         </div>
 
-        <a href="dashboard.html" class="back-link">
+        <a
+            href="dashboard.html"
+            class="back-link"
+        >
             ← Dashboard
         </a>
 
@@ -179,7 +196,7 @@
             </h2>
 
 
-            <form>
+            <form id="athleteForm">
 
                 <div class="form-row">
 
@@ -227,7 +244,10 @@
                             Gender
                         </label>
 
-                        <select id="gender" required>
+                        <select
+                            id="gender"
+                            required
+                        >
 
                             <option value="">
                                 Select gender
@@ -280,6 +300,8 @@
                             type="number"
                             id="height"
                             placeholder="Enter height"
+                            min="1"
+                            step="0.01"
                             required
                         >
 
@@ -296,6 +318,8 @@
                             type="number"
                             id="weight"
                             placeholder="Enter weight"
+                            min="1"
+                            step="0.01"
                             required
                         >
 
@@ -330,6 +354,7 @@
                         id="training-hours"
                         placeholder="Enter weekly training hours"
                         min="0"
+                        step="0.01"
                     >
 
                 </div>
@@ -341,7 +366,10 @@
                         Previous Injury
                     </label>
 
-                    <select id="previous-injury" required>
+                    <select
+                        id="previous-injury"
+                        required
+                    >
 
                         <option value="">
                             Select an option
@@ -362,20 +390,271 @@
 
                 <div class="button-container">
 
-                    <a
-                        href="Upload.html"
+                    <button
+                        type="submit"
                         class="continue-btn"
+                        id="continueButton"
                     >
-                        Continue to Video Upload →
-                    </a>
+                        Save Athlete Details
+                    </button>
 
                 </div>
 
-            </form>  
+            </form>
 
         </div>
 
     </div>
 
+
+    <script>
+
+        const authToken =
+            localStorage.getItem("authToken");
+
+
+        if (!authToken) {
+
+            alert("Please login to continue.");
+
+            window.location.href =
+                "login.html";
+
+        }
+
+
+        const athleteForm =
+            document.getElementById("athleteForm");
+
+
+        const saveButton =
+            document.getElementById("saveButton");
+
+
+        athleteForm.addEventListener(
+            "submit",
+            async function(event) {
+
+                event.preventDefault();
+
+
+                const fullName =
+                    document.getElementById("full-name")
+                    .value
+                    .trim();
+
+
+                const age =
+                    document.getElementById("age")
+                    .value;
+
+
+                const gender =
+                    document.getElementById("gender")
+                    .value;
+
+
+                const sport =
+                    document.getElementById("sport")
+                    .value
+                    .trim();
+
+
+                const height =
+                    document.getElementById("height")
+                    .value;
+
+
+                const weight =
+                    document.getElementById("weight")
+                    .value;
+
+
+                const position =
+                    document.getElementById("position")
+                    .value
+                    .trim();
+
+
+                const trainingHours =
+                    document.getElementById("training-hours")
+                    .value;
+
+
+                const previousInjury =
+                    document.getElementById("previous-injury")
+                    .value;
+
+
+                saveButton.disabled = true;
+
+                saveButton.textContent =
+                    "Saving Details...";
+
+
+                const athleteData = {
+
+                    full_name: fullName,
+
+                    age: Number(age),
+
+                    gender: gender,
+
+                    sport: sport,
+
+                    height: Number(height),
+
+                    weight: Number(weight),
+
+                    position: position,
+
+                    training_hours:
+                        trainingHours === ""
+                            ? null
+                            : Number(trainingHours),
+
+                    previous_injury:
+                        previousInjury
+
+                };
+
+
+                try {
+
+                    const response =
+                        await fetch(
+                            "http://127.0.0.1:8000/api/athlete/profile/",
+                            {
+                                method: "POST",
+
+                                headers: {
+                                    "Content-Type":
+                                        "application/json",
+
+                                    "Authorization":
+                                        "Token " + authToken
+                                },
+
+                                body:
+                                    JSON.stringify(athleteData)
+                            }
+                        );
+
+
+                    const data =
+                        await response.json();
+
+
+                    if (response.ok) {
+
+                        alert(
+                            "Athlete details saved successfully."
+                        );
+                        
+                        return;
+
+                    }
+
+
+                    if (response.status === 401) {
+
+                        localStorage.removeItem(
+                            "authToken"
+                        );
+
+                        localStorage.removeItem(
+                            "user"
+                        );
+
+                        alert(
+                            "Your login session has expired. Please login again."
+                        );
+
+                        window.location.href =
+                            "login.html";
+
+                        return;
+
+                    }
+
+
+                    if (data.age) {
+
+                        alert(data.age[0]);
+
+                    }
+
+                    else if (data.height) {
+
+                        alert(data.height[0]);
+
+                    }
+
+                    else if (data.weight) {
+
+                        alert(data.weight[0]);
+
+                    }
+
+                    else if (data.training_hours) {
+
+                        alert(
+                            data.training_hours[0]
+                        );
+
+                    }
+
+                    else if (data.gender) {
+
+                        alert(data.gender[0]);
+
+                    }
+
+                    else if (data.sport) {
+
+                        alert(data.sport[0]);
+
+                    }
+
+                    else {
+
+                        alert(
+                            "Unable to save athlete details. Please check your information."
+                        );
+
+                    }
+
+                }
+
+
+                catch (error) {
+
+                    console.error(
+                        "Athlete details error:",
+                        error.message
+                    );
+
+                    alert(
+                        "Unable to connect to the server. Please make sure Django is running."
+                    );
+
+                }
+
+
+                finally {
+
+                    saveButton.disabled = false;
+
+                    saveButton.textContent =
+                        "Continue to Video Upload →";
+
+                }
+
+            }
+        );
+
+    </script>
+
 </body>
+
 </html>

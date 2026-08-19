@@ -62,3 +62,42 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.save()
 
         return user
+
+
+class LoginSerializer(serializers.Serializer):
+
+    email = serializers.EmailField()
+
+    password = serializers.CharField(
+        write_only=True
+    )
+
+    def validate(self, data):
+
+        email = data.get("email")
+        password = data.get("password")
+
+        try:
+            user = User.objects.get(email=email)
+
+        except User.DoesNotExist:
+
+            raise serializers.ValidationError(
+                "No account exists with this email."
+            )
+
+        if not user.check_password(password):
+
+            raise serializers.ValidationError(
+                "Incorrect password."
+            )
+
+        if not user.is_active:
+
+            raise serializers.ValidationError(
+                "This account is inactive."
+            )
+
+        data["user"] = user
+
+        return data        

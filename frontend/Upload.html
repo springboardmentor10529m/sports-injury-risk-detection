@@ -1,12 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Upload Video - Smart Athlete</title>
 
     <style>
+
         * {
             margin: 0;
             padding: 0;
@@ -114,6 +118,7 @@
             margin-top: 15px;
             color: #2563eb;
             font-weight: 600;
+            word-break: break-word;
         }
 
         .analyze-btn {
@@ -129,6 +134,11 @@
 
         .analyze-btn:hover {
             background: #1d4ed8;
+        }
+
+        .analyze-btn:disabled {
+            background: #93c5fd;
+            cursor: not-allowed;
         }
 
         .requirements {
@@ -150,6 +160,7 @@
         }
 
         @media (max-width: 650px) {
+
             nav {
                 padding: 0 20px;
             }
@@ -157,11 +168,16 @@
             .upload-card {
                 padding: 25px;
             }
+
         }
+
     </style>
+
 </head>
 
+
 <body>
+
 
     <nav>
 
@@ -169,7 +185,10 @@
             Smart Athlete
         </div>
 
-        <a href="athlete-details.html" class="back-link">
+        <a
+            href="athlete-details.html"
+            class="back-link"
+        >
             ← Athlete Details
         </a>
 
@@ -177,6 +196,7 @@
 
 
     <div class="container">
+
 
         <div class="heading">
 
@@ -194,7 +214,9 @@
 
         <div class="upload-card">
 
-            <form>
+
+            <form id="uploadForm">
+
 
                 <label for="video">
 
@@ -216,7 +238,10 @@
                             Choose Video
                         </span>
 
-                        <div class="file-name" id="file-name">
+                        <div
+                            class="file-name"
+                            id="file-name"
+                        >
                         </div>
 
                     </div>
@@ -228,7 +253,7 @@
                     type="file"
                     id="video"
                     name="video"
-                    accept="video/mp4,video/mov,video/avi"
+                    accept="video/mp4,video/quicktime,video/x-msvideo"
                     required
                 >
 
@@ -236,9 +261,11 @@
                 <button
                     type="submit"
                     class="analyze-btn"
+                    id="analyzeButton"
                 >
                     Analyze Video →
                 </button>
+
 
             </form>
 
@@ -250,13 +277,31 @@
                 </h3>
 
                 <ul>
-                    <li>Use a clear video of the athlete.</li>
-                    <li>Keep the athlete visible throughout the video.</li>
-                    <li>Avoid excessive camera movement.</li>
-                    <li>Use MP4, MOV, or AVI video formats.</li>
+
+                    <li>
+                        Use a clear video of the athlete.
+                    </li>
+
+                    <li>
+                        Keep the athlete visible throughout the video.
+                    </li>
+
+                    <li>
+                        Avoid excessive camera movement.
+                    </li>
+
+                    <li>
+                        Use MP4, MOV, or AVI video formats.
+                    </li>
+
+                    <li>
+                        Maximum file size: 100 MB.
+                    </li>
+
                 </ul>
 
             </div>
+
 
         </div>
 
@@ -265,21 +310,298 @@
 
     <script>
 
-        const videoInput = document.getElementById("video");
-        const fileName = document.getElementById("file-name");
 
-        videoInput.addEventListener("change", function () {
+        /*
+            Get authentication token
+        */
 
-            if (videoInput.files.length > 0) {
+        const authToken =
+            localStorage.getItem("authToken");
+
+
+        /*
+            User must be logged in
+        */
+
+        if (!authToken) {
+
+            alert(
+                "Please login to upload a video."
+            );
+
+            window.location.href =
+                "login.html";
+
+        }
+
+
+        const uploadForm =
+            document.getElementById("uploadForm");
+
+
+        const videoInput =
+            document.getElementById("video");
+
+
+        const fileName =
+            document.getElementById("file-name");
+
+
+        const analyzeButton =
+            document.getElementById("analyzeButton");
+
+
+        /*
+            Display selected file
+        */
+
+        videoInput.addEventListener(
+            "change",
+            function() {
+
+                if (videoInput.files.length === 0) {
+
+                    fileName.textContent = "";
+
+                    return;
+
+                }
+
+
+                const file =
+                    videoInput.files[0];
+
 
                 fileName.textContent =
-                    "Selected: " + videoInput.files[0].name;
+                    "Selected: " + file.name;
 
             }
+        );
 
-        });
+
+        /*
+            Upload video
+        */
+
+        uploadForm.addEventListener(
+            "submit",
+            async function(event) {
+
+                event.preventDefault();
+
+
+                /*
+                    Check that a file exists
+                */
+
+                if (videoInput.files.length === 0) {
+
+                    alert(
+                        "Please select a video first."
+                    );
+
+                    return;
+
+                }
+
+
+                const videoFile =
+                    videoInput.files[0];
+
+
+                /*
+                    Maximum size = 100 MB
+                */
+
+                const maxSize =
+                    100 * 1024 * 1024;
+
+
+                if (videoFile.size > maxSize) {
+
+                    alert(
+                        "Video file must be smaller than 100 MB."
+                    );
+
+                    return;
+
+                }
+
+
+                /*
+                    Check file type
+                */
+
+                const allowedTypes = [
+
+                    "video/mp4",
+
+                    "video/quicktime",
+
+                    "video/x-msvideo"
+
+                ];
+
+
+                if (
+                    !allowedTypes.includes(
+                        videoFile.type
+                    )
+                ) {
+
+                    alert(
+                        "Only MP4, MOV, and AVI videos are allowed."
+                    );
+
+                    return;
+
+                }
+
+
+                /*
+                    Disable button while uploading
+                */
+
+                analyzeButton.disabled = true;
+
+                analyzeButton.textContent =
+                    "Uploading Video...";
+
+
+                /*
+                    FormData is required for
+                    file uploads.
+                */
+
+                const formData =
+                    new FormData();
+
+
+                formData.append(
+                    "video",
+                    videoFile
+                );
+
+
+                try {
+
+
+                    const response =
+                        await fetch(
+                            "http://127.0.0.1:8000/api/athlete/upload-video/",
+                            {
+
+                                method: "POST",
+
+                                headers: {
+
+                                    "Authorization":
+                                        "Token " + authToken
+
+                                },
+
+                                body: formData
+
+                            }
+                        );
+
+
+                    const data =
+                        await response.json();
+
+
+                    /*
+                        Upload successful
+                    */
+
+                    if (response.ok) {
+
+                        alert(
+                            data.message ||
+                            "Video uploaded successfully."
+                        );
+
+
+                        /*
+                            For now we go back
+                            to the dashboard.
+
+                            Actual injury analysis
+                            will be connected later.
+                        */
+
+                        window.location.href =
+                            "dashboard.html";
+
+                    }
+
+
+                    /*
+                        Upload failed
+                    */
+
+                    else {
+
+                        if (data.video) {
+
+                            alert(
+                                data.video[0]
+                            );
+
+                        }
+
+                        else if (data.error) {
+
+                            alert(
+                                data.error
+                            );
+
+                        }
+
+                        else {
+
+                            alert(
+                                "Video upload failed. Please try again."
+                            );
+
+                        }
+
+                    }
+
+                }
+
+
+                catch (error) {
+
+                    console.error(
+                        "Video upload error:",
+                        error
+                    );
+
+
+                    alert(
+                        "Unable to connect to the server. Please make sure Django is running."
+                    );
+
+                }
+
+
+                finally {
+
+                    analyzeButton.disabled = false;
+
+                    analyzeButton.textContent =
+                        "Analyze Video →";
+
+                }
+
+            }
+        );
+
 
     </script>
 
+
 </body>
+
 </html>
