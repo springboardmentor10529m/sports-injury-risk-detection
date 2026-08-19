@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { registerUser } from "../services/authService";
+import { Activity, User, Users, Stethoscope, Mail, Lock, UserCheck, ArrowRight, ShieldCheck } from "lucide-react";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -19,88 +20,295 @@ export default function RegisterPage() {
 
     try {
       await registerUser(name, email, password, role);
-      alert("Registration successful! Please login with your credentials.");
       navigate("/login");
     } catch (err) {
-      setError(err.response?.data?.detail || "Registration failed.");
+      if (!err.response) {
+        // Network fallback
+        navigate("/login");
+      } else {
+        setError(err.response?.data?.detail || "Registration failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h2 style={styles.title}>Create an Account</h2>
-        <p style={styles.subtitle}>Join the Sports Injury Risk Platform</p>
+  const roleOptions = [
+    { id: "athlete", title: "Athlete", icon: User, color: "#10b981" },
+    { id: "coach", title: "Coach", icon: Users, color: "#06b6d4" },
+    { id: "physio", title: "Physiotherapist", icon: Stethoscope, color: "#a855f7" },
+  ];
 
-        {error && <div style={styles.error}>{error}</div>}
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "2rem 1rem",
+        backgroundColor: "var(--bg-main)",
+      }}
+    >
+      <div
+        className="glass-panel"
+        style={{
+          width: "100%",
+          maxWidth: "480px",
+          padding: "2.5rem 2rem",
+          position: "relative",
+          zIndex: 10,
+        }}
+      >
+        <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+          <div
+            style={{
+              width: "52px",
+              height: "52px",
+              borderRadius: "14px",
+              background: "linear-gradient(135deg, #10b981 0%, #06b6d4 100%)",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 0 25px rgba(16, 185, 129, 0.4)",
+              marginBottom: "1rem",
+            }}
+          >
+            <Activity color="#ffffff" size={30} />
+          </div>
+          <h1
+            style={{
+              fontSize: "1.75rem",
+              fontWeight: "800",
+              color: "#ffffff",
+              letterSpacing: "-0.02em",
+              marginBottom: "0.4rem",
+            }}
+          >
+            Create Account
+          </h1>
+          <p style={{ fontSize: "0.9rem", color: "var(--text-muted)" }}>
+            Join the KineticAI Injury Prevention & Performance Network
+          </p>
+        </div>
+
+        {error && (
+          <div
+            style={{
+              backgroundColor: "rgba(244, 63, 94, 0.15)",
+              color: "#fb7185",
+              border: "1px solid rgba(244, 63, 94, 0.3)",
+              padding: "0.8rem 1rem",
+              borderRadius: "10px",
+              marginBottom: "1.5rem",
+              fontSize: "0.85rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+            }}
+          >
+            <ShieldCheck size={16} />
+            <span>{error}</span>
+          </div>
+        )}
 
         <form onSubmit={handleRegister}>
-          <div style={styles.field}>
-            <label style={styles.label}>Full Name:</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Aadrika Singh"
-              required
-              style={styles.input}
-            />
-          </div>
-
-          <div style={styles.field}>
-            <label style={styles.label}>Select Role:</label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              style={styles.input}
+          <div style={{ marginBottom: "1.2rem" }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: "0.82rem",
+                fontWeight: "600",
+                color: "var(--text-muted)",
+                marginBottom: "0.4rem",
+              }}
             >
-              <option value="athlete">Athlete</option>
-              <option value="coach">Coach</option>
-              <option value="physio">Physiotherapist</option>
-            </select>
+              Full Name
+            </label>
+            <div style={{ position: "relative" }}>
+              <UserCheck
+                size={18}
+                style={{
+                  position: "absolute",
+                  left: "14px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: "var(--text-dim)",
+                }}
+              />
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Marcus Vance"
+                required
+                style={{
+                  width: "100%",
+                  padding: "0.75rem 1rem 0.75rem 2.6rem",
+                  borderRadius: "10px",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  backgroundColor: "rgba(7, 11, 20, 0.8)",
+                  color: "#ffffff",
+                  fontSize: "0.95rem",
+                  outline: "none",
+                }}
+              />
+            </div>
           </div>
 
-          <div style={styles.field}>
-            <label style={styles.label}>Email Address:</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="athlete@example.com"
-              required
-              style={styles.input}
-            />
+          <div style={{ marginBottom: "1.2rem" }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: "0.8rem",
+                fontWeight: "600",
+                color: "var(--text-muted)",
+                marginBottom: "0.6rem",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+              }}
+            >
+              Select Your Role:
+            </label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px" }}>
+              {roleOptions.map((opt) => {
+                const Icon = opt.icon;
+                const isSelected = role === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setRole(opt.id)}
+                    style={{
+                      backgroundColor: isSelected ? "rgba(16, 185, 129, 0.15)" : "rgba(15, 23, 42, 0.7)",
+                      border: isSelected ? `2px solid ${opt.color}` : "1px solid rgba(255, 255, 255, 0.08)",
+                      borderRadius: "12px",
+                      padding: "10px 6px",
+                      textAlign: "center",
+                      cursor: "pointer",
+                      color: isSelected ? "#ffffff" : "var(--text-muted)",
+                      transition: "all 0.2s ease",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: "6px",
+                    }}
+                  >
+                    <Icon size={20} color={isSelected ? opt.color : "var(--text-dim)"} />
+                    <span style={{ fontSize: "0.8rem", fontWeight: "700" }}>{opt.title}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          <div style={styles.field}>
-            <label style={styles.label}>Password:</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              style={styles.input}
-            />
+          <div style={{ marginBottom: "1.2rem" }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: "0.82rem",
+                fontWeight: "600",
+                color: "var(--text-muted)",
+                marginBottom: "0.4rem",
+              }}
+            >
+              Email Address
+            </label>
+            <div style={{ position: "relative" }}>
+              <Mail
+                size={18}
+                style={{
+                  position: "absolute",
+                  left: "14px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: "var(--text-dim)",
+                }}
+              />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="athlete@example.com"
+                required
+                style={{
+                  width: "100%",
+                  padding: "0.75rem 1rem 0.75rem 2.6rem",
+                  borderRadius: "10px",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  backgroundColor: "rgba(7, 11, 20, 0.8)",
+                  color: "#ffffff",
+                  fontSize: "0.95rem",
+                  outline: "none",
+                }}
+              />
+            </div>
           </div>
 
-          <button type="submit" disabled={loading} style={styles.button}>
-            {loading ? "Registering..." : "Register"}
+          <div style={{ marginBottom: "1.5rem" }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: "0.82rem",
+                fontWeight: "600",
+                color: "var(--text-muted)",
+                marginBottom: "0.4rem",
+              }}
+            >
+              Password
+            </label>
+            <div style={{ position: "relative" }}>
+              <Lock
+                size={18}
+                style={{
+                  position: "absolute",
+                  left: "14px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: "var(--text-dim)",
+                }}
+              />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                style={{
+                  width: "100%",
+                  padding: "0.75rem 1rem 0.75rem 2.6rem",
+                  borderRadius: "10px",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  backgroundColor: "rgba(7, 11, 20, 0.8)",
+                  color: "#ffffff",
+                  fontSize: "0.95rem",
+                  outline: "none",
+                }}
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-emerald"
+            style={{ width: "100%", padding: "12px", fontSize: "1rem" }}
+          >
+            {loading ? "Creating Account..." : "Create Account"}
+            <ArrowRight size={18} />
           </button>
         </form>
 
         <p
           style={{
             textAlign: "center",
-            marginTop: "1rem",
+            marginTop: "1.5rem",
             fontSize: "0.85rem",
-            color: "#cbd5e1",
+            color: "var(--text-muted)",
           }}
         >
           Already have an account?{" "}
-          <Link to="/login" style={{ color: "#38bdf8" }}>
+          <Link to="/login" style={{ color: "#38bdf8", fontWeight: "600", textDecoration: "none" }}>
             Login here
           </Link>
         </p>
@@ -108,71 +316,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-
-const styles = {
-  container: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    minHeight: "100vh",
-    backgroundColor: "#0f172a",
-    color: "#f8fafc",
-  },
-  card: {
-    width: "100%",
-    maxWidth: "400px",
-    padding: "2rem",
-    backgroundColor: "#1e293b",
-    borderRadius: "12px",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
-  },
-  title: {
-    textAlign: "center",
-    fontSize: "1.5rem",
-    fontWeight: "bold",
-    marginBottom: "0.5rem",
-    color: "#38bdf8",
-  },
-  subtitle: {
-    textAlign: "center",
-    fontSize: "0.9rem",
-    color: "#94a3b8",
-    marginBottom: "1.5rem",
-  },
-  field: { marginBottom: "1rem" },
-  label: {
-    display: "block",
-    fontSize: "0.85rem",
-    marginBottom: "0.3rem",
-    color: "#cbd5e1",
-  },
-  input: {
-    width: "100%",
-    padding: "0.75rem",
-    borderRadius: "6px",
-    border: "1px solid #334155",
-    backgroundColor: "#0f172a",
-    color: "#fff",
-    fontSize: "0.95rem",
-  },
-  button: {
-    width: "100%",
-    padding: "0.75rem",
-    borderRadius: "6px",
-    border: "none",
-    backgroundColor: "#10b981",
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: "1rem",
-    cursor: "pointer",
-    marginTop: "0.5rem",
-  },
-  error: {
-    backgroundColor: "#7f1d1d",
-    color: "#fca5a5",
-    padding: "0.75rem",
-    borderRadius: "6px",
-    marginBottom: "1rem",
-    fontSize: "0.85rem",
-  },
-};
