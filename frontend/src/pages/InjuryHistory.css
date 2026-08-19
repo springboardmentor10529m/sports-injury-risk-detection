@@ -1,0 +1,909 @@
+/* =====================================================
+   INJURY HISTORY PAGE
+===================================================== */
+
+.page-heading-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.page-main-title {
+  color: #0f2747;
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin: 0 0 5px;
+}
+
+.page-main-description {
+  color: #64748b;
+  font-size: 0.78rem;
+  margin: 0;
+}
+
+
+/* =====================================================
+   INJURY STAT CARDS
+===================================================== */
+
+.dashboard-content .row.g-4 .dashboard-stat-card {
+  width: 100%;
+  min-height: 125px;
+  height: 100%;
+
+  background: #ffffff;
+
+  border: 1px solid #dfe7f1;
+  border-radius: 14px;
+
+  padding: 20px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  box-shadow: 0 5px 18px rgba(15, 39, 71, 0.04);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.dashboard-content .row.g-4 .dashboard-stat-card:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 10px 25px rgba(15, 39, 71, 0.08);
+}
+
+.dashboard-content .row.g-4 .dashboard-stat-card > span {
+  width: 36px;
+  height: 36px;
+
+  border-radius: 10px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 10px;
+
+  font-size: 0.9rem;
+  font-weight: 700;
+
+  background: #e8f0ff;
+  color: #2563eb;
+}
+
+
+/* =====================================================
+   STAT ICON COLORS
+===================================================== */
+
+.dashboard-content .row.g-4 .dashboard-stat-card
+.injury-stat-icon.danger {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.dashboard-content .row.g-4 .dashboard-stat-card
+.injury-stat-icon.warning {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.dashboard-content .row.g-4 .dashboard-stat-card
+.injury-stat-icon.success {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.dashboard-content .row.g-4 .dashboard-stat-card
+.injury-stat-icon.critical {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+
+/* =====================================================
+   STAT TEXT
+===================================================== */
+
+.dashboard-content .row.g-4 .dashboard-stat-card strong {
+  display: block;
+
+  color: #0f2747;
+
+  font-size: 1.45rem;
+  font-weight: 700;
+
+  line-height: 1;
+
+  margin-bottom: 7px;
+}
+
+.dashboard-content .row.g-4 .dashboard-stat-card small {
+  color: #94a3b8;
+  font-size: 0.7rem;
+}
+
+
+/* =====================================================
+   INJURY HISTORY PANEL
+===================================================== */
+
+.injury-history-panel {
+  background: #ffffff;
+
+  border: 1px solid #dfe7f1;
+  border-radius: 16px;
+
+  padding: 24px;
+
+  box-shadow:
+    0 5px 18px rgba(15, 39, 71, 0.04);
+
+  margin-bottom: 24px;
+}
+
+
+/* =====================================================
+   PANEL HEADER
+===================================================== */
+
+.injury-history-panel .panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  padding-bottom: 17px;
+  margin-bottom: 18px;
+
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.injury-history-panel .panel-header h3 {
+  color: #0f2747;
+
+  font-size: 0.98rem;
+  font-weight: 700;
+
+  margin: 0 0 5px;
+}
+
+.injury-history-panel .panel-header p {
+  color: #94a3b8;
+
+  font-size: 0.72rem;
+
+  margin: 0;
+}
+
+
+/* =====================================================
+   RECORD COUNT
+===================================================== */
+
+.record-count {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 6px 11px;
+
+  border-radius: 20px;
+
+  background: #eff6ff;
+  color: #2563eb;
+
+  font-size: 0.65rem;
+  font-weight: 600;
+
+  white-space: nowrap;
+}
+
+
+/* =====================================================
+   FILTERS
+===================================================== */
+
+.injury-filters {
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  margin-bottom: 20px;
+}
+
+
+/* =====================================================
+   SEARCH
+===================================================== */
+
+.injury-search {
+  flex: 1;
+
+  min-width: 200px;
+
+  height: 42px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 9px;
+
+  padding: 0 13px;
+
+  background: #ffffff;
+
+  border: 1px solid #dbe3ee;
+
+  border-radius: 8px;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.injury-search span {
+  font-size: 0.8rem;
+}
+
+.injury-search input {
+  width: 100%;
+
+  border: none;
+  outline: none;
+
+  background: transparent;
+
+  color: #334155;
+
+  font-size: 0.74rem;
+}
+
+.injury-search input::placeholder {
+  color: #94a3b8;
+}
+
+.injury-search:focus-within {
+  border-color: #2563eb;
+
+  box-shadow:
+    0 0 0 3px rgba(37, 99, 235, 0.08);
+}
+
+
+/* =====================================================
+   FILTER SELECT
+===================================================== */
+
+.injury-filters select {
+  height: 42px;
+
+  min-width: 150px;
+
+  padding: 0 12px;
+
+  border: 1px solid #dbe3ee;
+
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #475569;
+
+  font-size: 0.74rem;
+
+  outline: none;
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.injury-filters select:focus {
+  border-color: #2563eb;
+
+  box-shadow:
+    0 0 0 3px rgba(37, 99, 235, 0.08);
+}
+
+
+/* =====================================================
+   TABLE WRAPPER
+===================================================== */
+
+.injury-history-panel .table-responsive {
+  width: 100%;
+
+  overflow-x: auto;
+
+  border-radius: 8px;
+}
+
+
+/* =====================================================
+   TABLE
+===================================================== */
+
+.injury-table {
+  width: 100%;
+
+  min-width: 950px;
+
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+
+/* =====================================================
+   TABLE HEADER
+===================================================== */
+
+.injury-table th {
+  background: #f8fafc;
+
+  color: #64748b;
+
+  font-size: 0.68rem;
+
+  font-weight: 600;
+
+  text-align: left;
+
+  padding: 13px 12px;
+
+  border-bottom: 1px solid #dfe7f1;
+
+  white-space: nowrap;
+}
+
+
+/* =====================================================
+   TABLE BODY
+===================================================== */
+
+.injury-table td {
+  color: #64748b;
+
+  font-size: 0.72rem;
+
+  padding: 15px 12px;
+
+  border-bottom: 1px solid #eef2f7;
+
+  vertical-align: middle;
+
+  white-space: nowrap;
+}
+
+.injury-table tbody tr {
+  transition: background 0.15s ease;
+}
+
+.injury-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.injury-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.injury-table td strong {
+  color: #334155;
+
+  font-weight: 600;
+}
+
+
+/* =====================================================
+   ATHLETE CELL
+===================================================== */
+
+.athlete-table-name {
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+}
+
+.athlete-initial {
+  width: 34px;
+  height: 34px;
+
+  border-radius: 50%;
+
+  background: #e5efff;
+
+  color: #2563eb;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  font-size: 0.75rem;
+  font-weight: 700;
+
+  flex-shrink: 0;
+}
+
+.athlete-table-name div {
+  display: flex;
+
+  flex-direction: column;
+}
+
+.athlete-table-name strong {
+  color: #0f2747;
+
+  font-size: 0.73rem;
+}
+
+.athlete-table-name small {
+  color: #94a3b8;
+
+  font-size: 0.63rem;
+
+  margin-top: 2px;
+}
+
+
+/* =====================================================
+   INJURY NAME
+===================================================== */
+
+.injury-name {
+  color: #0f2747 !important;
+
+  font-weight: 600;
+}
+
+
+/* =====================================================
+   SEVERITY BADGES
+===================================================== */
+
+.injury-severity {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  min-width: 68px;
+
+  padding: 5px 10px;
+
+  border-radius: 20px;
+
+  font-size: 0.64rem;
+
+  font-weight: 600;
+
+  white-space: nowrap;
+}
+
+.injury-severity.low {
+  color: #059669;
+
+  background: #dcfce7;
+}
+
+.injury-severity.moderate {
+  color: #b45309;
+
+  background: #fef3c7;
+}
+
+.injury-severity.high {
+  color: #ea580c;
+
+  background: #ffedd5;
+}
+
+.injury-severity.critical {
+  color: #dc2626;
+
+  background: #fee2e2;
+}
+
+
+/* =====================================================
+   STATUS BADGES
+===================================================== */
+
+.injury-status {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 5px 10px;
+
+  border-radius: 20px;
+
+  font-size: 0.64rem;
+
+  font-weight: 600;
+
+  white-space: nowrap;
+}
+
+.injury-status.recovered {
+  color: #059669;
+
+  background: #dcfce7;
+}
+
+.injury-status.recovering {
+  color: #2563eb;
+
+  background: #dbeafe;
+}
+
+.injury-status.treatment {
+  color: #dc2626;
+
+  background: #fee2e2;
+}
+
+
+/* =====================================================
+   VIEW BUTTON
+===================================================== */
+
+.injury-view-button {
+  border: 1px solid #bfdbfe;
+
+  background: #eff6ff;
+
+  color: #2563eb;
+
+  border-radius: 7px;
+
+  padding: 6px 12px;
+
+  font-size: 0.66rem;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.injury-view-button:hover {
+  background: #2563eb;
+
+  border-color: #2563eb;
+
+  color: #ffffff;
+}
+
+
+/* =====================================================
+   EMPTY STATE
+===================================================== */
+
+.injury-empty-state {
+  padding: 55px 20px !important;
+
+  text-align: center;
+
+  color: #94a3b8 !important;
+}
+
+.injury-empty-state strong {
+  display: block;
+
+  color: #334155;
+
+  font-size: 0.82rem;
+
+  margin-bottom: 5px;
+}
+
+.injury-empty-state span {
+  display: block;
+
+  color: #94a3b8;
+
+  font-size: 0.7rem;
+}
+
+
+/* =====================================================
+   DARK MODE
+===================================================== */
+
+.dark-theme .page-main-title {
+  color: #f1f5f9;
+}
+
+.dark-theme .page-main-description {
+  color: #94a3b8;
+}
+
+
+/* Stat Cards */
+
+.dark-theme .dashboard-content .row.g-4 .dashboard-stat-card {
+  background: #111d2e;
+
+  border-color: #26364d;
+
+  box-shadow: none;
+}
+
+.dark-theme .dashboard-content .row.g-4 .dashboard-stat-card strong {
+  color: #f1f5f9;
+}
+
+.dark-theme .dashboard-content .row.g-4 .dashboard-stat-card small {
+  color: #94a3b8;
+}
+
+.dark-theme .dashboard-content .row.g-4
+.dashboard-stat-card .injury-stat-icon.danger {
+  background: #3a1d27;
+  color: #f87171;
+}
+
+.dark-theme .dashboard-content .row.g-4
+.dashboard-stat-card .injury-stat-icon.warning {
+  background: #3b2d19;
+  color: #fbbf24;
+}
+
+.dark-theme .dashboard-content .row.g-4
+.dashboard-stat-card .injury-stat-icon.success {
+  background: #173326;
+  color: #4ade80;
+}
+
+.dark-theme .dashboard-content .row.g-4
+.dashboard-stat-card .injury-stat-icon.critical {
+  background: #3a1d27;
+  color: #f87171;
+}
+
+
+/* Panel */
+
+.dark-theme .injury-history-panel {
+  background: #111d2e;
+
+  border-color: #26364d;
+
+  box-shadow: none;
+}
+
+.dark-theme .injury-history-panel .panel-header {
+  border-color: #26364d;
+}
+
+.dark-theme .injury-history-panel .panel-header h3 {
+  color: #f1f5f9;
+}
+
+.dark-theme .injury-history-panel .panel-header p {
+  color: #94a3b8;
+}
+
+
+/* Record Count */
+
+.dark-theme .record-count {
+  background: #172d4f;
+
+  color: #60a5fa;
+}
+
+
+/* Search */
+
+.dark-theme .injury-search {
+  background: #172337;
+
+  border-color: #26364d;
+}
+
+.dark-theme .injury-search input {
+  color: #e2e8f0;
+}
+
+.dark-theme .injury-search input::placeholder {
+  color: #64748b;
+}
+
+.dark-theme .injury-search:focus-within {
+  border-color: #2563eb;
+}
+
+
+/* Select */
+
+.dark-theme .injury-filters select {
+  background: #172337;
+
+  border-color: #26364d;
+
+  color: #cbd5e1;
+}
+
+
+/* Table */
+
+.dark-theme .injury-table th {
+  background: #172337;
+
+  color: #94a3b8;
+
+  border-color: #26364d;
+}
+
+.dark-theme .injury-table td {
+  color: #94a3b8;
+
+  border-color: #26364d;
+}
+
+.dark-theme .injury-table tbody tr:hover {
+  background: #172337;
+}
+
+.dark-theme .injury-table td strong {
+  color: #e2e8f0;
+}
+
+.dark-theme .injury-name {
+  color: #f1f5f9 !important;
+}
+
+
+/* Athlete */
+
+.dark-theme .athlete-initial {
+  background: #172d4f;
+
+  color: #60a5fa;
+}
+
+.dark-theme .athlete-table-name strong {
+  color: #e2e8f0;
+}
+
+.dark-theme .athlete-table-name small {
+  color: #64748b;
+}
+
+
+/* View Button */
+
+.dark-theme .injury-view-button {
+  background: #172d4f;
+
+  border-color: #31527c;
+
+  color: #60a5fa;
+}
+
+.dark-theme .injury-view-button:hover {
+  background: #2563eb;
+
+  border-color: #2563eb;
+
+  color: #ffffff;
+}
+
+
+/* Empty */
+
+.dark-theme .injury-empty-state strong {
+  color: #e2e8f0;
+}
+
+.dark-theme .injury-empty-state span {
+  color: #94a3b8;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width: 900px) {
+
+  .injury-filters {
+    flex-wrap: wrap;
+  }
+
+  .injury-search {
+    flex: 1 1 100%;
+  }
+
+  .injury-filters select {
+    flex: 1;
+  }
+
+}
+
+
+@media (max-width: 600px) {
+
+  .page-heading-row {
+    align-items: flex-start;
+  }
+
+  .dashboard-content .row.g-4 .dashboard-stat-card {
+    min-height: 110px;
+  }
+
+  .injury-history-panel {
+    padding: 16px;
+  }
+
+  .injury-history-panel .panel-header {
+    align-items: flex-start;
+
+    flex-direction: column;
+
+    gap: 10px;
+  }
+
+  .injury-filters {
+    flex-direction: column;
+
+    align-items: stretch;
+  }
+
+  .injury-search {
+    width: 100%;
+
+    min-width: 0;
+  }
+
+  .injury-filters select {
+    width: 100%;
+
+    min-width: 0;
+  }
+
+}
+
+
+@media (max-width: 480px) {
+
+  .page-main-title {
+    font-size: 1.2rem;
+  }
+
+  .page-main-description {
+    font-size: 0.72rem;
+  }
+
+  .dashboard-content .row.g-4 .dashboard-stat-card {
+    padding: 18px;
+
+    min-height: 105px;
+  }
+
+  .injury-table {
+    min-width: 950px;
+  }
+
+}

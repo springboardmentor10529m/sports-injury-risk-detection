@@ -1,0 +1,686 @@
+/* =====================================================
+   SPORTS INJURY RISK PREDICTION
+   GLOBAL THEME SYSTEM
+===================================================== */
+
+
+/* =====================================================
+   LIGHT THEME
+===================================================== */
+
+:root,
+.light-theme {
+  --app-bg: #f5f7fb;
+  --app-surface: #ffffff;
+  --app-surface-soft: #f8fafc;
+
+  --app-text: #0f2747;
+  --app-text-secondary: #475569;
+  --app-text-muted: #64748b;
+  --app-text-light: #94a3b8;
+
+  --app-border: #e2e8f0;
+  --app-border-soft: #f1f5f9;
+
+  --app-primary: #2563eb;
+  --app-primary-soft: #e5efff;
+
+  --app-sidebar: #0f2747;
+  --app-sidebar-hover: #16385f;
+  --app-sidebar-active: #2563eb;
+
+  --app-input: #ffffff;
+  --app-shadow: rgba(15, 39, 71, 0.08);
+}
+
+
+/* =====================================================
+   DARK THEME
+===================================================== */
+
+.dark-theme {
+  --app-bg: #0b1220;
+  --app-surface: #111c2e;
+  --app-surface-soft: #172337;
+
+  --app-text: #f1f5f9;
+  --app-text-secondary: #cbd5e1;
+  --app-text-muted: #94a3b8;
+  --app-text-light: #64748b;
+
+  --app-border: #26364d;
+  --app-border-soft: #1e2b3d;
+
+  --app-primary: #60a5fa;
+  --app-primary-soft: #172d4f;
+
+  --app-sidebar: #08111f;
+  --app-sidebar-hover: #12243a;
+  --app-sidebar-active: #2563eb;
+
+  --app-input: #172337;
+  --app-shadow: rgba(0, 0, 0, 0.25);
+}
+
+
+/* =====================================================
+   GLOBAL APPLICATION
+===================================================== */
+
+html {
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
+}
+
+
+body {
+  background: var(--app-bg);
+  color: var(--app-text-secondary);
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
+}
+
+
+/* =====================================================
+   DASHBOARD
+===================================================== */
+
+.dashboard-page {
+  background: var(--app-bg);
+  color: var(--app-text-secondary);
+}
+
+
+.dashboard-main {
+  background: var(--app-bg);
+}
+
+
+.dashboard-topbar {
+  background: var(--app-surface);
+  border-color: var(--app-border);
+}
+
+
+.dashboard-topbar h1 {
+  color: var(--app-text);
+}
+
+
+.dashboard-breadcrumb {
+  color: var(--app-text-muted);
+}
+
+
+.dashboard-welcome h2 {
+  color: var(--app-text);
+}
+
+
+.dashboard-welcome p {
+  color: var(--app-text-muted);
+}
+
+
+/* =====================================================
+   SIDEBAR
+===================================================== */
+
+.dashboard-sidebar {
+  background: var(--app-sidebar);
+}
+
+
+.sidebar-brand {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+
+.sidebar-brand-text strong {
+  color: #ffffff;
+}
+
+
+.sidebar-brand-text span {
+  color: #94a3b8;
+}
+
+
+.sidebar-link {
+  color: #aebdce;
+}
+
+
+.sidebar-link:hover {
+  background: var(--app-sidebar-hover);
+  color: #ffffff;
+}
+
+
+.sidebar-link.active {
+  background: var(--app-sidebar-active);
+  color: #ffffff;
+}
+
+
+.sidebar-section-title {
+  color: #64748b;
+}
+
+
+.sidebar-bottom {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+
+/* =====================================================
+   STAT CARDS
+===================================================== */
+
+.dashboard-stat-card {
+  background: var(--app-surface);
+  border-color: var(--app-border);
+  box-shadow: 0 8px 25px var(--app-shadow);
+}
+
+
+.dashboard-stat-card span {
+  color: var(--app-text-muted);
+}
+
+
+.dashboard-stat-card strong {
+  color: var(--app-text);
+}
+
+
+.dashboard-stat-card small {
+  color: var(--app-text-light);
+}
+
+
+/* =====================================================
+   PANELS
+===================================================== */
+
+.dashboard-panel {
+  background: var(--app-surface);
+  border-color: var(--app-border);
+  box-shadow: 0 8px 25px var(--app-shadow);
+}
+
+
+.panel-header {
+  border-color: var(--app-border-soft);
+}
+
+
+.panel-header h3 {
+  color: var(--app-text);
+}
+
+
+.panel-header p {
+  color: var(--app-text-muted);
+}
+
+
+.panel-header a {
+  color: var(--app-primary);
+}
+
+
+/* =====================================================
+   TABLES
+===================================================== */
+
+.dashboard-table {
+  color: var(--app-text-secondary);
+}
+
+
+.dashboard-table thead th {
+  background: var(--app-surface-soft);
+  color: var(--app-text-muted);
+  border-color: var(--app-border);
+}
+
+
+.dashboard-table tbody td {
+  border-color: var(--app-border-soft);
+  color: var(--app-text-muted);
+}
+
+
+.dashboard-table tbody tr:hover {
+  background: var(--app-surface-soft);
+}
+
+
+.dashboard-table tbody td strong {
+  color: var(--app-text);
+}
+
+
+/* =====================================================
+   ATHLETE SEARCH / FILTER
+===================================================== */
+
+.athlete-search {
+  background: var(--app-surface-soft);
+  border-color: var(--app-border);
+}
+
+
+.athlete-search input {
+  color: var(--app-text);
+}
+
+
+.athlete-search input::placeholder {
+  color: var(--app-text-light);
+}
+
+
+.athlete-filter {
+  background: var(--app-input);
+  border-color: var(--app-border);
+  color: var(--app-text-secondary);
+}
+
+
+/* =====================================================
+   ATHLETE PAGE
+===================================================== */
+
+.athletes-page-header h2 {
+  color: var(--app-text);
+}
+
+
+.athletes-page-header p {
+  color: var(--app-text-muted);
+}
+
+
+.athlete-name-cell strong {
+  color: var(--app-text);
+}
+
+
+.athlete-avatar {
+  background: var(--app-primary-soft);
+  color: var(--app-primary);
+}
+
+
+.athlete-view-link {
+  background: var(--app-primary-soft);
+  color: var(--app-primary);
+}
+
+
+.athlete-view-link:hover {
+  background: var(--app-primary);
+  color: #ffffff;
+}
+
+
+/* =====================================================
+   RISK GUIDE
+===================================================== */
+
+.risk-guide-item {
+  background: var(--app-surface-soft);
+}
+
+
+.risk-guide-item strong {
+  color: var(--app-text-secondary);
+}
+
+
+.risk-guide-item small {
+  color: var(--app-text-light);
+}
+
+
+.monitoring-info div {
+  background: var(--app-surface-soft);
+}
+
+
+.monitoring-info span {
+  color: var(--app-text-muted);
+}
+
+
+.monitoring-info strong {
+  color: var(--app-text);
+}
+
+
+/* =====================================================
+   PROFILE
+===================================================== */
+
+.profile-details-grid div {
+  background: var(--app-surface-soft);
+}
+
+
+.profile-details-grid span {
+  color: var(--app-text-light);
+}
+
+
+.profile-details-grid strong {
+  color: var(--app-text);
+}
+
+
+.profile-risk-description {
+  color: var(--app-text-muted);
+}
+
+
+.profile-risk-progress {
+  background: var(--app-border);
+}
+
+
+.profile-injury-bar {
+  background: var(--app-border);
+}
+
+
+.profile-injury-heading {
+  color: var(--app-text-secondary);
+}
+
+
+.profile-injury-heading strong {
+  color: var(--app-text);
+}
+
+
+.assessment-info-grid div {
+  background: var(--app-surface-soft);
+}
+
+
+.assessment-info-grid span {
+  color: var(--app-text-light);
+}
+
+
+.assessment-info-grid strong {
+  color: var(--app-text);
+}
+
+
+/* =====================================================
+   ADD ATHLETE FORM
+===================================================== */
+
+.athlete-form-group label {
+  color: var(--app-text-secondary);
+}
+
+
+.athlete-form-group input,
+.athlete-form-group select {
+  background: var(--app-input);
+  border-color: var(--app-border);
+  color: var(--app-text);
+}
+
+
+.athlete-form-group input::placeholder {
+  color: var(--app-text-light);
+}
+
+
+.form-section-title {
+  color: var(--app-text);
+  border-color: var(--app-border);
+}
+
+
+.form-actions {
+  border-color: var(--app-border);
+}
+
+
+.form-info-box {
+  background: var(--app-primary-soft);
+  border-color: var(--app-border);
+}
+
+
+.form-info-box p {
+  color: var(--app-text-secondary);
+}
+
+
+/* =====================================================
+   SETTINGS
+===================================================== */
+
+.settings-page-header h2 {
+  color: var(--app-text);
+}
+
+
+.settings-page-header p {
+  color: var(--app-text-muted);
+}
+
+
+.settings-section-header {
+  border-color: var(--app-border);
+}
+
+
+.settings-section-header h3 {
+  color: var(--app-text);
+}
+
+
+.settings-section-header p {
+  color: var(--app-text-muted);
+}
+
+
+.settings-section-icon {
+  background: var(--app-primary-soft);
+  color: var(--app-primary);
+}
+
+
+.settings-option-row strong {
+  color: var(--app-text-secondary);
+}
+
+
+.settings-option-row span {
+  color: var(--app-text-light);
+}
+
+
+/* Theme Selector */
+
+.theme-selector {
+  background: var(--app-surface-soft);
+  border-color: var(--app-border);
+}
+
+
+.theme-option {
+  color: var(--app-text-muted);
+}
+
+
+.theme-option:hover {
+  color: var(--app-primary);
+}
+
+
+.theme-option.active {
+  background: var(--app-surface);
+  color: var(--app-primary);
+}
+
+
+/* Settings List */
+
+.settings-list-row {
+  border-color: var(--app-border-soft);
+}
+
+
+.settings-list-row strong {
+  color: var(--app-text-secondary);
+}
+
+
+.settings-list-row span {
+  color: var(--app-text-muted);
+}
+
+
+.settings-action {
+  background: var(--app-surface);
+  border-color: var(--app-border);
+  color: var(--app-primary);
+}
+
+
+.settings-action:hover {
+  background: var(--app-primary-soft);
+}
+
+
+.settings-value-badge {
+  background: var(--app-primary-soft);
+  color: var(--app-primary) !important;
+}
+
+
+/* About */
+
+.settings-about-content span {
+  color: var(--app-text-light);
+}
+
+
+.settings-about-content strong {
+  color: var(--app-text);
+}
+
+
+.settings-about-content small {
+  color: var(--app-text-muted);
+}
+
+
+/* =====================================================
+   AUTHENTICATION
+===================================================== */
+
+.auth-page {
+  background: var(--app-bg);
+}
+
+
+.auth-brand {
+  background: var(--app-surface);
+  border-color: var(--app-border);
+}
+
+
+.auth-card {
+  background: var(--app-surface);
+  border-color: var(--app-border);
+  box-shadow: 0 20px 50px var(--app-shadow);
+}
+
+
+.auth-title {
+  color: var(--app-text);
+}
+
+
+.auth-subtitle {
+  color: var(--app-text-muted);
+}
+
+
+.form-label {
+  color: var(--app-text-secondary);
+}
+
+
+.form-control {
+  background: var(--app-input);
+  border-color: var(--app-border);
+  color: var(--app-text);
+}
+
+
+.form-control::placeholder {
+  color: var(--app-text-light);
+}
+
+
+.auth-divider {
+  color: var(--app-text-light);
+}
+
+
+.back-home {
+  color: var(--app-text-muted);
+}
+
+
+/* =====================================================
+   BOOTSTRAP BUTTON COMPATIBILITY
+===================================================== */
+
+.dark-theme .btn-outline-secondary {
+  color: #cbd5e1;
+  border-color: #475569;
+}
+
+
+.dark-theme .btn-outline-secondary:hover {
+  color: #ffffff;
+  background: #26364d;
+  border-color: #64748b;
+}
+
+
+/* =====================================================
+   SMOOTH TRANSITIONS
+===================================================== */
+
+.dashboard-page,
+.dashboard-main,
+.dashboard-topbar,
+.dashboard-panel,
+.dashboard-stat-card,
+.athlete-search,
+.athlete-filter,
+.settings-panel,
+.auth-card,
+.auth-brand,
+.profile-details-grid div,
+.assessment-info-grid div {
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease,
+    box-shadow 0.25s ease;
+}

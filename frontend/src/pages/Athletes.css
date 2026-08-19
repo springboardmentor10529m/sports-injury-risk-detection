@@ -1,0 +1,695 @@
+/* =====================================================
+   ATHLETES PAGE
+===================================================== */
+
+.athletes-page-header {
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
+
+  padding: 28px 32px 22px;
+
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 25px;
+
+  box-sizing: border-box;
+}
+
+.athletes-page-header h2 {
+  margin: 0 0 6px;
+
+  color: #0f2747;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.athletes-page-header p {
+  margin: 0;
+
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+
+/* =====================================================
+   STAT CARDS
+===================================================== */
+
+.athletes-page-header + .dashboard-stats {
+  padding: 0 32px;
+  box-sizing: border-box;
+}
+
+.dashboard-stat-card {
+  min-height: 125px;
+
+  padding: 22px;
+
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  background: #ffffff;
+
+  border: 1px solid #e1e8f0;
+  border-radius: 14px;
+
+  box-sizing: border-box;
+}
+
+.dashboard-stat-card > div:last-child {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-stat-card span {
+  color: #64748b;
+  font-size: 0.72rem;
+  margin-bottom: 6px;
+}
+
+.dashboard-stat-card strong {
+  color: #0f2747;
+  font-size: 1.5rem;
+  line-height: 1;
+
+  margin-bottom: 7px;
+}
+
+.dashboard-stat-card small {
+  color: #94a3b8;
+  font-size: 0.66rem;
+}
+
+
+/* =====================================================
+   ATHLETE LIST
+===================================================== */
+
+.athletes-list-panel {
+  max-width: 1500px;
+
+  margin: 0 auto 24px;
+  padding: 25px 32px;
+
+  box-sizing: border-box;
+}
+
+.athletes-panel-header {
+  margin-bottom: 20px;
+}
+
+
+/* =====================================================
+   SEARCH + FILTERS
+===================================================== */
+
+.athletes-toolbar {
+  width: 100%;
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    150px
+    165px;
+
+  gap: 10px;
+
+  margin-bottom: 20px;
+}
+
+.athlete-search {
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+
+  padding: 0 13px;
+
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  box-sizing: border-box;
+}
+
+.athlete-search span {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.athlete-search input {
+  width: 100%;
+
+  border: none;
+  outline: none;
+
+  background: transparent;
+
+  color: #334155;
+
+  font-size: 0.72rem;
+}
+
+.athlete-search input::placeholder {
+  color: #94a3b8;
+}
+
+.athlete-filter {
+  height: 40px;
+
+  padding: 0 11px;
+
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+
+  background: #ffffff;
+  color: #475569;
+
+  font-size: 0.7rem;
+
+  outline: none;
+  cursor: pointer;
+}
+
+.athlete-filter:focus,
+.athlete-search:focus-within {
+  border-color: #93b4e8;
+}
+
+
+/* =====================================================
+   TABLE
+===================================================== */
+
+.athletes-table {
+  width: 100%;
+  min-width: 900px;
+
+  border-collapse: collapse;
+}
+
+.athletes-table th {
+  padding: 13px 10px;
+
+  text-align: left;
+
+  color: #64748b;
+
+  font-size: 0.67rem;
+  font-weight: 600;
+
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.athletes-table td {
+  padding: 14px 10px;
+
+  color: #64748b;
+
+  font-size: 0.7rem;
+
+  border-bottom: 1px solid #eef2f6;
+
+  vertical-align: middle;
+}
+
+.athletes-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.athletes-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+
+/* =====================================================
+   ATHLETE NAME
+===================================================== */
+
+.athlete-name-cell {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+}
+
+.athlete-avatar {
+  width: 32px;
+  height: 32px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #e5efff;
+  color: #2563eb;
+
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.athlete-name-cell strong {
+  color: #1e3a5f;
+  font-size: 0.72rem;
+}
+
+
+/* =====================================================
+   RISK BADGES
+===================================================== */
+
+.risk-status {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  min-width: 58px;
+
+  padding: 5px 10px;
+
+  border-radius: 20px;
+
+  font-size: 0.62rem;
+  font-weight: 600;
+}
+
+.low-status {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.moderate-status {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.high-status {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.critical-status {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+
+/* =====================================================
+   VIEW BUTTON
+===================================================== */
+
+.athlete-view-link {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 6px 11px;
+
+  border-radius: 7px;
+
+  background: #e8f0ff;
+  color: #2563eb;
+
+  text-decoration: none;
+
+  font-size: 0.66rem;
+  font-weight: 600;
+
+  transition: 0.2s ease;
+}
+
+.athlete-view-link:hover {
+  background: #dbe8ff;
+  color: #1d4ed8;
+}
+
+
+/* =====================================================
+   EMPTY STATE
+===================================================== */
+
+.no-athletes-found {
+  height: 160px;
+
+  text-align: center;
+}
+
+.no-athletes-found > div {
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 6px;
+}
+
+.no-athletes-found strong {
+  color: #334155;
+  font-size: 0.8rem;
+}
+
+.no-athletes-found span {
+  color: #94a3b8;
+  font-size: 0.7rem;
+}
+
+
+/* =====================================================
+   BOTTOM INFORMATION
+===================================================== */
+
+.athletes-info-grid {
+  width: 100%;
+  max-width: 1500px;
+
+  margin: 0 auto;
+  padding: 0 32px 30px;
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(0, 1fr);
+
+  gap: 22px;
+
+  box-sizing: border-box;
+}
+
+.athletes-info-grid > .dashboard-panel {
+  padding: 25px;
+}
+
+
+/* =====================================================
+   RISK GUIDE
+===================================================== */
+
+.risk-guide {
+  display: grid;
+
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 18px;
+
+  padding-top: 20px;
+}
+
+.risk-guide-item {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+}
+
+.risk-guide-dot {
+  width: 10px;
+  height: 10px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+}
+
+.low-dot {
+  background: #16a34a;
+}
+
+.moderate-dot {
+  background: #f59e0b;
+}
+
+.high-dot {
+  background: #f97316;
+}
+
+.critical-dot {
+  background: #dc2626;
+}
+
+.risk-guide-item div {
+  display: flex;
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+.risk-guide-item strong {
+  color: #334155;
+  font-size: 0.73rem;
+}
+
+.risk-guide-item small {
+  color: #94a3b8;
+  font-size: 0.65rem;
+}
+
+
+/* =====================================================
+   MONITORING
+===================================================== */
+
+.monitoring-info {
+  display: grid;
+
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 12px;
+
+  padding-top: 20px;
+}
+
+.monitoring-info div {
+  padding: 15px;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+
+  border-radius: 10px;
+
+  background: #f8fafc;
+
+  border: 1px solid #edf1f5;
+}
+
+.monitoring-info span {
+  color: #64748b;
+  font-size: 0.65rem;
+}
+
+.monitoring-info strong {
+  color: #0f2747;
+  font-size: 1.2rem;
+}
+
+
+/* =====================================================
+   DARK MODE
+===================================================== */
+
+.dark-theme .athletes-page-header h2 {
+  color: #f1f5f9;
+}
+
+.dark-theme .athletes-page-header p {
+  color: #94a3b8;
+}
+
+.dark-theme .dashboard-stat-card,
+.dark-theme .athletes-list-panel,
+.dark-theme .athletes-info-grid > .dashboard-panel {
+  background: #101d2e;
+  border-color: #263b54;
+}
+
+.dark-theme .dashboard-stat-card span {
+  color: #94a3b8;
+}
+
+.dark-theme .dashboard-stat-card strong {
+  color: #f1f5f9;
+}
+
+.dark-theme .dashboard-stat-card small {
+  color: #718096;
+}
+
+.dark-theme .athlete-search {
+  background: #111f32;
+  border-color: #2a405a;
+}
+
+.dark-theme .athlete-search input {
+  color: #e2e8f0;
+}
+
+.dark-theme .athlete-search input::placeholder {
+  color: #718096;
+}
+
+.dark-theme .athlete-filter {
+  background: #111f32;
+  border-color: #2a405a;
+  color: #cbd5e1;
+}
+
+.dark-theme .athletes-table th {
+  color: #94a3b8;
+  border-color: #263b54;
+}
+
+.dark-theme .athletes-table td {
+  color: #94a3b8;
+  border-color: #1e3044;
+}
+
+.dark-theme .athletes-table tbody tr:hover {
+  background: #142338;
+}
+
+.dark-theme .athlete-name-cell strong {
+  color: #e2e8f0;
+}
+
+.dark-theme .athlete-avatar {
+  background: #172d4f;
+  color: #60a5fa;
+}
+
+.dark-theme .athlete-view-link {
+  background: #172d4f;
+  color: #60a5fa;
+}
+
+.dark-theme .athlete-view-link:hover {
+  background: #203b62;
+}
+
+.dark-theme .no-athletes-found strong {
+  color: #e2e8f0;
+}
+
+.dark-theme .risk-guide-item strong {
+  color: #e2e8f0;
+}
+
+.dark-theme .monitoring-info div {
+  background: #0d1929;
+  border-color: #263b54;
+}
+
+.dark-theme .monitoring-info span {
+  color: #94a3b8;
+}
+
+.dark-theme .monitoring-info strong {
+  color: #f1f5f9;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width: 1100px) {
+
+  .athletes-toolbar {
+    grid-template-columns: minmax(0, 1fr) 150px;
+  }
+
+  .athlete-filter:last-child {
+    grid-column: 2;
+  }
+
+  .athletes-info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+@media (max-width: 800px) {
+
+  .athletes-page-header {
+    padding-left: 22px;
+    padding-right: 22px;
+  }
+
+  .athletes-page-header + .dashboard-stats {
+    padding-left: 22px;
+    padding-right: 22px;
+  }
+
+  .athletes-list-panel {
+    margin-left: 22px;
+    margin-right: 22px;
+
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .athletes-info-grid {
+    padding-left: 22px;
+    padding-right: 22px;
+  }
+
+  .risk-guide {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+@media (max-width: 650px) {
+
+  .athletes-page-header {
+    flex-direction: column;
+    align-items: flex-start;
+
+    padding: 22px 16px 18px;
+  }
+
+  .athletes-page-header + .dashboard-stats {
+    padding: 0 16px;
+  }
+
+  .athletes-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .athlete-filter:last-child {
+    grid-column: auto;
+  }
+
+  .athletes-list-panel {
+    margin-left: 16px;
+    margin-right: 16px;
+
+    padding: 18px;
+  }
+
+  .athletes-info-grid {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .monitoring-info {
+    grid-template-columns: 1fr;
+  }
+}
