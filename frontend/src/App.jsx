@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Navbar } from './components/Navbar';
-import { AuthModal } from './components/AuthModal';
+import { LandingPage } from './components/LandingPage';
+import { AthleteDashboard } from './components/AthleteDashboard';
 import { VideoUploadZone } from './components/VideoUploadZone';
 import { MyVideosPage } from './components/MyVideosPage';
+import { AuthModal } from './components/AuthModal';
 import { AthleteProfileModal } from './components/AthleteProfileModal';
-import { UploadCloud, LogIn, Activity, Shield } from 'lucide-react';
+import { Upload, Video, Activity, ShieldCheck, LogOut, LayoutDashboard } from 'lucide-react';
 
 function MainApp() {
-  const { user, loading } = useAuth();
-  const [activeTab, setActiveTab] = useState('upload'); // 'upload' | 'my-videos' | 'all-videos'
+  const { user, loading, logout } = useAuth();
+  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'my-videos' | 'upload'
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
@@ -17,7 +19,7 @@ function MainApp() {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-cyan-400 space-y-4">
         <div className="w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-sm font-semibold tracking-wider uppercase text-slate-400">Initializing Platform...</p>
+        <p className="text-xs font-bold tracking-widest uppercase text-slate-400">Loading Athlete Hub...</p>
       </div>
     );
   }
@@ -25,108 +27,142 @@ function MainApp() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-cyan-500 selection:text-white">
       
-      {/* Navbar */}
-      <Navbar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        onOpenAuth={() => setIsAuthOpen(true)}
-        onOpenProfile={() => {
-          if (!user) setIsAuthOpen(true);
-          else setIsProfileOpen(true);
-        }}
-      />
+      {/* Navbar Header */}
+      <header className="sticky top-0 z-40 w-full px-4 sm:px-8 py-3.5 border-b border-slate-800/80 bg-slate-950/85 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          
+          {/* Logo & Brand */}
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setActiveTab('dashboard')}>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-teal-400 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+              <Activity className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg font-extrabold tracking-tight text-white">
+                  sportsinjuryanalyser
+                </h1>
+                <span className="px-2 py-0.5 text-[10px] font-bold tracking-wider text-cyan-400 bg-cyan-950 border border-cyan-800 rounded-full">
+                  Athlete Hub
+                </span>
+              </div>
+              <p className="text-xs text-slate-400">Athlete Profile Details & Personal Videos</p>
+            </div>
+          </div>
+
+          {/* Logged In Navigation Tabs */}
+          {user && (
+            <div className="flex items-center gap-2 bg-slate-900 p-1 rounded-xl border border-slate-800">
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition-all ${
+                  activeTab === 'dashboard'
+                    ? 'bg-cyan-500 text-white shadow-md shadow-cyan-500/20'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                Athlete Dashboard
+              </button>
+
+              <button
+                onClick={() => setActiveTab('my-videos')}
+                className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition-all ${
+                  activeTab === 'my-videos'
+                    ? 'bg-cyan-500 text-white shadow-md shadow-cyan-500/20'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Video className="w-4 h-4" />
+                My Videos
+              </button>
+
+              <button
+                onClick={() => setActiveTab('upload')}
+                className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition-all ${
+                  activeTab === 'upload'
+                    ? 'bg-cyan-500 text-white shadow-md shadow-cyan-500/20'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Upload className="w-4 h-4" />
+                Upload Video
+              </button>
+            </div>
+          )}
+
+          {/* Auth Controls */}
+          <div className="flex items-center gap-3">
+            {user ? (
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setIsProfileOpen(true)}
+                  className="flex items-center gap-2.5 px-3 py-1.5 bg-slate-900 border border-slate-700/80 rounded-xl hover:border-cyan-500/50 transition-all text-left"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-600 to-teal-500 flex items-center justify-center text-white font-bold text-sm">
+                    {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                  <div className="hidden sm:block">
+                    <div className="text-xs font-bold text-slate-200">
+                      {user.name}
+                    </div>
+                    <span className="text-[9px] font-extrabold text-cyan-400 uppercase">
+                      {user.role}
+                    </span>
+                  </div>
+                </button>
+
+                <button
+                  onClick={logout}
+                  title="Logout"
+                  className="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-900 border border-transparent hover:border-rose-900/50 rounded-xl transition-all"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setIsAuthOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-white font-bold text-xs rounded-xl shadow-lg shadow-cyan-500/20 transition-all"
+              >
+                Sign In / Register
+              </button>
+            )}
+          </div>
+
+        </div>
+      </header>
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8">
-        
-        {/* Unauthenticated Guest Landing Prompt */}
-        {!user && (
-          <div className="mb-8 p-6 rounded-2xl bg-gradient-to-r from-cyan-950/60 via-slate-900 to-indigo-950/60 border border-cyan-500/30 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-cyan-900/60 border border-cyan-700/60 flex items-center justify-center text-cyan-400 flex-shrink-0">
-                <Shield className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-white">Sign In to Upload & Manage Videos</h3>
-                <p className="text-xs text-slate-400">
-                  Create a free athlete profile to upload videos, extract metadata, and store videos on the server.
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setIsAuthOpen(true)}
-              className="flex items-center gap-2 px-5 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-white font-semibold text-xs rounded-xl shadow-lg shadow-cyan-500/20 transition-all whitespace-nowrap"
-            >
-              <LogIn className="w-4 h-4" />
-              Sign In / Register
-            </button>
-          </div>
-        )}
-
-        {/* Tab Views */}
-        {activeTab === 'upload' && (
-          user ? (
+        {!user ? (
+          /* Unauthenticated Landing & Sign In Page */
+          <LandingPage onAuthSuccess={() => setIsAuthOpen(false)} />
+        ) : (
+          /* Authenticated User Tab Views */
+          activeTab === 'dashboard' ? (
+            <AthleteDashboard />
+          ) : activeTab === 'upload' ? (
             <VideoUploadZone
-              onUploadSuccess={() => {}}
+              onUploadSuccess={() => setActiveTab('my-videos')}
               onViewMyVideos={() => setActiveTab('my-videos')}
             />
           ) : (
-            <div className="py-12 text-center space-y-4 max-w-md mx-auto">
-              <div className="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-cyan-400 mx-auto">
-                <UploadCloud className="w-8 h-8" />
-              </div>
-              <h2 className="text-xl font-bold text-white">Authentication Required</h2>
-              <p className="text-xs text-slate-400">
-                Please sign in or register an account to access the Video Upload Studio and save videos to the server.
-              </p>
-              <button
-                onClick={() => setIsAuthOpen(true)}
-                className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 text-white text-sm font-semibold rounded-xl shadow-lg"
-              >
-                Sign In / Register Now
-              </button>
-            </div>
-          )
-        )}
-
-        {activeTab === 'my-videos' && (
-          user ? (
             <MyVideosPage
-              initialTab="my-videos"
               onNavigateToUpload={() => setActiveTab('upload')}
             />
-          ) : (
-            <div className="py-12 text-center space-y-4 max-w-md mx-auto">
-              <h2 className="text-xl font-bold text-white">Please Sign In</h2>
-              <p className="text-xs text-slate-400">Sign in to view your personal uploaded video library.</p>
-              <button
-                onClick={() => setIsAuthOpen(true)}
-                className="px-6 py-2.5 bg-cyan-500 text-white text-xs font-semibold rounded-xl"
-              >
-                Sign In
-              </button>
-            </div>
           )
-        )}
-
-        {activeTab === 'all-videos' && (
-          <MyVideosPage
-            initialTab="all-videos"
-            onNavigateToUpload={() => setActiveTab('upload')}
-          />
         )}
       </main>
 
       {/* Footer */}
-      <footer className="w-full border-t border-slate-900 bg-slate-950 py-6 text-center text-xs text-slate-500">
+      <footer className="w-full border-t border-slate-900 bg-slate-950 py-6 text-center text-xs text-slate-500 mt-auto">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Activity className="w-4 h-4 text-cyan-400" />
             <span className="font-bold text-slate-300">sportsinjuryanalyser</span>
           </div>
 
-          <p>© 2026 sportsinjuryanalyser Platform. Built with FastAPI & React.</p>
+          <p>© 2026 Sports Injury Analyser Platform. Athlete Details Dashboard Active.</p>
         </div>
       </footer>
 
