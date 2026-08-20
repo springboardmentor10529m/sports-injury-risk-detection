@@ -19,6 +19,46 @@ The AI-based injury prediction module will be integrated in a later phase.
 - Fetch API
 - Django REST API (backend integration)
 
+┌──────────────────────┐
+│        USER          │
+├──────────────────────┤
+│ PK: user_id          │
+│ username             │
+│ email                │
+│ password             │
+└──────────┬───────────┘
+           │
+           │ 1
+           │
+           │ 1
+┌──────────▼───────────┐
+│       ATHLETE        │
+├──────────────────────┤
+│ PK: athlete_id       │
+│ FK: user_id          │
+│ full_name            │
+│ age                  │
+│ gender               │
+│ sport                │
+│ height               │
+│ weight               │
+│ position             │
+│ training_hours       │
+│ previous_injury      │
+└──────────┬───────────┘
+           │
+           │ 1
+           │
+           │ M
+┌──────────▼───────────┐
+│    VIDEO / UPLOAD    │
+├──────────────────────┤
+│ PK: video_id         │
+│ FK: athlete_id       │
+│ video_file           │
+│ upload_date          │
+└──────────────────────┘
+
 ## Frontend Pages
 
 | File | Purpose |
@@ -30,17 +70,26 @@ The AI-based injury prediction module will be integrated in a later phase.
 | Upload.html | Athlete video upload interface |
 | dashboard.html | Displays the athlete dashboard |
 
-## Current Workflow
-
-User
-↓
-Registration / Login
-↓
-Athlete Details
-↓
-Video Upload
-↓
-Dashboard
+     
+ ## Frontend page flow                  
+                   Home
+ │
+ ├──► Register
+ │       │
+ │       ▼
+ │     Login
+ │       │
+ │       ▼
+ │  Athlete Details
+ │       │
+ │       ▼
+ │  Video Upload
+ │       │
+ │       ▼
+ │   Dashboard
+ │
+ └──► Login ────────────────► Athlete Details
+ 
 
 ## Backend Integration
 
