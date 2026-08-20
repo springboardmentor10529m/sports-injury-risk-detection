@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+backend/venv/
+
+# Environment files
+.env
+backend/.env
+
+# SQLite Database
+*.db
+sql_app.db
+
+# Media uploads (exclude user-uploaded files, preserve folder structure)
+uploads/raw/*
+!uploads/raw/.gitkeep
+uploads/processed/*
+!uploads/processed/.gitkeep
+
+# Pytest / Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE & OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db

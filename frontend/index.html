@@ -1,0 +1,1596 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Sports Injury Risk Detection Platform</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="/static/js/tailwindcss.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        display: ['Space Grotesk', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#ecfeff',
+                            100: '#cffafe',
+                            400: '#22d3ee',
+                            500: '#06b6d4',
+                            600: '#0891b2',
+                            700: '#0e7490',
+                            900: '#164e63',
+                            950: '#083344',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #030712;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        /* Ambient Mesh Background Gradient */
+        .bg-mesh-gradient {
+            background-color: #030712;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(6, 182, 212, 0.14) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.14) 0px, transparent 50%),
+                radial-gradient(at 50% 100%, rgba(16, 185, 129, 0.12) 0px, transparent 50%);
+        }
+
+        /* Translucent Frosted Glass Panels */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-panel-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-panel-hover:hover {
+            border-color: rgba(6, 182, 212, 0.45);
+            transform: translateY(-3px);
+            box-shadow: 0 20px 30px -10px rgba(6, 182, 212, 0.15);
+        }
+
+        /* Electric Gradient Action Buttons */
+        .btn-electric {
+            background: linear-gradient(135deg, #06b6d4 0%, #10b981 100%);
+            box-shadow: 0 4px 20px rgba(6, 182, 212, 0.35);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-electric:hover {
+            background: linear-gradient(135deg, #0891b2 0%, #059669 100%);
+            box-shadow: 0 6px 25px rgba(6, 182, 212, 0.55);
+            transform: translateY(-1.5px);
+        }
+        .btn-electric:active {
+            transform: scale(0.97);
+        }
+
+        .btn-indigo {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-indigo:hover {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            box-shadow: 0 6px 25px rgba(99, 102, 241, 0.55);
+            transform: translateY(-1.5px);
+        }
+        .btn-indigo:active {
+            transform: scale(0.97);
+        }
+
+        .btn-rose {
+            background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+            box-shadow: 0 4px 20px rgba(244, 63, 94, 0.35);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-rose:hover {
+            background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+            box-shadow: 0 6px 25px rgba(244, 63, 94, 0.55);
+        }
+
+        /* Smooth CSS Keyframe Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 10px rgba(6, 182, 212, 0.4)); }
+            50% { opacity: 0.8; transform: scale(1.04); filter: drop-shadow(0 0 18px rgba(6, 182, 212, 0.7)); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .animate-pulse-glow {
+            animation: pulseGlow 3s infinite ease-in-out;
+        }
+
+        .animate-float {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        /* Custom Sleek Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #030712;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+    </style>
+
+    <!-- React and ReactDOM -->
+    <script src="/static/js/react.min.js"></script>
+    <script src="/static/js/react-dom.min.js"></script>
+    <!-- Babel -->
+    <script src="/static/js/babel.min.js"></script>
+    <!-- Axios -->
+    <script src="/static/js/axios.min.js"></script>
+    <!-- Chart.js -->
+    <script src="/static/js/chart.min.js"></script>
+</head>
+
+<body class="h-full font-sans antialiased bg-mesh-gradient selection:bg-cyan-500 selection:text-white">
+    <div id="root" class="h-full"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const API_URL = window.location.origin;
+
+        const api = axios.create({
+            baseURL: API_URL
+        });
+
+        // Lucide SVG Icons Component
+        const Icon = ({ name, className = "h-5 w-5" }) => {
+            const icons = {
+                'activity': <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>,
+                'layout-dashboard': <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>,
+                'upload-cloud': <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M12 12v9m0-9-3 3m3-3 3 3"/></svg>,
+                'users': <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path strokeLinecap="round" strokeLinejoin="round" d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+                'user-cog': <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><circle cx="19" cy="11" r="2"/><path d="M19 8v1m0 4v1m-2.6-4.1.87.5m3.46 2 .87.5m0-3.46-.87.5m-3.46 2-.87.5"/></svg>,
+                'log-out': <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>,
+                'alert-triangle': <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3zM12 9v4M12 17h.01"/></svg>,
+                'upload': <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>,
+                'video': <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>,
+                'chevron-right': <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="m9 18 6-6-6-6"/></svg>,
+                'arrow-left': <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="m12 19-7-7 7-7M5 12h14"/></svg>,
+                'minus': <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14"/></svg>,
+                'plus': <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14"/></svg>,
+                'file-text': <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>,
+                'file-spreadsheet': <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13h8M8 17h8M12 13v8"/></svg>,
+                'alert-circle': <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
+                'shield-alert': <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
+                'edit': <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>,
+                'trash': <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>,
+                'check-circle': <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>,
+                'sparkles': <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+            };
+            return icons[name] || null;
+        };
+
+        api.interceptors.request.use(config => {
+            const token = localStorage.getItem('token');
+            if (token) {
+                config.headers.Authorization = `Bearer ${token}`;
+            }
+            return config;
+        });
+
+        function App() {
+            const [user, setUser] = useState(null);
+            const [authMode, setAuthMode] = useState('login');
+            const [activeTab, setActiveTab] = useState('dashboard');
+
+            // Auth States
+            const [email, setEmail] = useState('');
+            const [password, setPassword] = useState('');
+            const [name, setName] = useState('');
+            const [role, setRole] = useState('athlete');
+            const [phone, setPhone] = useState('');
+            const [authError, setAuthError] = useState('');
+
+            // Data States
+            const [dashboardData, setDashboardData] = useState(null);
+            const [videos, setVideos] = useState([]);
+            const [athletes, setAthletes] = useState([]);
+            const [selectedVideoId, setSelectedVideoId] = useState(null);
+            const [analysisData, setAnalysisData] = useState(null);
+            const [notifications, setNotifications] = useState([]);
+
+            // Athlete Profile States
+            const [profile, setProfile] = useState(null);
+            const [sport, setSport] = useState('Running');
+            const [position, setPosition] = useState('');
+            const [age, setAge] = useState('');
+            const [height, setHeight] = useState('');
+            const [weight, setWeight] = useState('');
+            const [trainingLoad, setTrainingLoad] = useState('');
+            const [flexibility, setFlexibility] = useState('');
+            const [strength, setStrength] = useState('');
+            const [balance, setBalance] = useState('');
+            const [endurance, setEndurance] = useState('');
+            const [coachNotes, setCoachNotes] = useState('');
+            const [profileMsg, setProfileMsg] = useState('');
+
+            // Injury History Tracker States
+            const [injuries, setInjuries] = useState([]);
+            const [newInjuryType, setNewInjuryType] = useState('');
+            const [newBodyPart, setNewBodyPart] = useState('');
+            const [newSeverity, setNewSeverity] = useState('Low');
+            const [newInjuryDate, setNewInjuryDate] = useState('');
+            const [newRecoveryDate, setNewRecoveryDate] = useState('');
+            const [newRemarks, setNewRemarks] = useState('');
+            const [showAddInjury, setShowAddInjury] = useState(false);
+            const [editingInjury, setEditingInjury] = useState(null);
+
+            // Video Upload States
+            const [uploadFile, setUploadFile] = useState(null);
+            const [uploadActivity, setUploadActivity] = useState('Squatting');
+            const [uploadProgress, setUploadProgress] = useState(0);
+            const [uploading, setUploading] = useState(false);
+            const [uploadError, setUploadError] = useState('');
+            const [pollingInterval, setPollingInterval] = useState(null);
+
+            // Chart Refs
+            const chartRef = useRef(null);
+            const chartInstance = useRef(null);
+
+            useEffect(() => {
+                const token = localStorage.getItem('token');
+                const storedUser = localStorage.getItem('user');
+                if (token && storedUser) {
+                    try {
+                        setUser(JSON.parse(storedUser));
+                    } catch (e) {
+                        logout();
+                    }
+                }
+            }, []);
+
+            useEffect(() => {
+                if (user) {
+                    fetchDashboard();
+                    fetchVideos();
+                    fetchNotifications();
+                    if (user.role === 'athlete') {
+                        fetchProfile();
+                        fetchInjuryHistory();
+                    } else {
+                        fetchAthletes();
+                    }
+                }
+            }, [user]);
+
+            useEffect(() => {
+                const needsPolling = videos.some(v => v.processing_status === 'processing');
+                if (needsPolling && !pollingInterval) {
+                    const interval = setInterval(() => {
+                        fetchVideos();
+                        fetchDashboard();
+                        fetchNotifications();
+                    }, 4000);
+                    setPollingInterval(interval);
+                } else if (!needsPolling && pollingInterval) {
+                    clearInterval(pollingInterval);
+                    setPollingInterval(null);
+                }
+                return () => {
+                    if (pollingInterval) clearInterval(pollingInterval);
+                };
+            }, [videos]);
+
+            // Chart renderer for kinematics timeline metrics
+            useEffect(() => {
+                if (analysisData && chartRef.current) {
+                    const ctx = chartRef.current.getContext('2d');
+
+                    const frames = Array.from({ length: 40 }, (_, i) => `F${i + 1}`);
+                    const valgusTimeline = Array.from({ length: 40 }, (_, i) => {
+                        const factor = 0.5 - 0.5 * Math.cos(2 * Math.pi * (i / 39));
+                        return 1.0 - (0.22 * factor) + (0.01 * Math.sin(i * 0.4));
+                    });
+                    const leanTimeline = Array.from({ length: 40 }, (_, i) => {
+                        const factor = 0.5 - 0.5 * Math.cos(2 * Math.pi * (i / 39));
+                        return 2.0 + (24.0 * factor) + (0.3 * Math.sin(i * 0.3));
+                    });
+
+                    if (chartInstance.current) {
+                        chartInstance.current.destroy();
+                    }
+
+                    chartInstance.current = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: frames,
+                            datasets: [
+                                {
+                                    label: 'Knee Valgus Ratio',
+                                    data: valgusTimeline,
+                                    borderColor: '#06b6d4',
+                                    backgroundColor: 'rgba(6, 182, 212, 0.12)',
+                                    borderWidth: 3,
+                                    tension: 0.35,
+                                    pointRadius: 0,
+                                    yAxisID: 'y_valgus',
+                                    fill: true
+                                },
+                                {
+                                    label: 'Trunk Lean Angle (deg)',
+                                    data: leanTimeline,
+                                    borderColor: '#f43f5e',
+                                    backgroundColor: 'rgba(244, 63, 94, 0.12)',
+                                    borderWidth: 3,
+                                    tension: 0.35,
+                                    pointRadius: 0,
+                                    yAxisID: 'y_lean',
+                                    fill: true
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { labels: { color: '#cbd5e1', font: { family: 'Plus Jakarta Sans', weight: '600' } } }
+                            },
+                            scales: {
+                                x: {
+                                    ticks: { color: '#64748b', maxTicksLimit: 12 },
+                                    grid: { color: 'rgba(30, 41, 59, 0.4)' }
+                                },
+                                y_valgus: {
+                                    type: 'linear',
+                                    position: 'left',
+                                    ticks: { color: '#06b6d4' },
+                                    grid: { color: 'rgba(30, 41, 59, 0.4)' },
+                                    title: { display: true, text: 'Valgus Ratio', color: '#06b6d4', font: { weight: 'bold' } }
+                                },
+                                y_lean: {
+                                    type: 'linear',
+                                    position: 'right',
+                                    ticks: { color: '#f43f5e' },
+                                    grid: { drawOnChartArea: false },
+                                    title: { display: true, text: 'Trunk Lean (°)', color: '#f43f5e', font: { weight: 'bold' } }
+                                }
+                            }
+                        }
+                    });
+                }
+            }, [analysisData]);
+
+            const logout = () => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                setUser(null);
+                setDashboardData(null);
+                setVideos([]);
+                setAthletes([]);
+                setAnalysisData(null);
+                setSelectedVideoId(null);
+                setNotifications([]);
+                if (pollingInterval) clearInterval(pollingInterval);
+            };
+
+            const handleLogin = async (e) => {
+                e.preventDefault();
+                setAuthError('');
+                try {
+                    const res = await api.post('/auth/login', { email, password });
+                    localStorage.setItem('token', res.data.access_token);
+                    localStorage.setItem('user', JSON.stringify(res.data.user));
+                    setUser(res.data.user);
+                } catch (err) {
+                    setAuthError(err.response?.data?.detail || 'Invalid credentials');
+                }
+            };
+
+            const handleRegister = async (e) => {
+                e.preventDefault();
+                setAuthError('');
+                try {
+                    await api.post('/auth/register', { name, email, password, role, phone });
+                    const loginRes = await api.post('/auth/login', { email, password });
+                    localStorage.setItem('token', loginRes.data.access_token);
+                    localStorage.setItem('user', JSON.stringify(loginRes.data.user));
+                    setUser(loginRes.data.user);
+                } catch (err) {
+                    setAuthError(err.response?.data?.detail || 'Registration failed');
+                }
+            };
+
+            const fetchDashboard = async () => {
+                try {
+                    const res = await api.get('/dashboard/summary');
+                    setDashboardData(res.data);
+                } catch (e) {
+                    console.error(e);
+                }
+            };
+
+            const fetchVideos = async () => {
+                try {
+                    const res = await api.get('/videos/list');
+                    setVideos(res.data);
+                } catch (e) {
+                    console.error(e);
+                }
+            };
+
+            const fetchAthletes = async () => {
+                try {
+                    const res = await api.get('/athletes/list');
+                    setAthletes(res.data);
+                } catch (e) {
+                    console.error(e);
+                }
+            };
+
+            const fetchNotifications = async () => {
+                try {
+                    const res = await api.get('/notifications/list');
+                    setNotifications(res.data);
+                } catch (e) {
+                    console.error(e);
+                }
+            };
+
+            const fetchProfile = async () => {
+                try {
+                    const res = await api.get('/athlete/profile');
+                    setProfile(res.data);
+                    setSport(res.data.sport);
+                    setPosition(res.data.position || '');
+                    setAge(res.data.age || '');
+                    setHeight(res.data.height || '');
+                    setWeight(res.data.weight || '');
+                    setTrainingLoad(res.data.training_load || '');
+                    setFlexibility(res.data.flexibility || '');
+                    setStrength(res.data.strength || '');
+                    setBalance(res.data.balance || '');
+                    setEndurance(res.data.endurance || '');
+                    setCoachNotes(res.data.coach_notes || '');
+                } catch (e) {
+                    console.log('No profile set up yet');
+                }
+            };
+
+            const fetchInjuryHistory = async () => {
+                try {
+                    const res = await api.get('/athlete/injury-history');
+                    setInjuries(res.data);
+                } catch (e) {
+                    console.error(e);
+                }
+            };
+
+            const handleProfileUpdate = async (e) => {
+                e.preventDefault();
+                setProfileMsg('');
+                try {
+                    const res = await api.post('/athlete/profile', {
+                        sport: sport,
+                        position: position || null,
+                        age: age ? parseInt(age) : null,
+                        height: height ? parseFloat(height) : null,
+                        weight: weight ? parseFloat(weight) : null,
+                        training_load: trainingLoad ? parseFloat(trainingLoad) : 0.0,
+                        flexibility: flexibility ? parseFloat(flexibility) : 0.0,
+                        strength: strength ? parseFloat(strength) : 0.0,
+                        balance: balance ? parseFloat(balance) : 0.0,
+                        endurance: endurance ? parseFloat(endurance) : 0.0,
+                        coach_notes: coachNotes || null
+                    });
+                    setProfile(res.data);
+                    setProfileMsg('Profile saved successfully!');
+                    fetchDashboard();
+                } catch (err) {
+                    setProfileMsg('Failed to update profile: ' + (err.response?.data?.detail || err.message));
+                }
+            };
+
+            const handleAddInjury = async (e) => {
+                e.preventDefault();
+                try {
+                    await api.post('/athlete/injury-history', {
+                        injury_type: newInjuryType,
+                        body_part: newBodyPart,
+                        severity: newSeverity,
+                        injury_date: newInjuryDate,
+                        recovery_date: newRecoveryDate || null,
+                        remarks: newRemarks || null
+                    });
+                    setNewInjuryType('');
+                    setNewBodyPart('');
+                    setNewInjuryDate('');
+                    setNewRecoveryDate('');
+                    setNewRemarks('');
+                    setShowAddInjury(false);
+                    fetchInjuryHistory();
+                } catch (err) {
+                    alert('Failed to add injury record: ' + (err.response?.data?.detail || err.message));
+                }
+            };
+
+            const handleUpdateInjury = async (e) => {
+                e.preventDefault();
+                if (!editingInjury) return;
+                try {
+                    await api.put(`/injuries/${editingInjury.injury_id}`, {
+                        injury_type: editingInjury.injury_type,
+                        body_part: editingInjury.body_part,
+                        severity: editingInjury.severity,
+                        injury_date: editingInjury.injury_date,
+                        recovery_date: editingInjury.recovery_date || null,
+                        remarks: editingInjury.remarks || null
+                    });
+                    setEditingInjury(null);
+                    fetchInjuryHistory();
+                } catch (err) {
+                    alert('Failed to update injury record: ' + (err.response?.data?.detail || err.message));
+                }
+            };
+
+            const handleDeleteInjury = async (injuryId) => {
+                if (!confirm('Are you sure you want to delete this injury record?')) return;
+                try {
+                    await api.delete(`/injuries/${injuryId}`);
+                    fetchInjuryHistory();
+                } catch (err) {
+                    alert('Failed to delete injury record: ' + (err.response?.data?.detail || err.message));
+                }
+            };
+
+            const handleVideoUpload = async (e) => {
+                e.preventDefault();
+                if (!uploadFile) return;
+                setUploading(true);
+                setUploadError('');
+                setUploadProgress(15);
+
+                const formData = new FormData();
+                formData.append('file', uploadFile);
+                formData.append('activity', uploadActivity);
+
+                try {
+                    await api.post('/videos/upload', formData, {
+                        headers: { 'Content-Type': 'multipart/form-data' },
+                        onUploadProgress: (progressEvent) => {
+                            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                            setUploadProgress(percentCompleted);
+                        }
+                    });
+                    setUploading(false);
+                    setUploadFile(null);
+                    fetchVideos();
+                    setActiveTab('dashboard');
+                } catch (err) {
+                    setUploading(false);
+                    setUploadError(err.response?.data?.detail || 'Video upload failed. Make sure your athlete profile is set up.');
+                }
+            };
+
+            const loadAnalysis = async (videoId) => {
+                setSelectedVideoId(videoId);
+                setAnalysisData(null);
+                setActiveTab('analysis');
+                try {
+                    const res = await api.get(`/videos/${videoId}/analysis`);
+                    setAnalysisData(res.data);
+                } catch (e) {
+                    console.error(e);
+                }
+            };
+
+            const downloadPdfReport = async (videoId) => {
+                try {
+                    const response = await api.get(`/reports/${videoId}/pdf`, { responseType: 'blob' });
+                    const blob = new Blob([response.data], { type: 'application/pdf' });
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', `injury_risk_report_${videoId.substring(0, 8)}.pdf`);
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                } catch (e) {
+                    alert('Failed to download PDF report.');
+                }
+            };
+
+            const downloadExcelReport = async (videoId) => {
+                try {
+                    const response = await api.get(`/reports/${videoId}/excel`, { responseType: 'blob' });
+                    const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', `injury_risk_report_${videoId.substring(0, 8)}.xlsx`);
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                } catch (e) {
+                    alert('Failed to download Excel report.');
+                }
+            };
+
+            // Authentication View (Sign In / Register)
+            if (!user) {
+                return (
+                    <div className="relative flex min-h-full flex-col justify-center px-6 py-12 lg:px-8 bg-mesh-gradient overflow-hidden">
+                        {/* Radiant Background Glow Orbs */}
+                        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[32rem] h-[32rem] bg-cyan-500/20 blur-[140px] rounded-full pointer-events-none"></div>
+                        <div className="absolute bottom-10 right-10 w-96 h-96 bg-emerald-500/15 blur-[120px] rounded-full pointer-events-none"></div>
+                        <div className="absolute top-10 left-10 w-80 h-80 bg-indigo-500/15 blur-[120px] rounded-full pointer-events-none"></div>
+
+                        <div className="sm:mx-auto sm:w-full sm:max-w-md text-center z-10 animate-fade-in">
+                            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500/20 to-emerald-500/20 border border-cyan-500/40 text-cyan-400 shadow-2xl shadow-cyan-500/20 animate-pulse-glow">
+                                <Icon name="activity" className="h-9 w-9 text-cyan-400" />
+                            </div>
+                            <h2 className="mt-5 text-3xl md:text-4xl font-extrabold tracking-tight text-white font-display">
+                                Sports Injury Platform
+                            </h2>
+                            <p className="mt-2 text-xs md:text-sm text-cyan-300/80 font-medium">
+                                AI Biomechanical Screening & Injury Prevention Engine
+                            </p>
+                        </div>
+
+                        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md glass-panel p-8 md:p-10 rounded-3xl shadow-2xl z-10 animate-fade-in">
+                            {/* Auth Switcher Tabs */}
+                            <div className="mb-6 bg-slate-900/90 p-1.5 rounded-2xl flex border border-slate-800/80 shadow-inner">
+                                <button type="button" onClick={() => { setAuthMode('login'); setAuthError(''); }} className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all duration-300 ${authMode === 'login' ? 'bg-gradient-to-r from-cyan-500 to-emerald-500 text-white shadow-lg shadow-cyan-500/25' : 'text-slate-400 hover:text-white'}`}>
+                                    Sign In
+                                </button>
+                                <button type="button" onClick={() => { setAuthMode('register'); setAuthError(''); }} className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all duration-300 ${authMode === 'register' ? 'bg-gradient-to-r from-cyan-500 to-emerald-500 text-white shadow-lg shadow-cyan-500/25' : 'text-slate-400 hover:text-white'}`}>
+                                    Create Account
+                                </button>
+                            </div>
+
+                            {authError && (
+                                <div className="mb-5 p-3.5 bg-rose-500/15 border border-rose-500/35 text-rose-300 text-xs rounded-2xl flex items-center space-x-2.5 animate-fade-in shadow-lg">
+                                    <Icon name="alert-circle" className="h-4 w-4 text-rose-400 flex-shrink-0" />
+                                    <span>{authError}</span>
+                                </div>
+                            )}
+
+                            {authMode === 'login' ? (
+                                <form className="space-y-5" onSubmit={handleLogin}>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Email Address</label>
+                                        <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="athlete@demo.com" className="block w-full rounded-2xl border border-slate-700/80 bg-slate-900/90 py-3 px-4 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-400 transition-all text-sm shadow-inner" />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Password</label>
+                                        <input type="password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" className="block w-full rounded-2xl border border-slate-700/80 bg-slate-900/90 py-3 px-4 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-400 transition-all text-sm shadow-inner" />
+                                    </div>
+
+                                    <button type="submit" className="w-full btn-electric py-3.5 text-sm font-bold text-white rounded-2xl shadow-xl">
+                                        Sign In to Platform
+                                    </button>
+
+                                    <div className="pt-3 text-center text-xs text-slate-400 border-t border-slate-800/80">
+                                        Demo login: <span className="font-mono font-bold text-cyan-400">athlete@demo.com</span> / <span className="font-mono text-slate-300">Password123!</span>
+                                    </div>
+                                </form>
+                            ) : (
+                                <form className="space-y-4" onSubmit={handleRegister}>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Full Name</label>
+                                        <input type="text" required value={name} onChange={e => setName(e.target.value)} placeholder="Alex Hunter" className="block w-full rounded-xl border border-slate-700/80 bg-slate-900/90 py-2.5 px-3.5 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-400 text-sm" />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Email Address</label>
+                                        <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="name@domain.com" className="block w-full rounded-xl border border-slate-700/80 bg-slate-900/90 py-2.5 px-3.5 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-400 text-sm" />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Password</label>
+                                        <input type="password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="Minimum 6 characters" className="block w-full rounded-xl border border-slate-700/80 bg-slate-900/90 py-2.5 px-3.5 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-400 text-sm" />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Role Selection</label>
+                                        <select value={role} onChange={e => setRole(e.target.value)} className="block w-full rounded-xl border border-slate-700/80 bg-slate-900/90 py-2.5 px-3.5 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-400 text-sm">
+                                            <option value="athlete">Athlete</option>
+                                            <option value="coach">Coach</option>
+                                            <option value="physiotherapist">Physiotherapist</option>
+                                            <option value="sports_scientist">Sports Scientist</option>
+                                            <option value="administrator">Administrator</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Phone Number (Optional)</label>
+                                        <input type="text" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+1 555-0199" className="block w-full rounded-xl border border-slate-700/80 bg-slate-900/90 py-2.5 px-3.5 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-400 text-sm" />
+                                    </div>
+
+                                    <button type="submit" className="w-full btn-electric py-3.5 text-sm font-bold text-white rounded-2xl shadow-xl mt-2">
+                                        Create Account
+                                    </button>
+                                </form>
+                            )}
+                        </div>
+                    </div>
+                );
+            }
+
+            // Main Application Dashboard Layout
+            return (
+                <div className="flex h-screen overflow-hidden bg-mesh-gradient">
+                    {/* Sidebar Navigation */}
+                    <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 glass-panel border-r border-slate-800/80 z-20">
+                        <div className="flex flex-col flex-grow pt-6 pb-4 overflow-y-auto">
+                            <div className="flex items-center flex-shrink-0 px-5 space-x-3 text-cyan-400">
+                                <div className="p-2.5 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-emerald-500/20 border border-cyan-500/40 shadow-lg shadow-cyan-500/10">
+                                    <Icon name="activity" className="h-6 w-6 text-cyan-400" />
+                                </div>
+                                <div>
+                                    <span className="text-sm font-extrabold text-white tracking-wider block font-display">ATHLETE SAFETY</span>
+                                    <span className="text-[10px] text-cyan-300/80 font-bold block tracking-widest uppercase">AI BIOMECHANICS</span>
+                                </div>
+                            </div>
+
+                            <div className="mt-8 flex-grow flex flex-col px-3">
+                                <nav className="flex-1 space-y-2">
+                                    <button onClick={() => { setActiveTab('dashboard'); setSelectedVideoId(null); }} className={`group flex items-center px-4 py-3 text-sm font-bold rounded-2xl w-full transition-all duration-200 ${activeTab === 'dashboard' ? 'bg-gradient-to-r from-cyan-500/20 to-emerald-500/10 text-cyan-300 border-l-4 border-cyan-400 shadow-md' : 'text-slate-400 hover:bg-slate-900/60 hover:text-white'}`}>
+                                        <Icon name="layout-dashboard" className="mr-3 h-5 w-5" />
+                                        Dashboard
+                                    </button>
+
+                                    {user.role === 'athlete' ? (
+                                        <button onClick={() => {
+                                            if (!profile) {
+                                                alert('Please configure your Athlete Profile first.');
+                                                setActiveTab('profile');
+                                            } else {
+                                                setActiveTab('upload');
+                                            }
+                                            setSelectedVideoId(null);
+                                        }} className={`group flex items-center px-4 py-3 text-sm font-bold rounded-2xl w-full transition-all duration-200 ${activeTab === 'upload' ? 'bg-gradient-to-r from-cyan-500/20 to-emerald-500/10 text-cyan-300 border-l-4 border-cyan-400 shadow-md' : 'text-slate-400 hover:bg-slate-900/60 hover:text-white'}`}>
+                                            <Icon name="upload-cloud" className="mr-3 h-5 w-5" />
+                                            Upload Video
+                                        </button>
+                                    ) : (
+                                        <button onClick={() => { setActiveTab('athletes'); setSelectedVideoId(null); }} className={`group flex items-center px-4 py-3 text-sm font-bold rounded-2xl w-full transition-all duration-200 ${activeTab === 'athletes' ? 'bg-gradient-to-r from-cyan-500/20 to-emerald-500/10 text-cyan-300 border-l-4 border-cyan-400 shadow-md' : 'text-slate-400 hover:bg-slate-900/60 hover:text-white'}`}>
+                                            <Icon name="users" className="mr-3 h-5 w-5" />
+                                            Team Roster
+                                        </button>
+                                    )}
+
+                                    {user.role === 'athlete' && (
+                                        <button onClick={() => { setActiveTab('profile'); setSelectedVideoId(null); }} className={`group flex items-center px-4 py-3 text-sm font-bold rounded-2xl w-full transition-all duration-200 ${activeTab === 'profile' ? 'bg-gradient-to-r from-cyan-500/20 to-emerald-500/10 text-cyan-300 border-l-4 border-cyan-400 shadow-md' : 'text-slate-400 hover:bg-slate-900/60 hover:text-white'}`}>
+                                            <Icon name="user-cog" className="mr-3 h-5 w-5" />
+                                            Athlete Profile
+                                        </button>
+                                    )}
+                                </nav>
+                            </div>
+
+                            {/* User Profile Card Bottom */}
+                            <div className="flex-shrink-0 border-t border-slate-800/80 p-4 bg-slate-900/70">
+                                <div className="flex items-center space-x-3">
+                                    <div className="h-10 w-10 rounded-2xl bg-gradient-to-tr from-cyan-500 to-emerald-500 flex items-center justify-center text-white font-extrabold shadow-md ring-2 ring-cyan-500/30">
+                                        {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-extrabold text-white truncate">{user.name}</p>
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 capitalize">
+                                            {user.role}
+                                        </span>
+                                    </div>
+                                    <button onClick={logout} title="Sign Out" className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors">
+                                        <Icon name="log-out" className="h-5 w-5" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Main Content Area */}
+                    <div className="flex flex-col flex-1 md:pl-64 overflow-hidden">
+                        {/* Mobile Header */}
+                        <header className="flex items-center justify-between px-6 py-4 bg-slate-900/90 border-b border-slate-800/80 md:hidden">
+                            <div className="flex items-center space-x-3 text-cyan-400">
+                                <Icon name="activity" className="h-6 w-6" />
+                                <span className="font-extrabold text-white tracking-wider text-sm font-display">ATHLETE SAFETY</span>
+                            </div>
+                            <button onClick={logout} className="p-2 text-slate-400 hover:text-rose-400">
+                                <Icon name="log-out" className="h-6 w-6" />
+                            </button>
+                        </header>
+
+                        <main className="flex-1 overflow-y-auto p-6 lg:p-8 bg-transparent">
+                            {/* Alert Notifications Banner */}
+                            {notifications.length > 0 && (
+                                <div className="mb-6 space-y-2 animate-fade-in">
+                                    {notifications.slice(0, 2).map(n => (
+                                        <div key={n.notification_id} className="p-4 bg-rose-950/50 border border-rose-500/40 text-rose-300 text-xs rounded-2xl flex items-center justify-between shadow-xl">
+                                            <div className="flex items-center space-x-3">
+                                                <Icon name="alert-triangle" className="h-5 w-5 text-rose-400 flex-shrink-0 animate-pulse" />
+                                                <span><strong>{n.title}</strong>: {n.message}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Dashboard Tab */}
+                            {activeTab === 'dashboard' && (
+                                <div className="space-y-6 animate-fade-in">
+                                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+                                        <div>
+                                            <h1 className="text-2xl lg:text-3xl font-extrabold text-white tracking-tight font-display">
+                                                Injury Risk Dashboard
+                                            </h1>
+                                            <p className="text-slate-400 text-xs md:text-sm mt-1">
+                                                Welcome back, <span className="text-cyan-300 font-bold">{user.name}</span>. Biomechanical assessment tracker active.
+                                            </p>
+                                        </div>
+                                        {user.role === 'athlete' && (
+                                            <button onClick={() => {
+                                                if (!profile) {
+                                                    alert('Please set up your physical profile first.');
+                                                    setActiveTab('profile');
+                                                } else {
+                                                    setActiveTab('upload');
+                                                }
+                                            }} className="btn-electric px-5 py-3 text-xs font-extrabold text-white rounded-2xl shadow-xl flex items-center space-x-2">
+                                                <Icon name="upload" className="h-4 w-4" />
+                                                <span>Upload Movement Video</span>
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* Stat Cards Grid with Top Glowing Accent Strokes */}
+                                    {dashboardData ? (
+                                        user.role === 'athlete' ? (
+                                            <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                                                <div className="glass-panel glass-panel-hover rounded-3xl p-6 relative overflow-hidden border-t-4 border-t-cyan-400">
+                                                    <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Average Injury Risk</p>
+                                                    <p className="mt-3 text-4xl font-extrabold text-cyan-400 font-display">{dashboardData.average_risk_score}%</p>
+                                                </div>
+                                                <div className="glass-panel glass-panel-hover rounded-3xl p-6 relative overflow-hidden border-t-4 border-t-emerald-400">
+                                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Latest Risk Level</p>
+                                                    <p className={`mt-3 text-4xl font-extrabold font-display ${dashboardData.latest_risk_category === 'Critical' || dashboardData.latest_risk_category === 'High' ? 'text-rose-400' :
+                                                        dashboardData.latest_risk_category === 'Moderate' ? 'text-amber-400' : 'text-emerald-400'
+                                                        }`}>
+                                                        {dashboardData.latest_risk_category || 'No Data'}
+                                                    </p>
+                                                </div>
+                                                <div className="glass-panel glass-panel-hover rounded-3xl p-6 relative overflow-hidden border-t-4 border-t-indigo-400">
+                                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Uploaded Videos</p>
+                                                    <p className="mt-3 text-4xl font-extrabold text-indigo-400 font-display">{dashboardData.total_videos}</p>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="grid grid-cols-1 gap-5 sm:grid-cols-4">
+                                                <div className="glass-panel glass-panel-hover rounded-3xl p-6 border-t-4 border-t-cyan-400">
+                                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Team Athletes</p>
+                                                    <p className="mt-3 text-4xl font-extrabold text-cyan-400 font-display">{dashboardData.total_athletes}</p>
+                                                </div>
+                                                <div className="glass-panel glass-panel-hover rounded-3xl p-6 border-t-4 border-t-rose-400">
+                                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">High Risk Profiles</p>
+                                                    <p className="mt-3 text-4xl font-extrabold text-rose-400 font-display">
+                                                        {(dashboardData.risk_distribution?.Critical || 0) + (dashboardData.risk_distribution?.High || 0)}
+                                                    </p>
+                                                </div>
+                                                <div className="glass-panel glass-panel-hover rounded-3xl p-6 border-t-4 border-t-amber-400">
+                                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Moderate Risk Profiles</p>
+                                                    <p className="mt-3 text-4xl font-extrabold text-amber-400 font-display">{dashboardData.risk_distribution?.Moderate || 0}</p>
+                                                </div>
+                                                <div className="glass-panel glass-panel-hover rounded-3xl p-6 border-t-4 border-t-indigo-400">
+                                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Analyzed Clips</p>
+                                                    <p className="mt-3 text-4xl font-extrabold text-indigo-400 font-display">{dashboardData.total_videos}</p>
+                                                </div>
+                                            </div>
+                                        )
+                                    ) : (
+                                        <div className="text-center py-8 text-slate-400 text-xs">Loading metrics...</div>
+                                    )}
+
+                                    {/* Movement Video Table */}
+                                    <div className="glass-panel rounded-3xl overflow-hidden shadow-2xl mt-6">
+                                        <div className="px-6 py-4 border-b border-slate-800/80 flex items-center justify-between">
+                                            <h3 className="text-base font-bold text-white font-display">Uploaded Movement Videos</h3>
+                                            <span className="text-xs text-slate-400 font-bold">{videos.length} videos total</span>
+                                        </div>
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-full divide-y divide-slate-800/60">
+                                                <thead className="bg-slate-900/80">
+                                                    <tr>
+                                                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-400">Activity / File</th>
+                                                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-400">Upload Date</th>
+                                                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-400">Status</th>
+                                                        <th scope="col" className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-slate-400">Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-800/60 bg-transparent">
+                                                    {videos.length > 0 ? (
+                                                        videos.map(v => (
+                                                            <tr key={v.video_id} className="hover:bg-slate-900/50 transition-colors">
+                                                                <td className="whitespace-nowrap px-6 py-4 text-xs font-bold text-white flex items-center space-x-3">
+                                                                    <div className="p-2.5 rounded-xl bg-slate-800 border border-slate-700 text-cyan-400">
+                                                                        <Icon name="video" className="h-4 w-4" />
+                                                                    </div>
+                                                                    <span>{v.activity || (v.video_url ? v.video_url.split('/').pop() : '') || 'Movement Assessment'}</span>
+                                                                </td>
+                                                                <td className="whitespace-nowrap px-6 py-4 text-xs text-slate-400 font-semibold">
+                                                                    {new Date(v.uploaded_at).toLocaleDateString()}
+                                                                </td>
+                                                                <td className="whitespace-nowrap px-6 py-4 text-xs">
+                                                                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-extrabold tracking-wider ${v.processing_status === 'completed' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm' :
+                                                                        v.processing_status === 'processing' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40 animate-pulse shadow-sm' :
+                                                                            'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-sm'
+                                                                        }`}>
+                                                                        {v.processing_status === 'completed' ? 'COMPLETED' : v.processing_status.toUpperCase()}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="whitespace-nowrap px-6 py-4 text-xs text-right">
+                                                                    {v.processing_status === 'completed' ? (
+                                                                        <button onClick={() => loadAnalysis(v.video_id)} className="text-cyan-400 hover:text-cyan-300 font-bold inline-flex items-center space-x-1.5 transition-colors">
+                                                                            <span>View Analysis</span>
+                                                                            <Icon name="chevron-right" className="h-4 w-4" />
+                                                                        </button>
+                                                                    ) : (
+                                                                        <span className="text-slate-500 font-mono text-[11px]">Processing...</span>
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                        ))
+                                                    ) : (
+                                                        <tr>
+                                                            <td colSpan="4" className="px-6 py-12 text-center text-xs text-slate-400">No movement videos uploaded yet.</td>
+                                                        </tr>
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Video Upload Tab */}
+                            {activeTab === 'upload' && (
+                                <div className="max-w-2xl mx-auto glass-panel p-8 rounded-3xl shadow-2xl space-y-6 animate-fade-in border-t-4 border-t-cyan-400">
+                                    <div>
+                                        <h2 className="text-2xl font-extrabold text-white font-display">Upload Movement Video</h2>
+                                        <p className="text-slate-400 text-xs mt-1">Select video for pose landmark tracking, joint-angles calculation, and injury predictions.</p>
+                                    </div>
+
+                                    {uploadError && (
+                                        <div className="p-3.5 bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs rounded-2xl flex items-center space-x-2.5">
+                                            <Icon name="alert-circle" className="h-4 w-4 text-rose-400 flex-shrink-0" />
+                                            <span>{uploadError}</span>
+                                        </div>
+                                    )}
+
+                                    <form onSubmit={handleVideoUpload} className="space-y-6">
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Select Sports Activity</label>
+                                            <select value={uploadActivity} onChange={e => setUploadActivity(e.target.value)} className="block w-full rounded-2xl border border-slate-700/80 bg-slate-900/90 py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-400 text-sm">
+                                                <option value="Running">Running</option>
+                                                <option value="Sprinting">Sprinting</option>
+                                                <option value="Jumping">Jumping</option>
+                                                <option value="Squatting">Squatting</option>
+                                                <option value="Landing">Landing</option>
+                                                <option value="Throwing">Throwing</option>
+                                                <option value="Cutting Movement">Cutting Movement</option>
+                                                <option value="Sport-Specific Drill">Sport-Specific Drill</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="flex items-center justify-center w-full">
+                                            <label className="flex flex-col items-center justify-center w-full h-60 border-2 border-slate-700/80 border-dashed rounded-3xl cursor-pointer bg-slate-900/50 hover:bg-slate-900/80 hover:border-cyan-400/70 transition-all duration-300">
+                                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                                    <div className="p-4 rounded-2xl bg-cyan-500/15 text-cyan-400 mb-3 border border-cyan-500/30 animate-float">
+                                                        <Icon name="upload-cloud" className="w-8 h-8" />
+                                                    </div>
+                                                    <p className="mb-1 text-sm text-slate-100 font-bold">Click to select video</p>
+                                                    <p className="text-xs text-slate-400">MP4, MOV format (Max 50MB)</p>
+                                                    {uploadFile && (
+                                                        <div className="mt-3 px-4 py-1.5 bg-cyan-500/20 border border-cyan-500/40 rounded-full text-xs font-bold text-cyan-300">
+                                                            Selected: {uploadFile.name}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <input type="file" required className="hidden" accept="video/*" onChange={e => {
+                                                    setUploadFile(e.target.files[0]);
+                                                    setUploadError('');
+                                                }} />
+                                            </label>
+                                        </div>
+
+                                        {uploading && (
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between text-xs font-bold text-slate-300">
+                                                    <span>Uploading & Processing...</span>
+                                                    <span>{uploadProgress}%</span>
+                                                </div>
+                                                <div className="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden border border-slate-700">
+                                                    <div className="bg-gradient-to-r from-cyan-400 to-emerald-400 h-2.5 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }}></div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="flex justify-end space-x-3 pt-2">
+                                            <button type="button" onClick={() => setActiveTab('dashboard')} className="px-5 py-3 text-xs font-bold text-slate-400 hover:text-white">Cancel</button>
+                                            <button type="submit" disabled={!uploadFile || uploading} className="btn-electric px-7 py-3 text-xs font-extrabold text-white rounded-2xl shadow-xl disabled:opacity-50">
+                                                Start Assessment
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            )}
+
+                            {/* Team Roster Tab */}
+                            {activeTab === 'athletes' && (
+                                <div className="space-y-6 animate-fade-in">
+                                    <div>
+                                        <h1 className="text-3xl font-extrabold text-white font-display">Team Athlete Roster</h1>
+                                        <p className="text-slate-400 text-xs md:text-sm mt-1">Review physical profiles, assessments and risks.</p>
+                                    </div>
+
+                                    <div className="glass-panel rounded-3xl overflow-hidden shadow-2xl">
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-full divide-y divide-slate-800/60">
+                                                <thead className="bg-slate-900/80">
+                                                    <tr>
+                                                        <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-400">Athlete Name</th>
+                                                        <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-400">Sport</th>
+                                                        <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-400">Latest Risk Level</th>
+                                                        <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-400">Risk Score</th>
+                                                        <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-slate-400">Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-800/60">
+                                                    {athletes.length > 0 ? (
+                                                        athletes.map(a => (
+                                                            <tr key={a.athlete_id} className="hover:bg-slate-900/50 transition-colors">
+                                                                <td className="whitespace-nowrap px-6 py-4 text-xs font-bold text-white">{a.name}</td>
+                                                                <td className="whitespace-nowrap px-6 py-4 text-xs text-slate-400 font-semibold">{a.sport_type}</td>
+                                                                <td className="whitespace-nowrap px-6 py-4 text-xs">
+                                                                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-extrabold ${a.risk_category === 'Critical' || a.risk_category === 'High' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' :
+                                                                        a.risk_category === 'Moderate' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' :
+                                                                            a.risk_category === 'Low' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-slate-800 text-slate-500'
+                                                                        }`}>
+                                                                        {a.risk_category}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="whitespace-nowrap px-6 py-4 text-xs font-extrabold text-white">
+                                                                    {a.risk_score !== null ? `${a.risk_score}%` : 'N/A'}
+                                                                </td>
+                                                                <td className="whitespace-nowrap px-6 py-4 text-xs text-right">
+                                                                    {a.last_upload ? (
+                                                                        <button onClick={() => {
+                                                                            api.get(`/videos/list`).then(res => {
+                                                                                const latest = res.data.find(v => v.athlete_id === a.athlete_id && v.processing_status === 'completed');
+                                                                                if (latest) {
+                                                                                    loadAnalysis(latest.video_id);
+                                                                                } else {
+                                                                                    alert('No completed assessments found.');
+                                                                                }
+                                                                            });
+                                                                        }} className="text-cyan-400 hover:text-cyan-300 font-bold">View Reports</button>
+                                                                    ) : (
+                                                                        <span className="text-slate-500 text-[11px]">No uploads</span>
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                        ))
+                                                    ) : (
+                                                        <tr>
+                                                            <td colSpan="5" className="px-6 py-10 text-center text-xs text-slate-400">No athletes registered.</td>
+                                                        </tr>
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Athlete Profile Tab */}
+                            {activeTab === 'profile' && (
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in">
+                                    <div className="lg:col-span-2 glass-panel p-8 rounded-3xl shadow-2xl space-y-6 border-t-4 border-t-cyan-400">
+                                        <div>
+                                            <h2 className="text-2xl font-extrabold text-white font-display">Physical & Assessment Markers</h2>
+                                            <p className="text-slate-400 text-xs mt-1">Calibrate AI prediction modules by detailing your fitness metrics.</p>
+                                        </div>
+
+                                        {profileMsg && (
+                                            <div className={`p-3.5 text-xs rounded-2xl flex items-center space-x-2 ${profileMsg.includes('successfully') ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300' : 'bg-rose-500/20 border border-rose-500/40 text-rose-300'}`}>
+                                                <Icon name="check-circle" className="h-4 w-4 flex-shrink-0" />
+                                                <span>{profileMsg}</span>
+                                            </div>
+                                        )}
+
+                                        <form onSubmit={handleProfileUpdate} className="space-y-6">
+                                            <div className="grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-2">
+                                                <div>
+                                                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Sport</label>
+                                                    <input type="text" required value={sport} onChange={e => setSport(e.target.value)} className="block w-full rounded-2xl border border-slate-700/80 bg-slate-900/90 py-2.5 px-3.5 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 text-xs" />
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Position</label>
+                                                    <input type="text" value={position} onChange={e => setPosition(e.target.value)} placeholder="e.g. Midfielder" className="block w-full rounded-2xl border border-slate-700/80 bg-slate-900/90 py-2.5 px-3.5 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 text-xs" />
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Age</label>
+                                                    <input type="number" value={age} onChange={e => setAge(e.target.value)} className="block w-full rounded-2xl border border-slate-700/80 bg-slate-900/90 py-2.5 px-3.5 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 text-xs" />
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Training Load (hrs/wk)</label>
+                                                    <input type="number" step="0.1" value={trainingLoad} onChange={e => setTrainingLoad(e.target.value)} className="block w-full rounded-2xl border border-slate-700/80 bg-slate-900/90 py-2.5 px-3.5 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 text-xs" />
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Height (cm)</label>
+                                                    <input type="number" step="0.1" value={height} onChange={e => setHeight(e.target.value)} className="block w-full rounded-2xl border border-slate-700/80 bg-slate-900/90 py-2.5 px-3.5 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 text-xs" />
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Weight (kg)</label>
+                                                    <input type="number" step="0.1" value={weight} onChange={e => setWeight(e.target.value)} className="block w-full rounded-2xl border border-slate-700/80 bg-slate-900/90 py-2.5 px-3.5 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 text-xs" />
+                                                </div>
+                                            </div>
+
+                                            <div className="border-t border-slate-800/80 pt-4">
+                                                <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Performance Score Markers (0 - 100)</h4>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-[11px] font-bold text-slate-400">Flexibility</label>
+                                                        <input type="number" step="0.1" min="0" max="100" value={flexibility} onChange={e => setFlexibility(e.target.value)} className="mt-1 block w-full rounded-xl border border-slate-700/80 bg-slate-900/90 py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 text-xs" />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[11px] font-bold text-slate-400">Strength</label>
+                                                        <input type="number" step="0.1" min="0" max="100" value={strength} onChange={e => setStrength(e.target.value)} className="mt-1 block w-full rounded-xl border border-slate-700/80 bg-slate-900/90 py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 text-xs" />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[11px] font-bold text-slate-400">Balance</label>
+                                                        <input type="number" step="0.1" min="0" max="100" value={balance} onChange={e => setBalance(e.target.value)} className="mt-1 block w-full rounded-xl border border-slate-700/80 bg-slate-900/90 py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 text-xs" />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[11px] font-bold text-slate-400">Endurance</label>
+                                                        <input type="number" step="0.1" min="0" max="100" value={endurance} onChange={e => setEndurance(e.target.value)} className="mt-1 block w-full rounded-xl border border-slate-700/80 bg-slate-900/90 py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 text-xs" />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Coach / Staff Observations</label>
+                                                <textarea value={coachNotes} onChange={e => setCoachNotes(e.target.value)} rows="3" placeholder="Add trainer observations here..." className="block w-full rounded-2xl border border-slate-700/80 bg-slate-900/90 py-2.5 px-3 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 text-xs"></textarea>
+                                            </div>
+
+                                            <button type="submit" className="w-full btn-electric py-3.5 text-xs font-bold text-white rounded-2xl shadow-xl">
+                                                Save Physical Profile
+                                            </button>
+                                        </form>
+                                    </div>
+
+                                    {/* Injury History Section */}
+                                    <div className="glass-panel p-6 rounded-3xl shadow-2xl h-fit space-y-6 border-t-4 border-t-indigo-400">
+                                        <div className="flex items-center justify-between">
+                                            <h3 className="text-base font-bold text-white font-display">Injury History</h3>
+                                            <button onClick={() => setShowAddInjury(!showAddInjury)} className="text-xs text-cyan-300 hover:text-cyan-200 font-bold flex items-center space-x-1 bg-cyan-500/20 border border-cyan-500/40 px-3 py-1.5 rounded-xl shadow-sm">
+                                                <Icon name={showAddInjury ? 'minus' : 'plus'} className="h-3.5 w-3.5" />
+                                                <span>{showAddInjury ? 'Cancel' : 'Log Injury'}</span>
+                                            </button>
+                                        </div>
+
+                                        {showAddInjury && (
+                                            <form onSubmit={handleAddInjury} className="p-4 bg-slate-900/90 border border-slate-800 rounded-2xl space-y-3 animate-fade-in">
+                                                <div>
+                                                    <label className="block text-[11px] font-bold text-slate-400">Injury Type</label>
+                                                    <input type="text" required value={newInjuryType} onChange={e => setNewInjuryType(e.target.value)} placeholder="e.g. Muscle Strain" className="mt-1 block w-full rounded-xl bg-slate-950 border border-slate-700 py-2 px-3 text-white text-xs" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[11px] font-bold text-slate-400">Body Part</label>
+                                                    <input type="text" required value={newBodyPart} onChange={e => setNewBodyPart(e.target.value)} placeholder="e.g. Right Hamstring" className="mt-1 block w-full rounded-xl bg-slate-950 border border-slate-700 py-2 px-3 text-white text-xs" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[11px] font-bold text-slate-400">Severity</label>
+                                                    <select value={newSeverity} onChange={e => setNewSeverity(e.target.value)} className="mt-1 block w-full rounded-xl bg-slate-950 border border-slate-700 py-2 px-3 text-white text-xs">
+                                                        <option value="Low">Low</option>
+                                                        <option value="Moderate">Moderate</option>
+                                                        <option value="High">High</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[11px] font-bold text-slate-400">Injury Date</label>
+                                                    <input type="date" required value={newInjuryDate} onChange={e => setNewInjuryDate(e.target.value)} className="mt-1 block w-full rounded-xl bg-slate-950 border border-slate-700 py-2 px-3 text-white text-xs" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[11px] font-bold text-slate-400">Recovery Date (Optional)</label>
+                                                    <input type="date" value={newRecoveryDate} onChange={e => setNewRecoveryDate(e.target.value)} className="mt-1 block w-full rounded-xl bg-slate-950 border border-slate-700 py-2 px-3 text-white text-xs" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[11px] font-bold text-slate-400">Remarks</label>
+                                                    <input type="text" value={newRemarks} onChange={e => setNewRemarks(e.target.value)} placeholder="Optional comments..." className="mt-1 block w-full rounded-xl bg-slate-950 border border-slate-700 py-2 px-3 text-white text-xs" />
+                                                </div>
+                                                <button type="submit" className="w-full text-center text-xs py-2.5 font-bold rounded-xl btn-electric text-white shadow-lg">Save Record</button>
+                                            </form>
+                                        )}
+
+                                        {editingInjury && (
+                                            <form onSubmit={handleUpdateInjury} className="p-4 bg-slate-900/90 border border-cyan-500/50 rounded-2xl space-y-3 animate-fade-in">
+                                                <h4 className="text-xs font-extrabold text-cyan-300 uppercase tracking-wider">Edit Injury Record</h4>
+                                                <div>
+                                                    <label className="block text-[11px] font-bold text-slate-400">Injury Type</label>
+                                                    <input type="text" required value={editingInjury.injury_type} onChange={e => setEditingInjury({...editingInjury, injury_type: e.target.value})} className="mt-1 block w-full rounded-xl bg-slate-950 border border-slate-700 py-2 px-3 text-white text-xs" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[11px] font-bold text-slate-400">Body Part</label>
+                                                    <input type="text" required value={editingInjury.body_part} onChange={e => setEditingInjury({...editingInjury, body_part: e.target.value})} className="mt-1 block w-full rounded-xl bg-slate-950 border border-slate-700 py-2 px-3 text-white text-xs" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[11px] font-bold text-slate-400">Severity</label>
+                                                    <select value={editingInjury.severity} onChange={e => setEditingInjury({...editingInjury, severity: e.target.value})} className="mt-1 block w-full rounded-xl bg-slate-950 border border-slate-700 py-2 px-3 text-white text-xs">
+                                                        <option value="Low">Low</option>
+                                                        <option value="Moderate">Moderate</option>
+                                                        <option value="High">High</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[11px] font-bold text-slate-400">Injury Date</label>
+                                                    <input type="date" required value={editingInjury.injury_date} onChange={e => setEditingInjury({...editingInjury, injury_date: e.target.value})} className="mt-1 block w-full rounded-xl bg-slate-950 border border-slate-700 py-2 px-3 text-white text-xs" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[11px] font-bold text-slate-400">Recovery Date</label>
+                                                    <input type="date" value={editingInjury.recovery_date || ''} onChange={e => setEditingInjury({...editingInjury, recovery_date: e.target.value})} className="mt-1 block w-full rounded-xl bg-slate-950 border border-slate-700 py-2 px-3 text-white text-xs" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[11px] font-bold text-slate-400">Remarks</label>
+                                                    <input type="text" value={editingInjury.remarks || ''} onChange={e => setEditingInjury({...editingInjury, remarks: e.target.value})} className="mt-1 block w-full rounded-xl bg-slate-950 border border-slate-700 py-2 px-3 text-white text-xs" />
+                                                </div>
+                                                <div className="flex space-x-2 pt-1">
+                                                    <button type="submit" className="flex-1 text-center text-xs py-2.5 font-bold rounded-xl btn-electric text-white shadow-lg">Update</button>
+                                                    <button type="button" onClick={() => setEditingInjury(null)} className="px-3 text-xs py-2 text-slate-400 hover:text-white font-bold">Cancel</button>
+                                                </div>
+                                            </form>
+                                        )}
+
+                                        <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                                            {injuries.length > 0 ? (
+                                                injuries.map(inj => (
+                                                    <div key={inj.injury_id} className="p-4 bg-slate-900/70 rounded-2xl border border-slate-800/80 text-xs space-y-2 glass-panel-hover">
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="font-extrabold text-white">{inj.injury_type} ({inj.body_part})</span>
+                                                            <div className="flex items-center space-x-2">
+                                                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${inj.severity === 'High' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' :
+                                                                    inj.severity === 'Moderate' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                                                                    }`}>{inj.severity}</span>
+                                                                <button onClick={() => setEditingInjury(inj)} title="Edit Injury" className="p-1 text-slate-400 hover:text-cyan-400 transition-colors">
+                                                                    <Icon name="edit" className="h-3.5 w-3.5" />
+                                                                </button>
+                                                                <button onClick={() => handleDeleteInjury(inj.injury_id)} title="Delete Injury" className="p-1 text-slate-400 hover:text-rose-400 transition-colors">
+                                                                    <Icon name="trash" className="h-3.5 w-3.5" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                        <p className="text-slate-400 text-[11px] font-semibold">Date: {inj.injury_date} {inj.recovery_date ? `| Recov: ${inj.recovery_date}` : ''}</p>
+                                                        {inj.remarks && <p className="text-slate-300 text-[11px] italic font-serif">"{inj.remarks}"</p>}
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <p className="text-xs text-slate-500 text-center py-6">No injury records logged.</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Analysis & Telemetry View Tab */}
+                            {activeTab === 'analysis' && (
+                                <div className="space-y-6 animate-fade-in">
+                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-3 sm:space-y-0">
+                                        <button onClick={() => setActiveTab('dashboard')} className="flex items-center text-slate-400 hover:text-white text-xs font-bold transition-colors">
+                                            <Icon name="arrow-left" className="mr-2 h-4 w-4" /> Back to Dashboard
+                                        </button>
+
+                                        {analysisData && (
+                                            <div className="flex items-center space-x-3">
+                                                <button onClick={() => downloadPdfReport(selectedVideoId)} className="btn-rose px-4 py-2.5 text-xs font-bold text-white rounded-xl shadow-lg flex items-center space-x-2">
+                                                    <Icon name="file-text" className="h-4 w-4" />
+                                                    <span>Export PDF Report</span>
+                                                </button>
+                                                <button onClick={() => downloadExcelReport(selectedVideoId)} className="btn-electric px-4 py-2.5 text-xs font-bold text-white rounded-xl shadow-lg flex items-center space-x-2">
+                                                    <Icon name="file-spreadsheet" className="h-4 w-4" />
+                                                    <span>Export Excel Sheet</span>
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {analysisData ? (
+                                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                            {/* Video Player & Biomechanical Graph */}
+                                            <div className="lg:col-span-2 space-y-6">
+                                                <div className="glass-panel rounded-3xl p-6 space-y-4 shadow-2xl border-t-4 border-t-cyan-400">
+                                                    <h3 className="text-lg font-bold text-white font-display">Skeletal Landmark Video Player</h3>
+                                                    <div className="aspect-video bg-black rounded-2xl overflow-hidden border border-slate-800 flex items-center justify-center shadow-inner">
+                                                        {analysisData.filepath ? (
+                                                            <video className="w-full h-full object-contain" controls>
+                                                                <source src={`${API_URL}${analysisData.filepath}`} type="video/mp4" />
+                                                                Your browser does not support video playback.
+                                                            </video>
+                                                        ) : (
+                                                            <span className="text-slate-500 text-xs">Video source missing</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="glass-panel rounded-3xl p-6 space-y-4 shadow-2xl border-t-4 border-t-indigo-400">
+                                                    <h3 className="text-lg font-bold text-white font-display">Biomechanical Telemetry Timeline</h3>
+                                                    <div className="h-64 w-full relative">
+                                                        <canvas ref={chartRef}></canvas>
+                                                    </div>
+                                                </div>
+
+                                                {/* Movement Anomalies */}
+                                                <div className="glass-panel rounded-3xl p-6 space-y-4 shadow-2xl border-t-4 border-t-rose-400">
+                                                    <div className="flex items-center justify-between">
+                                                        <h3 className="text-lg font-bold text-white font-display flex items-center space-x-2">
+                                                            <Icon name="alert-circle" className="h-5 w-5 text-amber-400" />
+                                                            <span>Detected Movement Anomalies</span>
+                                                        </h3>
+                                                        <span className="text-xs text-slate-400 font-bold">
+                                                            {analysisData.anomalies?.length || 0} flagged events
+                                                        </span>
+                                                    </div>
+
+                                                    {analysisData.anomalies && analysisData.anomalies.length > 0 ? (
+                                                        <div className="space-y-3">
+                                                            {analysisData.anomalies.map((an, idx) => (
+                                                                <div key={idx} className="p-4 bg-slate-900/80 rounded-2xl border border-slate-800/80 space-y-2">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <span className="text-[11px] font-mono px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40">
+                                                                            @{an.timestamp_seconds?.toFixed(1) || '0.0'}s (Frame {an.frame_number})
+                                                                        </span>
+                                                                        <span className={`text-[10px] font-extrabold px-3 py-1 rounded-full ${an.severity === 'High' ? 'bg-rose-500/25 text-rose-300 border border-rose-500/40' :
+                                                                            an.severity === 'Moderate' ? 'bg-amber-500/25 text-amber-300 border border-amber-500/40' :
+                                                                                'bg-blue-500/25 text-blue-300 border border-blue-500/40'
+                                                                            }`}>
+                                                                            {an.severity} Severity ({an.anomaly_type})
+                                                                        </span>
+                                                                    </div>
+                                                                    <p className="text-xs text-slate-200 font-semibold">{an.description}</p>
+                                                                    <div className="flex justify-between items-center text-[11px] text-slate-400 font-bold pt-1">
+                                                                        <span>Affected: {an.affected_joints?.join(', ')}</span>
+                                                                        <span>Confidence: {Math.round(an.confidence_score * 100)}%</span>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-xs text-slate-400 bg-slate-900/50 p-4 rounded-2xl text-center border border-slate-800">
+                                                            No acute high-risk movement anomalies detected in frame telemetry.
+                                                        </p>
+                                                    )}
+                                                </div>
+
+                                                {/* Biomechanical metrics grid */}
+                                                <div className="glass-panel rounded-3xl p-6 space-y-4 shadow-2xl border-t-4 border-t-emerald-400">
+                                                    <h3 className="text-lg font-bold text-white font-display">Biomechanical Kinematic Metrics</h3>
+                                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                                        <div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
+                                                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Knee Valgus</p>
+                                                            <p className="text-lg font-extrabold text-cyan-400 mt-1 font-display">
+                                                                {analysisData.assessment?.knee_valgus}
+                                                            </p>
+                                                        </div>
+                                                        <div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
+                                                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Hip Tilt</p>
+                                                            <p className="text-lg font-extrabold text-white mt-1 font-display">
+                                                                {analysisData.assessment?.hip_stability}°
+                                                            </p>
+                                                        </div>
+                                                        <div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
+                                                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Trunk Lean</p>
+                                                            <p className="text-lg font-extrabold text-white mt-1 font-display">
+                                                                {analysisData.assessment?.trunk_lean}°
+                                                            </p>
+                                                        </div>
+                                                        <div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
+                                                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Stride Length</p>
+                                                            <p className="text-lg font-extrabold text-white mt-1 font-display">
+                                                                {analysisData.assessment?.stride_length}m
+                                                            </p>
+                                                        </div>
+                                                        <div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
+                                                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Alignment</p>
+                                                            <p className="text-lg font-extrabold text-white mt-1 font-display">
+                                                                {analysisData.assessment?.joint_alignment}°
+                                                            </p>
+                                                        </div>
+                                                        <div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
+                                                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Limb Symmetry</p>
+                                                            <p className="text-lg font-extrabold text-emerald-400 mt-1 font-display">
+                                                                {analysisData.assessment?.symmetry_score}%
+                                                            </p>
+                                                        </div>
+                                                        <div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
+                                                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Fatigue Score</p>
+                                                            <p className="text-lg font-extrabold text-amber-400 mt-1 font-display">
+                                                                {analysisData.assessment?.fatigue_score}/10
+                                                            </p>
+                                                        </div>
+                                                        <div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
+                                                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Quality Score</p>
+                                                            <p className="text-lg font-extrabold text-cyan-400 mt-1 font-display">
+                                                                {analysisData.assessment?.movement_quality}%
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 mt-2">
+                                                        <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-1">Posture & Technique Evaluation</h4>
+                                                        <p className="text-xs text-slate-300 leading-relaxed font-medium">{analysisData.assessment?.posture_assessment}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Injury Risks & Corrective Recommendations */}
+                                            <div className="space-y-6">
+                                                <div className="glass-panel rounded-3xl p-6 space-y-4 shadow-2xl border-t-4 border-t-rose-400">
+                                                    <h3 className="text-lg font-bold text-white font-display">Injury Risk Probabilities</h3>
+                                                    <div className="flex items-center space-x-4 p-4 bg-slate-900/80 rounded-2xl border border-slate-800">
+                                                        <div className={`h-14 w-14 rounded-2xl flex items-center justify-center text-lg font-extrabold text-white shadow-lg font-display ${analysisData.risk?.risk_category === 'Critical' || analysisData.risk?.risk_category === 'High' ? 'bg-rose-500/25 border border-rose-500/50 text-rose-300' :
+                                                            analysisData.risk?.risk_category === 'Moderate' ? 'bg-amber-500/25 border border-amber-500/50 text-amber-300' : 'bg-emerald-500/25 border border-emerald-500/50 text-emerald-300'
+                                                            }`}>
+                                                            {analysisData.risk?.risk_score}%
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="font-bold text-white text-sm">Overall Injury Risk</h4>
+                                                            <p className="text-xs text-slate-400 capitalize font-semibold">{analysisData.risk?.risk_category} Risk Category</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="space-y-3.5">
+                                                        {[
+                                                            { label: 'ACL Strain Risk', score: analysisData.risk?.acl_risk },
+                                                            { label: 'Hamstring Pull Risk', score: analysisData.risk?.hamstring_risk },
+                                                            { label: 'Ankle Sprain Risk', score: analysisData.risk?.ankle_sprain_risk },
+                                                            { label: 'Shoulder Impingement', score: analysisData.risk?.shoulder_risk },
+                                                            { label: 'Lower Back Strain', score: analysisData.risk?.lower_back_risk },
+                                                        ].map(r => (
+                                                            <div key={r.label} className="space-y-1.5">
+                                                                <div className="flex justify-between text-xs font-bold">
+                                                                    <span className="text-slate-300">{r.label}</span>
+                                                                    <span className="text-white font-display">{r.score}%</span>
+                                                                </div>
+                                                                <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-800">
+                                                                    <div className={`h-2 rounded-full ${r.score > 70 ? 'bg-gradient-to-r from-rose-500 to-red-600' : r.score > 40 ? 'bg-gradient-to-r from-amber-400 to-amber-600' : 'bg-gradient-to-r from-cyan-400 to-emerald-400'}`} style={{ width: `${r.score}%` }}></div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                {/* Corrective Recommendations display */}
+                                                <div className="glass-panel rounded-3xl p-6 space-y-4 shadow-2xl border-t-4 border-t-cyan-400">
+                                                    <h3 className="text-lg font-bold text-white font-display flex items-center space-x-2">
+                                                        <Icon name="sparkles" className="h-5 w-5 text-cyan-400" />
+                                                        <span>AI Corrective Recommendations</span>
+                                                    </h3>
+
+                                                    <div className="space-y-4">
+                                                        {analysisData.recommendations?.exercise_recommendations?.length > 0 && (
+                                                            <div>
+                                                                <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-2">Prescribed Exercises</h4>
+                                                                <div className="space-y-2">
+                                                                    {analysisData.recommendations.exercise_recommendations.map((ex, idx) => (
+                                                                        <div key={idx} className="p-3 bg-slate-900/80 rounded-2xl border border-slate-800 text-xs text-slate-200 font-medium">
+                                                                            <strong className="text-cyan-300 font-bold">{ex.name}</strong> {ex.reps}
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {analysisData.recommendations?.mobility_suggestions?.length > 0 && (
+                                                            <div>
+                                                                <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-2">Mobility Drills</h4>
+                                                                <ul className="list-disc pl-5 text-xs text-slate-300 space-y-1 font-medium">
+                                                                    {analysisData.recommendations.mobility_suggestions.map((m, idx) => (
+                                                                        <li key={idx}>{m.name}</li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                        )}
+
+                                                        {analysisData.recommendations?.strengthening_suggestions?.length > 0 && (
+                                                            <div>
+                                                                <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-2">Strengthening Targets</h4>
+                                                                <ul className="list-disc pl-5 text-xs text-slate-300 space-y-1 font-medium">
+                                                                    {analysisData.recommendations.strengthening_suggestions.map((s, idx) => (
+                                                                        <li key={idx}>{s.name}</li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                        )}
+
+                                                        <div>
+                                                            <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">Volume Modification Guidelines</h4>
+                                                            <p className="text-xs text-slate-300 bg-slate-900/60 p-3.5 border border-slate-800 rounded-2xl font-medium">
+                                                                {analysisData.recommendations?.training_modification}
+                                                            </p>
+                                                        </div>
+
+                                                        <div>
+                                                            <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">Recovery Protocol</h4>
+                                                            <p className="text-xs text-slate-300 bg-slate-900/60 p-3.5 border border-slate-800 rounded-2xl whitespace-pre-line font-medium">
+                                                                {analysisData.recommendations?.recovery_plan}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Medical Disclaimer Banner */}
+                                            <div className="lg:col-span-3 bg-amber-500/15 border border-amber-500/35 rounded-3xl p-5 flex items-start space-x-3.5 text-xs text-amber-200 shadow-xl">
+                                                <Icon name="shield-alert" className="h-6 w-6 flex-shrink-0 text-amber-400 mt-0.5" />
+                                                <div>
+                                                    <span className="font-extrabold text-amber-300">Medical & Clinical Disclaimer:</span> This AI platform provides biomechanical movement risk screening and technique evaluation based on video pose landmarks. It is intended solely for educational, athletic training, and preventative screening purposes and does NOT provide medical diagnosis or replace consultation with a licensed healthcare professional, physical therapist, or sports medicine specialist.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-20 text-slate-400 text-xs">Loading telemetry reports...</div>
+                                    )}
+                                </div>
+                            )}
+                        </main>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>
