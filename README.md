@@ -130,12 +130,37 @@ sports-injury-risk-detection/
 
 ## ⚡ Setup & Run Instructions
 
-### Prerequisites
+### 🐳 Option A: Running with Docker Compose (Recommended)
+
+Run the entire application stack (Frontend, Backend, and PostgreSQL) with a single command using Docker Compose:
+
+```bash
+# Build and start all services in detached mode
+docker compose up -d --build
+
+# View container logs
+docker compose logs -f
+
+# Stop all services
+docker compose down
+```
+
+#### Docker Stack Services:
+- **Frontend SPA**: [http://localhost:5173](http://localhost:5173)
+- **FastAPI Backend API**: [http://localhost:8000](http://localhost:8000)
+- **API Swagger Documentation**: [http://localhost:8000/api/v1/docs](http://localhost:8000/api/v1/docs)
+- **PostgreSQL Database**: Port `5432` with persistent Docker volume `sports_injury_postgres_data`
+
+---
+
+### 💻 Option B: Manual Local Setup
+
+#### Prerequisites
 * **Python**: 3.11+ (Tested on Python 3.14)
 * **Node.js**: 18+ and npm
 * **PostgreSQL**: 14+ service running locally or remotely
 
-### 1. Database Setup
+#### 1. Database Setup
 Create a PostgreSQL database named `sports_injury_db`:
 ```sql
 CREATE DATABASE sports_injury_db;
