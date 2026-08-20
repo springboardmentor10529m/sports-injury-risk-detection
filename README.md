@@ -1,4 +1,4 @@
-# sports-injury-risk-detection
+# sports Injury Risk Detection 
 
 # Sports Injury Risk Detection - Frontend
 
@@ -19,46 +19,6 @@ The AI-based injury prediction module will be integrated in a later phase.
 - Fetch API
 - Django REST API (backend integration)
 
-┌──────────────────────┐
-│        USER          │
-├──────────────────────┤
-│ PK: user_id          │
-│ username             │
-│ email                │
-│ password             │
-└──────────┬───────────┘
-           │
-           │ 1
-           │
-           │ 1
-┌──────────▼───────────┐
-│       ATHLETE        │
-├──────────────────────┤
-│ PK: athlete_id       │
-│ FK: user_id          │
-│ full_name            │
-│ age                  │
-│ gender               │
-│ sport                │
-│ height               │
-│ weight               │
-│ position             │
-│ training_hours       │
-│ previous_injury      │
-└──────────┬───────────┘
-           │
-           │ 1
-           │
-           │ M
-┌──────────▼───────────┐
-│    VIDEO / UPLOAD    │
-├──────────────────────┤
-│ PK: video_id         │
-│ FK: athlete_id       │
-│ video_file           │
-│ upload_date          │
-└──────────────────────┘
-
 ## Frontend Pages
 
 | File | Purpose |
@@ -70,26 +30,17 @@ The AI-based injury prediction module will be integrated in a later phase.
 | Upload.html | Athlete video upload interface |
 | dashboard.html | Displays the athlete dashboard |
 
-     
- ## Frontend page flow                  
-                   Home
- │
- ├──► Register
- │       │
- │       ▼
- │     Login
- │       │
- │       ▼
- │  Athlete Details
- │       │
- │       ▼
- │  Video Upload
- │       │
- │       ▼
- │   Dashboard
- │
- └──► Login ────────────────► Athlete Details
- 
+## Current Workflow
+
+User
+↓
+Registration / Login
+↓
+Athlete Details
+↓
+Video Upload
+↓
+Dashboard
 
 ## Backend Integration
 
@@ -122,6 +73,12 @@ Completed:
 - Video upload interface
 - Dashboard interface
 - Frontend-backend API integration
+
+Not started yet:
+- AI-based video analysis
+- Pose estimation
+- Biomechanical feature extraction
+- Machine learning injury-risk prediction
 
 ## Future Integration
 
