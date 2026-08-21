@@ -173,24 +173,3 @@ Access application UI: http://localhost:5173
 
 
 
-#📊 Current Implementation Status & Planned Features
-
-
-
-+-----------------------------------------------------------------------------------+
-|                        CURRENT IMPLEMENTATION STATUS TABLE                        |
-+---------------------------------------------------+-------------------------------+
-| Feature Module                                    | Implementation Status         |
-+---------------------------------------------------+-------------------------------+
-| User Auth (Argon2id + JWT + OAuth2 Bearer)        | ✅ Implemented                |
-| Role-Based Access Control (5 Roles)               | ✅ Implemented                |
-| Athlete Profile Management (CRUD / Upsert)        | ✅ Implemented                |
-| Video Binary Storage (PostgreSQL BYTEA + 500MB)   | ✅ Implemented                |
-| Profile-Gated Video Analysis UI                   | ✅ Implemented                |
-| Database Schema for Analysis & Predictions        | ✅ Implemented (Schema ready) |
-| MediaPipe / CV Joint Keypoint Extraction          | 🔮 Planned (Phase 3)          |
-| Kinematic Biomechanical Risk Assessment           | 🔮 Planned (Phase 3)          |
-| ML Injury Prediction Model (ACL, Hamstring, etc.) | 🔮 Planned (Phase 4)          |
-| Automated Recommendation Engine                   | 🔮 Planned (Phase 4)          |
-| Downloadable PDF Report Exporter                  | 🔮 Planned (Phase 5)          |
-+--------------------------------------------------
