@@ -4,9 +4,11 @@ An end-to-end AI-ready web platform for athlete movement analysis, physical prof
 📌 Project Overview
 Preventable musculoskeletal injuries—such as ACL tears, hamstring strains, and joint misalignments—frequently result from undetected biomechanical movement flaws, muscle imbalances, and excessive training loads. The Sports Injury Risk Detection System provides an automated platform to collect athlete physical metrics, store movement videos securely in a relational database, and lay the foundation for automated computer vision (CV) and machine learning (ML) biomechanical assessments.
 
+
 🎯 Problem Statement & Objectives
 Problem Statement
 Traditional sports injury prevention relies heavily on manual, visual evaluations by coaches and physiotherapists. These evaluations are often subjective, inconsistent, and difficult to scale across team rosters. Furthermore, physical metrics and movement recordings are rarely centralized, leading to delayed interventions and higher injury rates.
+
 
 Project Objectives
 Centralized Profile Management: Provide a secure platform for athletes to maintain physical baselines (sport, position, age, height, weight).
@@ -17,11 +19,13 @@ Extensible AI Architecture: Prepare database schemas, REST APIs, and UI pipeline
 ✅ Features Currently Implemented
 User Authentication & Role-Based Access Control (RBAC):
 
+
 Registration & Login with Argon2id password hashing.
 Stateless JWT Bearer Token authentication with client-side Axios interceptor.
 Database-authoritative role verification (Athlete, Coach, Physiotherapist, Sports Scientist, Administrator).
 Defense-in-depth security: Blocked Administrator self-registration & constant-time password check.
 Athlete Profile Management:
+
 
 Read-only identity views (user_id, athlete_id, name, email, role).
 Editable physical baselines (sport, position, age, height, weight).
@@ -29,11 +33,13 @@ Profile completeness evaluation (✓ Complete vs ⚠ Incomplete).
 Single-call upsert endpoint (PUT /api/v1/athletes/me) with server-side identity resolution.
 Video Binary Upload & PostgreSQL Storage:
 
+
 Upload movement videos up to 500 MB via multipart/form-data.
 Client-side & server-side MIME type validation (video/mp4, video/quicktime, video/x-msvideo, video/webm).
 Binary persistence in PostgreSQL using the BYTEA column format (file_data).
 Real-time frontend progress bar (0–100%) and post-upload metadata confirmation card (original_filename, content_type, file_size, uploaded_at).
 Profile-Gated Video Analysis UI:
+
 
 Automatic profile status check before unlocking the video upload interface.
 Warning callout with a quick-action link to complete profile details if missing.
@@ -98,15 +104,21 @@ sports-injury-risk-detection/
     ├── database.md               # Database schema & ERD
     └── wireframes/               # Low-fidelity UI wireframes
         └── README.md
+
 ⚡ Setup & Run Instructions
 🐳 Option A: Running with Docker Compose (Recommended)
 Run the entire application stack (Frontend, Backend, and PostgreSQL) with a single command using Docker Compose:
 
+
 # Build and start all services in detached mode
 docker compose up -d --build
 
+
+
 # View container logs
 docker compose logs -f
+
+
 
 # Stop all services
 docker compose down
@@ -115,11 +127,14 @@ Frontend SPA: http://localhost:5173
 FastAPI Backend API: http://localhost:8000
 API Swagger Documentation: http://localhost:8000/api/v1/docs
 PostgreSQL Database: Port 5432 with persistent Docker volume sports_injury_postgres_data
+
 💻 Option B: Manual Local Setup
 Prerequisites
 Python: 3.11+ (Tested on Python 3.14)
+
 Node.js: 18+ and npm
 PostgreSQL: 14+ service running locally or remotely
+
 1. Database Setup
 Create a PostgreSQL database named sports_injury_db:
 
@@ -155,7 +170,13 @@ npm install
 npm run dev
 Access application UI: http://localhost:5173
 
+
+
+
 📊 Current Implementation Status & Planned Features
+
+
+
 +-----------------------------------------------------------------------------------+
 |                        CURRENT IMPLEMENTATION STATUS TABLE                        |
 +---------------------------------------------------+-------------------------------+
