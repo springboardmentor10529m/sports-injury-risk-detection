@@ -1,0 +1,125 @@
+{
+  "dataset_name": "calgary",
+  "compatibility_matrix": [
+    {
+      "safemove_feature": "knee_flexion_rom_left",
+      "available_in_calgary": true,
+      "original_source_field": "Knee_Flexion_ROM",
+      "unit": "degrees",
+      "transformation": "Direct mapping",
+      "usable_for_phase5": true,
+      "reason": "Direct 3D kinematic angle excursion measurement"
+    },
+    {
+      "safemove_feature": "peak_knee_flexion_left",
+      "available_in_calgary": true,
+      "original_source_field": "Peak_Knee_Flexion",
+      "unit": "degrees",
+      "transformation": "Direct mapping",
+      "usable_for_phase5": true,
+      "reason": "Direct peak sagittal knee flexion angle"
+    },
+    {
+      "safemove_feature": "knee_valgus_proxy_left_max",
+      "available_in_calgary": true,
+      "original_source_field": "Peak_Knee_Abduction",
+      "unit": "degrees",
+      "transformation": "Direct 3D equivalent",
+      "usable_for_phase5": true,
+      "reason": "3D Knee Abduction angle is the gold-standard reference for 2D knee valgus"
+    },
+    {
+      "safemove_feature": "hip_flexion_rom_left",
+      "available_in_calgary": true,
+      "original_source_field": "Hip_Flexion_ROM",
+      "unit": "degrees",
+      "transformation": "Direct mapping",
+      "usable_for_phase5": true,
+      "reason": "Direct 3D hip sagittal range of motion"
+    },
+    {
+      "safemove_feature": "ankle_dorsiflexion_rom_left",
+      "available_in_calgary": true,
+      "original_source_field": "Ankle_Dorsiflexion_ROM",
+      "unit": "degrees",
+      "transformation": "Direct mapping",
+      "usable_for_phase5": true,
+      "reason": "Direct 3D ankle sagittal range of motion"
+    },
+    {
+      "safemove_feature": "trunk_lean_max",
+      "available_in_calgary": true,
+      "original_source_field": "Peak_Trunk_Forward_Lean",
+      "unit": "degrees",
+      "transformation": "Direct mapping",
+      "usable_for_phase5": true,
+      "reason": "Direct 3D sagittal trunk inclination"
+    },
+    {
+      "safemove_feature": "hip_adduction_max",
+      "available_in_calgary": true,
+      "original_source_field": "Peak_Hip_Adduction",
+      "unit": "degrees",
+      "transformation": "Direct 3D mocap feature",
+      "usable_for_phase5": true,
+      "reason": "High clinical relevance for patellofemoral and ITBS pathology"
+    },
+    {
+      "safemove_feature": "hip_internal_rotation_max",
+      "available_in_calgary": true,
+      "original_source_field": "Peak_Hip_Internal_Rotation",
+      "unit": "degrees",
+      "transformation": "Direct 3D mocap feature",
+      "usable_for_phase5": true,
+      "reason": "Transverse plane biomechanics captured via 3D markers"
+    },
+    {
+      "safemove_feature": "peak_vertical_grf",
+      "available_in_calgary": true,
+      "original_source_field": "Peak_Vertical_GRF",
+      "unit": "BW",
+      "transformation": "Force plate kinetic measurement",
+      "usable_for_phase5": true,
+      "reason": "Ground reaction force impact parameter"
+    },
+    {
+      "safemove_feature": "vertical_loading_rate",
+      "available_in_calgary": true,
+      "original_source_field": "Vertical_Loading_Rate",
+      "unit": "BW/s",
+      "transformation": "Force plate kinetic measurement",
+      "usable_for_phase5": true,
+      "reason": "Rate of force application during initial stance"
+    },
+    {
+      "safemove_feature": "knee_peak_velocity_left",
+      "available_in_calgary": false,
+      "original_source_field": "N/A",
+      "unit": "degrees/s",
+      "transformation": "Unavailable in summary table",
+      "usable_for_phase5": false,
+      "reason": "Angular velocity time series not stored in standard discrete summary table"
+    },
+    {
+      "safemove_feature": "knee_flexion_asymmetry_mean",
+      "available_in_calgary": false,
+      "original_source_field": "N/A",
+      "unit": "%",
+      "transformation": "Unavailable in unilateral stance protocol",
+      "usable_for_phase5": false,
+      "reason": "Calgary running gait trials record affected vs unaffected limb in separate discrete trials"
+    },
+    {
+      "safemove_feature": "trunk_lateral_tilt_max",
+      "available_in_calgary": false,
+      "original_source_field": "N/A",
+      "unit": "degrees",
+      "transformation": "Not recorded in primary summary table",
+      "usable_for_phase5": false,
+      "reason": "Frontal trunk tilt omitted from primary summary feature table"
+    }
+  ],
+  "total_safemove_features_evaluated": 13,
+  "available_features_count": 10,
+  "unavailable_features_count": 3
+}

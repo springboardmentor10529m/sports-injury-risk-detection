@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "safemove-backend"
+version = "0.1.0"
+description = "SafeMove AI-Powered Sports Injury Risk Detection Platform Backend"
+authors = ["SafeMove Team"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+select = ["E", "F", "I", "UP", "N"]
+ignore = []
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

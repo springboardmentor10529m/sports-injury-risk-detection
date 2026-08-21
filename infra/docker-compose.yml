@@ -1,0 +1,60 @@
+version: '3.9'
+services:
+  backend:
+    build: ../backend
+    ports: ['8000:8000']
+    env_file: ../.env
+    depends_on: [postgres, mongodb, redis]
+    volumes: ['../backend:/app']
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    
+  frontend:
+    build: ../frontend
+    ports: ['3000:3000']
+    env_file: ../.env
+    depends_on: [backend]
+    volumes: ['../frontend:/app', '/app/node_modules', '/app/.next']
+    
+  postgres:
+    image: timescale/timescaledb:latest-pg16
+    ports: ['5432:5432']
+    environment:
+      POSTGRES_USER: safemove
+      POSTGRES_PASSWORD: safemove_dev
+      POSTGRES_DB: safemove
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    
+  mongodb:
+    image: mongo:7
+    ports: ['27017:27017']
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: safemove
+      MONGO_INITDB_ROOT_PASSWORD: safemove_dev
+      MONGO_INITDB_DATABASE: safemove
+    volumes: [mongo_data:/data/db]
+    
+  redis:
+    image: redis:7-alpine
+    ports: ['6379:6379']
+    volumes: [redis_data:/data]
+    
+  minio:
+    image: minio/minio:latest
+    ports: ['9000:9000', '9001:9001']
+    environment:
+      MINIO_ROOT_USER: safemove
+      MINIO_ROOT_PASSWORD: safemove_dev
+    command: server /data --console-address ':9001'
+    volumes: [minio_data:/data]
+    
+  nginx:
+    image: nginx:alpine
+    ports: ['80:80']
+    volumes: ['./nginx/nginx.conf:/etc/nginx/nginx.conf:ro']
+    depends_on: [backend, frontend]
+
+volumes:
+  postgres_data:
+  mongo_data:
+  redis_data:
+  minio_data:

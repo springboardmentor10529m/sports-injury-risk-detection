@@ -1,0 +1,59 @@
+{
+  "dataset_name": "calgary",
+  "total_records": 20,
+  "unique_subjects": 20,
+  "injured_subjects": 12,
+  "non_injured_subjects": 8,
+  "missing_labels_count": 0,
+  "injury_types_distribution": {
+    "PATELLOFEMORAL_PAIN": 3,
+    "IT_BAND_SYNDROME": 3,
+    "HEALTHY_CONTROL": 8,
+    "PLANTAR_FASCIITIS": 2,
+    "ACHILLES_TENDINOPATHY": 2,
+    "TIBIAL_STRESS_SYNDROME": 2
+  },
+  "laterality_distribution": {
+    "LEFT": 5,
+    "RIGHT": 6,
+    "NOT_APPLICABLE": 8,
+    "BILATERAL": 1
+  },
+  "missing_values_per_feature": {
+    "sample_id": 0,
+    "athlete_id": 0,
+    "modality": 0,
+    "sport": 0,
+    "movement_type": 0,
+    "laterality": 0,
+    "source_dataset": 0,
+    "injury_label": 0,
+    "injury_type": 0,
+    "knee_flexion_rom_left": 0,
+    "peak_knee_flexion_left": 0,
+    "knee_valgus_proxy_left_max": 0,
+    "hip_flexion_rom_left": 0,
+    "hip_adduction_max": 0,
+    "hip_internal_rotation_max": 0,
+    "ankle_dorsiflexion_rom_left": 0,
+    "trunk_lean_max": 0,
+    "peak_vertical_grf": 0,
+    "vertical_loading_rate": 0
+  },
+  "available_biomechanical_variables": [
+    "knee_flexion_rom_left",
+    "peak_knee_flexion_left",
+    "knee_valgus_proxy_left_max",
+    "hip_flexion_rom_left",
+    "hip_adduction_max",
+    "hip_internal_rotation_max",
+    "ankle_dorsiflexion_rom_left",
+    "trunk_lean_max",
+    "peak_vertical_grf",
+    "vertical_loading_rate"
+  ],
+  "feature_matrix_shape": [
+    20,
+    19
+  ]
+}

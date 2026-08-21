@@ -1,0 +1,129 @@
+{
+  "dataset_name": "calgary",
+  "modality": "BIOMECHANICAL_TABLE",
+  "mappings": [
+    {
+      "original_column": "Subject_ID",
+      "safemove_field": "athlete_id",
+      "unit": "string",
+      "transformation": "Prefix with CALGARY_SUBJ_ to standardize de-identified subject IDs",
+      "is_ground_truth": true,
+      "is_feature": false
+    },
+    {
+      "original_column": "Injury_Status",
+      "safemove_field": "injury_label",
+      "unit": "binary [0=Healthy/Control, 1=Injured]",
+      "transformation": "Map 'Injured'/'Injury' -> 1, 'Healthy'/'Control' -> 0",
+      "is_ground_truth": true,
+      "is_feature": false
+    },
+    {
+      "original_column": "Injury_Type",
+      "safemove_field": "injury_type",
+      "unit": "categorical",
+      "transformation": "Preserve clinical pathology string (PFPS, ITBS, Plantar Fasciitis, Achilles Tendinopathy, TSS, Healthy Control)",
+      "is_ground_truth": true,
+      "is_feature": false
+    },
+    {
+      "original_column": "Affected_Side",
+      "safemove_field": "laterality",
+      "unit": "enum",
+      "transformation": "Map 'Left' -> LEFT, 'Right' -> RIGHT, 'Bilateral' -> BILATERAL, 'None'/'NA' -> NOT_APPLICABLE",
+      "is_ground_truth": true,
+      "is_feature": false
+    },
+    {
+      "original_column": "Knee_Flexion_ROM",
+      "safemove_field": "knee_flexion_rom_left",
+      "unit": "degrees",
+      "transformation": "Direct mapping of 3D motion-capture sagittal knee excursion during stance",
+      "is_ground_truth": false,
+      "is_feature": true,
+      "usable_phase5": true
+    },
+    {
+      "original_column": "Peak_Knee_Flexion",
+      "safemove_field": "peak_knee_flexion_left",
+      "unit": "degrees",
+      "transformation": "Direct mapping of peak knee flexion angle",
+      "is_ground_truth": false,
+      "is_feature": true,
+      "usable_phase5": true
+    },
+    {
+      "original_column": "Peak_Knee_Abduction",
+      "safemove_field": "knee_valgus_proxy_left_max",
+      "unit": "degrees",
+      "transformation": "Direct 3D kinematic equivalent of frontal plane knee valgus",
+      "is_ground_truth": false,
+      "is_feature": true,
+      "usable_phase5": true
+    },
+    {
+      "original_column": "Hip_Flexion_ROM",
+      "safemove_field": "hip_flexion_rom_left",
+      "unit": "degrees",
+      "transformation": "Direct mapping of hip sagittal excursion",
+      "is_ground_truth": false,
+      "is_feature": true,
+      "usable_phase5": true
+    },
+    {
+      "original_column": "Peak_Hip_Adduction",
+      "safemove_field": "hip_adduction_max",
+      "unit": "degrees",
+      "transformation": "Preserve 3D frontal plane hip adduction peak angle",
+      "is_ground_truth": false,
+      "is_feature": true,
+      "usable_phase5": true
+    },
+    {
+      "original_column": "Peak_Hip_Internal_Rotation",
+      "safemove_field": "hip_internal_rotation_max",
+      "unit": "degrees",
+      "transformation": "Preserve 3D transverse plane hip rotation peak angle",
+      "is_ground_truth": false,
+      "is_feature": true,
+      "usable_phase5": true
+    },
+    {
+      "original_column": "Ankle_Dorsiflexion_ROM",
+      "safemove_field": "ankle_dorsiflexion_rom_left",
+      "unit": "degrees",
+      "transformation": "Direct mapping of sagittal ankle range of motion",
+      "is_ground_truth": false,
+      "is_feature": true,
+      "usable_phase5": true
+    },
+    {
+      "original_column": "Peak_Trunk_Forward_Lean",
+      "safemove_field": "trunk_lean_max",
+      "unit": "degrees",
+      "transformation": "Direct mapping of maximum trunk forward inclination",
+      "is_ground_truth": false,
+      "is_feature": true,
+      "usable_phase5": true
+    },
+    {
+      "original_column": "Peak_Vertical_GRF",
+      "safemove_field": "peak_vertical_grf",
+      "unit": "body_weight (BW)",
+      "transformation": "Preserve kinetic ground reaction force peak",
+      "is_ground_truth": false,
+      "is_feature": true,
+      "usable_phase5": true
+    },
+    {
+      "original_column": "Vertical_Loading_Rate",
+      "safemove_field": "vertical_loading_rate",
+      "unit": "BW/s",
+      "transformation": "Preserve kinetic impact loading rate",
+      "is_ground_truth": false,
+      "is_feature": true,
+      "usable_phase5": true
+    }
+  ],
+  "missing_value_policy": "Explicit null/None recording without silent record dropping"
+}
