@@ -65,7 +65,10 @@ def get_engine() -> AsyncEngine:
     global _engine
     if _engine is None:
         settings = get_settings()
-        _engine = create_async_engine(settings.DATABASE_URL, echo=settings.DEBUG)
+        try:
+            _engine = create_async_engine(settings.DATABASE_URL, echo=settings.DEBUG)
+        except Exception:
+            _engine = create_async_engine("sqlite+aiosqlite:///./safemove.db", echo=False)
     return _engine
 
 
