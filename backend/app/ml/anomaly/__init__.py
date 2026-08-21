@@ -2,7 +2,9 @@
 Anomaly Detection ML Model (Autoencoder-based).
 Phase 4 Implementation.
 """
+
 from app.ml.base import BaseModel
+
 
 class AnomalyDetectionModel(BaseModel):
     def __init__(self, version: str = "1.0.0"):

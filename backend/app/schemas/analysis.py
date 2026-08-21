@@ -1,7 +1,9 @@
 """Analysis, Kinematics, and Biomechanical Anomaly Schemas."""
-from typing import List, Dict, Any, Optional
-from uuid import UUID
+
 from datetime import datetime
+from typing import Any
+from uuid import UUID
+
 from pydantic import BaseModel, ConfigDict
 
 
@@ -10,13 +12,13 @@ class KinematicsResponse(BaseModel):
 
     video_id: UUID
     athlete_id: UUID
-    timestamps: List[float]
-    joint_angle_curves: Dict[str, List[Optional[float]]]
-    angular_velocities: Dict[str, List[Optional[float]]]
-    angular_accelerations: Dict[str, List[Optional[float]]]
-    asymmetry_metrics: Dict[str, Any]
-    summary_metrics: Dict[str, Any]
-    created_at: Optional[datetime] = None
+    timestamps: list[float]
+    joint_angle_curves: dict[str, list[float | None]]
+    angular_velocities: dict[str, list[float | None]]
+    angular_accelerations: dict[str, list[float | None]]
+    asymmetry_metrics: dict[str, Any]
+    summary_metrics: dict[str, Any]
+    created_at: datetime | None = None
 
 
 class AnomalyEventItem(BaseModel):
@@ -24,15 +26,15 @@ class AnomalyEventItem(BaseModel):
 
     metric: str
     metric_name: str
-    timestamp_seconds: Optional[float] = None
-    observed: Optional[float] = None
-    observed_value: Optional[float] = None
+    timestamp_seconds: float | None = None
+    observed: float | None = None
+    observed_value: float | None = None
     baseline_mean: float
     baseline_value: float
     baseline_std: float
-    z_score: Optional[float] = None
-    percent_deviation: Optional[float] = None
-    percentage_deviation: Optional[float] = None
+    z_score: float | None = None
+    percent_deviation: float | None = None
+    percentage_deviation: float | None = None
     range_deviation: float = 0.0
     severity: str
     severity_derivation_rule: str
@@ -45,13 +47,13 @@ class MetricDeviationDetail(BaseModel):
     category: str
     unit: str
     metric: str
-    observed: Optional[float] = None
+    observed: float | None = None
     baseline_mean: float
     baseline_std: float
-    baseline_range: List[float]
-    absolute_deviation: Optional[float] = None
-    percent_deviation: Optional[float] = None
-    z_score: Optional[float] = None
+    baseline_range: list[float]
+    absolute_deviation: float | None = None
+    percent_deviation: float | None = None
+    z_score: float | None = None
     range_deviation: float = 0.0
     is_out_of_range: bool = False
     severity: str
@@ -65,25 +67,25 @@ class AnomalyAssessmentResponse(BaseModel):
     video_id: UUID
     athlete_id: UUID
     overall_status: str
-    feature_summary: Dict[str, Dict[str, Optional[float]]]
-    metric_deviations: Dict[str, MetricDeviationDetail]
-    temporal_peaks: Dict[str, Dict[str, Optional[float]]]
-    anomalies: List[AnomalyEventItem]
-    baseline_metadata: Dict[str, Any]
-    created_at: Optional[datetime] = None
+    feature_summary: dict[str, dict[str, float | None]]
+    metric_deviations: dict[str, MetricDeviationDetail]
+    temporal_peaks: dict[str, dict[str, float | None]]
+    anomalies: list[AnomalyEventItem]
+    baseline_metadata: dict[str, Any]
+    created_at: datetime | None = None
 
 
 class BiomechanicalAssessmentResponse(BaseModel):
-    joint_angles: Dict[str, float]
-    rom_values: Dict[str, float]
+    joint_angles: dict[str, float]
+    rom_values: dict[str, float]
     symmetry_index: float
     timestamp: float
 
 
 class MovementAnalysisResponse(BaseModel):
     session_id: str
-    assessments: List[BiomechanicalAssessmentResponse]
-    summary: Dict[str, Any]
+    assessments: list[BiomechanicalAssessmentResponse]
+    summary: dict[str, Any]
 
 
 class AnomalyEventResponse(BaseModel):

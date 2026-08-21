@@ -3,17 +3,17 @@ SafeMove Calgary Biomechanical Dataset Ingestion & Integration Script.
 Ingests raw Calgary motion-capture metadata, generates mapping & compatibility reports,
 extracts tabular ML feature matrix, and executes subject-isolated train/val/test splits.
 """
-import sys
+
 import os
+import sys
 from pathlib import Path
-import json
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from app.ml.datasets.storage_layout import DatasetStorageManager
 from app.ml.datasets.adapters.calgary_adapter import CalgaryDatasetAdapter
-from app.ml.datasets.validator import DatasetValidator
 from app.ml.datasets.splitter import DatasetSplitter
+from app.ml.datasets.storage_layout import DatasetStorageManager
+from app.ml.datasets.validator import DatasetValidator
 
 
 def main():
@@ -45,7 +45,7 @@ def main():
         manifest=manifest,
         check_files_exist=True,
         check_video_integrity=False,  # Tabular/Mocap data, NOT video
-        allow_unlabeled=False
+        allow_unlabeled=False,
     )
     print(f"   -> Validation Passed:        {report.is_valid}")
     print(f"   -> Modalities Identified:    {report.modalities_present}")
@@ -59,7 +59,7 @@ def main():
     splitter = DatasetSplitter(train_ratio=0.70, val_ratio=0.15, test_ratio=0.15, random_seed=42)
     split_res = splitter.split(manifest)
     split_dir = storage.get_splits_dir("calgary")
-    split_files = splitter.save_splits(split_res, split_dir)
+    splitter.save_splits(split_res, split_dir)
 
     print(f"   -> Train Set: {split_res.train_count} samples (Subjects: {len(split_res.train_athletes)})")
     print(f"   -> Val Set:   {split_res.val_count} samples (Subjects: {len(split_res.val_athletes)})")

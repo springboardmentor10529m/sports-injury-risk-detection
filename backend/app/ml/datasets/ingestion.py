@@ -2,17 +2,17 @@
 Dataset Ingestion Module for SafeMove ML Pipeline.
 Imports raw video files and external annotations into standardized, provenance-tracked manifests.
 """
-from typing import List, Dict, Any, Optional
-from pathlib import Path
+
+import csv
+import hashlib
 import json
 import shutil
-import hashlib
-import csv
+from pathlib import Path
 
 from app.ml.datasets.schema import (
-    DatasetSample,
     DatasetManifest,
     DatasetProvenance,
+    DatasetSample,
     Laterality,
     SportType,
 )
@@ -22,7 +22,7 @@ from app.ml.datasets.storage_layout import DatasetStorageManager
 class DatasetIngestor:
     """Ingests raw video directories or annotation tables into the SafeMove dataset repository."""
 
-    def __init__(self, storage_manager: Optional[DatasetStorageManager] = None):
+    def __init__(self, storage_manager: DatasetStorageManager | None = None):
         self.storage = storage_manager or DatasetStorageManager()
 
     @staticmethod
@@ -39,7 +39,7 @@ class DatasetIngestor:
         csv_path: Path,
         dataset_name: str,
         provenance: DatasetProvenance,
-        copy_to_raw_storage: bool = True
+        copy_to_raw_storage: bool = True,
     ) -> DatasetManifest:
         """
         Ingest dataset from a CSV annotation file.
@@ -54,9 +54,9 @@ class DatasetIngestor:
         dirs = self.storage.initialize_dataset_directories(dataset_name)
         raw_dir = dirs["raw"]
 
-        samples: List[DatasetSample] = []
+        samples: list[DatasetSample] = []
 
-        with open(csv_path, mode="r", encoding="utf-8-sig") as f:
+        with open(csv_path, encoding="utf-8-sig") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 v_path_raw = row.get("video_path", "").strip()
@@ -120,11 +120,7 @@ class DatasetIngestor:
                 samples.append(sample)
 
         provenance.total_samples = len(samples)
-        manifest = DatasetManifest(
-            dataset_name=dataset_name,
-            provenance=provenance,
-            samples=samples
-        )
+        manifest = DatasetManifest(dataset_name=dataset_name, provenance=provenance, samples=samples)
 
         # Save manifest
         manifest_path = dirs["labels"] / "manifest.json"

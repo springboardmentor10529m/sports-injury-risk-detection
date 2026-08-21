@@ -2,27 +2,28 @@
 Demonstration & Verification Script for SafeMove Phase 5A:
 Dataset Ingestion, Validation, Athlete Leakage Prevention Splits, and ML Feature Matrix Generation.
 """
-import sys
+
 import os
-from pathlib import Path
+import sys
 import tempfile
+from pathlib import Path
+
 import cv2
 import numpy as np
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from app.ml.datasets.feature_pipeline import MLFeatureGenerator
 from app.ml.datasets.schema import (
-    DatasetSample,
     DatasetManifest,
     DatasetProvenance,
+    DatasetSample,
     Laterality,
     SportType,
 )
+from app.ml.datasets.splitter import DatasetSplitter
 from app.ml.datasets.storage_layout import DatasetStorageManager
 from app.ml.datasets.validator import DatasetValidator
-from app.ml.datasets.splitter import DatasetSplitter
-from app.ml.datasets.ingestion import DatasetIngestor
-from app.ml.datasets.feature_pipeline import MLFeatureGenerator
 
 
 def generate_synthetic_video_drill(output_path: Path, num_frames=15, is_asymmetric=False) -> Path:
@@ -36,9 +37,27 @@ def generate_synthetic_video_drill(output_path: Path, num_frames=15, is_asymmetr
 
         # Draw stick figure athlete
         cv2.circle(frame, (160 + tilt, 50 + squat_depth), 15, (255, 255, 255), -1)
-        cv2.line(frame, (160 + tilt, 65 + squat_depth), (160, 130 + squat_depth), (255, 255, 255), 4)
-        cv2.line(frame, (160, 130 + squat_depth), (130, 190 + squat_depth), (255, 255, 255), 3)
-        cv2.line(frame, (160, 130 + squat_depth), (190, 190 + squat_depth), (255, 255, 255), 3)
+        cv2.line(
+            frame,
+            (160 + tilt, 65 + squat_depth),
+            (160, 130 + squat_depth),
+            (255, 255, 255),
+            4,
+        )
+        cv2.line(
+            frame,
+            (160, 130 + squat_depth),
+            (130, 190 + squat_depth),
+            (255, 255, 255),
+            3,
+        )
+        cv2.line(
+            frame,
+            (160, 130 + squat_depth),
+            (190, 190 + squat_depth),
+            (255, 255, 255),
+            3,
+        )
         out.write(frame)
     out.release()
     return output_path
@@ -63,24 +82,26 @@ def main():
         samples: list[DatasetSample] = []
         for ath_idx in range(6):
             ath_id = f"ATH_{ath_idx + 1:03d}"
-            is_injured_athlete = (ath_idx % 2 == 1)
+            is_injured_athlete = ath_idx % 2 == 1
 
             for drill_idx in range(2):
                 v_path = video_files_dir / f"{ath_id}_drill_{drill_idx + 1}.mp4"
                 generate_synthetic_video_drill(v_path, num_frames=15, is_asymmetric=is_injured_athlete)
 
-                samples.append(DatasetSample(
-                    video_id=f"{ath_id}_D{drill_idx + 1}",
-                    athlete_id=ath_id,
-                    video_path=str(v_path),
-                    sport=SportType.BASKETBALL.value,
-                    movement_type="Drop Jump Screening",
-                    injury_label=1 if is_injured_athlete else 0,
-                    injury_type="ACL_TEAR" if is_injured_athlete else "NONE",
-                    laterality=Laterality.LEFT if is_injured_athlete else Laterality.BILATERAL,
-                    timestamp_onset_seconds=0.65 if is_injured_athlete else None,
-                    source_dataset=dataset_name,
-                ))
+                samples.append(
+                    DatasetSample(
+                        video_id=f"{ath_id}_D{drill_idx + 1}",
+                        athlete_id=ath_id,
+                        video_path=str(v_path),
+                        sport=SportType.BASKETBALL.value,
+                        movement_type="Drop Jump Screening",
+                        injury_label=1 if is_injured_athlete else 0,
+                        injury_type="ACL_TEAR" if is_injured_athlete else "NONE",
+                        laterality=Laterality.LEFT if is_injured_athlete else Laterality.BILATERAL,
+                        timestamp_onset_seconds=0.65 if is_injured_athlete else None,
+                        source_dataset=dataset_name,
+                    )
+                )
 
         provenance = DatasetProvenance(
             source_name=dataset_name,
@@ -88,17 +109,13 @@ def main():
             license="Research Data Use Agreement (OpenBiomech)",
             citation="doi:10.1016/j.sportsbiomech.2025.04.012",
             total_samples=len(samples),
-            annotation_protocol="Clinical Radiologist & 3D Vicon Verified ACL Cohort"
+            annotation_protocol="Clinical Radiologist & 3D Vicon Verified ACL Cohort",
         )
 
-        manifest = DatasetManifest(
-            dataset_name=dataset_name,
-            provenance=provenance,
-            samples=samples
-        )
+        manifest = DatasetManifest(dataset_name=dataset_name, provenance=provenance, samples=samples)
 
         dirs = storage.initialize_dataset_directories(dataset_name)
-        print(f"   -> Separated Storage Layout Initialized:")
+        print("   -> Separated Storage Layout Initialized:")
         print(f"       * Raw:        {dirs['raw']}")
         print(f"       * Processed:  {dirs['processed']}")
         print(f"       * Pose:       {dirs['pose']}")
@@ -114,7 +131,7 @@ def main():
             manifest=manifest,
             check_files_exist=True,
             check_video_integrity=True,
-            allow_unlabeled=False
+            allow_unlabeled=False,
         )
 
         print(f"   -> Validation Passed:        {report.is_valid}")
@@ -143,18 +160,23 @@ def main():
         feat_gen = MLFeatureGenerator(storage_manager=storage)
         df = feat_gen.generate_feature_table(manifest)
 
-        print(f"   -> Features Extracted Successfully!")
+        print("   -> Features Extracted Successfully!")
         print(f"   -> Feature Matrix Dimensions: {df.shape[0]} samples x {df.shape[1]} features")
-        print(f"   -> Columns Sample:")
+        print("   -> Columns Sample:")
         for col in list(df.columns)[:12]:
             print(f"       * {col}")
         print(f"       ... and {len(df.columns) - 12} additional numerical features.")
 
         print("\n5. [Inspection of First 2 Extracted ML Feature Rows]:")
         sample_display_cols = [
-            "video_id", "athlete_id", "sport", "knee_flexion_rom_left",
-            "trunk_lean_max", "knee_flexion_asymmetry_mean",
-            "z_score_knee_flexion_rom_left", "injury_label"
+            "video_id",
+            "athlete_id",
+            "sport",
+            "knee_flexion_rom_left",
+            "trunk_lean_max",
+            "knee_flexion_asymmetry_mean",
+            "z_score_knee_flexion_rom_left",
+            "injury_label",
         ]
         print(df[sample_display_cols].to_string(index=False))
 

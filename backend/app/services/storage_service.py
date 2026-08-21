@@ -1,9 +1,10 @@
 """Storage service for video file management."""
+
+import logging
 import os
 import uuid
-import logging
 from pathlib import Path
-from typing import Optional, Tuple
+
 import cv2
 
 from app.config import get_settings
@@ -26,14 +27,11 @@ class StorageService:
         return ext
 
     def save_video_file(
-        self,
-        file_content: bytes,
-        original_filename: str,
-        video_id: uuid.UUID
-    ) -> Tuple[str, str, Optional[float], Optional[float], Optional[str]]:
+        self, file_content: bytes, original_filename: str, video_id: uuid.UUID
+    ) -> tuple[str, str, float | None, float | None, str | None]:
         """
         Save video file securely to local storage directory.
-        
+
         Returns:
             (safe_filename, relative_storage_path, fps, duration_seconds, resolution)
         """
@@ -76,7 +74,7 @@ class StorageService:
 
         return safe_filename, relative_path, fps, duration_seconds, resolution
 
-    def get_video_file_path(self, storage_path: str) -> Optional[Path]:
+    def get_video_file_path(self, storage_path: str) -> Path | None:
         """
         Resolve storage path and verify it is located safely inside storage directory.
         """
@@ -108,7 +106,7 @@ class StorageService:
         return False
 
 
-_storage_service_instance: Optional[StorageService] = None
+_storage_service_instance: StorageService | None = None
 
 
 def get_storage_service() -> StorageService:

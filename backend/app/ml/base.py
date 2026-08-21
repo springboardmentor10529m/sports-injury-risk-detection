@@ -1,9 +1,11 @@
 """Base ML Model Interface."""
+
 from abc import ABC, abstractmethod
+
 
 class BaseModel(ABC):
     """Abstract base class for all ML models in SafeMove."""
-    
+
     def __init__(self, version: str):
         self.version = version
 
@@ -24,7 +26,4 @@ class BaseModel(ABC):
 
     def get_model_info(self) -> dict:
         """Return metadata about the loaded model."""
-        return {
-            "version": self.version,
-            "class": self.__class__.__name__
-        }
+        return {"version": self.version, "class": self.__class__.__name__}

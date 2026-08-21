@@ -3,7 +3,9 @@ Pose Estimation ML Model.
 Reference models: MediaPipe, MoveNet, OpenPose, Detectron2.
 Phase 2 Implementation.
 """
+
 from app.ml.base import BaseModel
+
 
 class PoseEstimationModel(BaseModel):
     def __init__(self, version: str = "1.0.0"):

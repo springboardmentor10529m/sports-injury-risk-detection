@@ -6,12 +6,12 @@ The baseline values and severity rules defined in this module are PROVISIONAL
 DEVELOPMENTAL STANDARDS for software verification and movement symmetry tracking.
 They are NOT clinically validated medical diagnostic thresholds or injury-risk cutoffs.
 """
-from dataclasses import dataclass, field
-from typing import Dict, Optional, Tuple
-import enum
+
+from dataclasses import dataclass
+from enum import StrEnum
 
 
-class DerivationStrategy(str, enum.Enum):
+class DerivationStrategy(StrEnum):
     Z_SCORE_PRIMARY = "Z_SCORE_PRIMARY"
     PERCENTAGE_PRIMARY = "PERCENTAGE_PRIMARY"
     RANGE_PRIMARY = "RANGE_PRIMARY"
@@ -23,6 +23,7 @@ class SeverityRuleConfig:
     Configurable severity derivation thresholds.
     Allows adjusting statistical boundaries without modifying detection logic.
     """
+
     strategy: DerivationStrategy = DerivationStrategy.Z_SCORE_PRIMARY
     # Z-Score thresholds (when std_dev > 0)
     z_score_mild: float = 1.0
@@ -41,6 +42,7 @@ class SeverityRuleConfig:
 @dataclass(frozen=True)
 class MovementBaseline:
     """Configurable baseline representation for a kinematic movement metric."""
+
     metric_key: str
     display_name: str
     category: str
@@ -56,7 +58,7 @@ class MovementBaseline:
 
 
 # Default Developmental Baseline Configuration Registry
-DEFAULT_DEVELOPMENTAL_BASELINES: Dict[str, MovementBaseline] = {
+DEFAULT_DEVELOPMENTAL_BASELINES: dict[str, MovementBaseline] = {
     "knee_flexion_rom": MovementBaseline(
         metric_key="knee_flexion_rom",
         display_name="Knee Flexion ROM",
@@ -66,7 +68,7 @@ DEFAULT_DEVELOPMENTAL_BASELINES: Dict[str, MovementBaseline] = {
         std_dev=15.0,
         min_norm=90.0,
         max_norm=145.0,
-        description="Range of motion between knee extension and peak flexion during dynamic movement."
+        description="Range of motion between knee extension and peak flexion during dynamic movement.",
     ),
     "peak_knee_flexion": MovementBaseline(
         metric_key="peak_knee_flexion",
@@ -77,7 +79,7 @@ DEFAULT_DEVELOPMENTAL_BASELINES: Dict[str, MovementBaseline] = {
         std_dev=12.0,
         min_norm=95.0,
         max_norm=150.0,
-        description="Maximum observed sagittal knee flexion angle."
+        description="Maximum observed sagittal knee flexion angle.",
     ),
     "hip_flexion_rom": MovementBaseline(
         metric_key="hip_flexion_rom",
@@ -88,7 +90,7 @@ DEFAULT_DEVELOPMENTAL_BASELINES: Dict[str, MovementBaseline] = {
         std_dev=15.0,
         min_norm=65.0,
         max_norm=120.0,
-        description="Range of motion between hip neutral and peak flexion."
+        description="Range of motion between hip neutral and peak flexion.",
     ),
     "ankle_dorsiflexion_rom": MovementBaseline(
         metric_key="ankle_dorsiflexion_rom",
@@ -99,7 +101,7 @@ DEFAULT_DEVELOPMENTAL_BASELINES: Dict[str, MovementBaseline] = {
         std_dev=8.0,
         min_norm=20.0,
         max_norm=55.0,
-        description="Range of motion across ankle flexion/extension."
+        description="Range of motion across ankle flexion/extension.",
     ),
     "trunk_lean_max": MovementBaseline(
         metric_key="trunk_lean_max",
@@ -110,7 +112,7 @@ DEFAULT_DEVELOPMENTAL_BASELINES: Dict[str, MovementBaseline] = {
         std_dev=8.0,
         min_norm=0.0,
         max_norm=35.0,
-        description="Maximum sagittal forward lean angle relative to vertical axis."
+        description="Maximum sagittal forward lean angle relative to vertical axis.",
     ),
     "trunk_lateral_tilt_max": MovementBaseline(
         metric_key="trunk_lateral_tilt_max",
@@ -121,7 +123,7 @@ DEFAULT_DEVELOPMENTAL_BASELINES: Dict[str, MovementBaseline] = {
         std_dev=3.0,
         min_norm=0.0,
         max_norm=12.0,
-        description="Maximum frontal plane lateral tilt angle relative to horizontal shoulder alignment."
+        description="Maximum frontal plane lateral tilt angle relative to horizontal shoulder alignment.",
     ),
     "knee_valgus_proxy_max": MovementBaseline(
         metric_key="knee_valgus_proxy_max",
@@ -132,7 +134,7 @@ DEFAULT_DEVELOPMENTAL_BASELINES: Dict[str, MovementBaseline] = {
         std_dev=4.0,
         min_norm=0.0,
         max_norm=15.0,
-        description="Estimated frontal plane knee medial displacement deviation proxy."
+        description="Estimated frontal plane knee medial displacement deviation proxy.",
     ),
     "knee_flexion_asymmetry": MovementBaseline(
         metric_key="knee_flexion_asymmetry",
@@ -143,7 +145,7 @@ DEFAULT_DEVELOPMENTAL_BASELINES: Dict[str, MovementBaseline] = {
         std_dev=4.0,
         min_norm=0.0,
         max_norm=12.0,
-        description="Mean absolute bilateral difference percentage between left and right knee flexion."
+        description="Mean absolute bilateral difference percentage between left and right knee flexion.",
     ),
     "hip_flexion_asymmetry": MovementBaseline(
         metric_key="hip_flexion_asymmetry",
@@ -154,7 +156,7 @@ DEFAULT_DEVELOPMENTAL_BASELINES: Dict[str, MovementBaseline] = {
         std_dev=4.5,
         min_norm=0.0,
         max_norm=14.0,
-        description="Mean absolute bilateral difference percentage between left and right hip flexion."
+        description="Mean absolute bilateral difference percentage between left and right hip flexion.",
     ),
     "knee_valgus_asymmetry": MovementBaseline(
         metric_key="knee_valgus_asymmetry",
@@ -165,7 +167,7 @@ DEFAULT_DEVELOPMENTAL_BASELINES: Dict[str, MovementBaseline] = {
         std_dev=5.0,
         min_norm=0.0,
         max_norm=15.0,
-        description="Mean absolute bilateral difference percentage in frontal knee alignment proxy."
+        description="Mean absolute bilateral difference percentage in frontal knee alignment proxy.",
     ),
     "peak_angular_velocity": MovementBaseline(
         metric_key="peak_angular_velocity",
@@ -176,7 +178,7 @@ DEFAULT_DEVELOPMENTAL_BASELINES: Dict[str, MovementBaseline] = {
         std_dev=100.0,
         min_norm=200.0,
         max_norm=750.0,
-        description="Maximum rate of change of knee joint angle."
+        description="Maximum rate of change of knee joint angle.",
     ),
 }
 
@@ -186,19 +188,19 @@ class BaselineRegistry:
 
     def __init__(
         self,
-        custom_baselines: Optional[Dict[str, MovementBaseline]] = None,
-        rule_config: Optional[SeverityRuleConfig] = None
+        custom_baselines: dict[str, MovementBaseline] | None = None,
+        rule_config: SeverityRuleConfig | None = None,
     ):
         self._baselines = dict(DEFAULT_DEVELOPMENTAL_BASELINES)
         if custom_baselines:
             self._baselines.update(custom_baselines)
         self.rule_config = rule_config or SeverityRuleConfig()
 
-    def get_baseline(self, metric_key: str) -> Optional[MovementBaseline]:
+    def get_baseline(self, metric_key: str) -> MovementBaseline | None:
         """Retrieve baseline by metric key."""
         return self._baselines.get(metric_key)
 
-    def get_all_baselines(self) -> Dict[str, MovementBaseline]:
+    def get_all_baselines(self) -> dict[str, MovementBaseline]:
         """Retrieve full map of registered developmental baselines."""
         return dict(self._baselines)
 
@@ -211,7 +213,7 @@ class BaselineRegistry:
         self.rule_config = config
 
 
-_default_registry: Optional[BaselineRegistry] = None
+_default_registry: BaselineRegistry | None = None
 
 
 def get_baseline_registry() -> BaselineRegistry:

@@ -1,5 +1,7 @@
 """Risk prediction service stub."""
+
 from abc import ABC, abstractmethod
+
 
 class RiskPredictionBase(ABC):
     @abstractmethod
@@ -10,6 +12,7 @@ class RiskPredictionBase(ABC):
         Note: Risk scores are decision-support signals, not clinical diagnoses.
         """
         pass
+
 
 class RiskPredictionService(RiskPredictionBase):
     def predict_risk(self, athlete_id: str, assessment_data: dict) -> dict:

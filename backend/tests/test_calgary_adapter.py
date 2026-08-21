@@ -2,21 +2,22 @@
 Tests for SafeMove Phase 5A.5: Calgary Biomechanical Dataset Adapter,
 Provenance, Feature Mapping, Modality Detection, and Leakage Prevention.
 """
-from pathlib import Path
+
 import csv
 import json
-import pytest
-import pandas as pd
+from pathlib import Path
 
-from app.ml.datasets.schema import DataModality, Laterality, DatasetManifest
-from app.ml.datasets.storage_layout import DatasetStorageManager
+import pytest
+
 from app.ml.datasets.adapters.calgary_adapter import (
-    CalgaryDatasetAdapter,
     CALGARY_FIELD_MAPPINGS,
     SAFEMOVE_COMPATIBILITY_SPEC,
+    CalgaryDatasetAdapter,
 )
-from app.ml.datasets.validator import DatasetValidator
+from app.ml.datasets.schema import DataModality, Laterality
 from app.ml.datasets.splitter import DatasetSplitter
+from app.ml.datasets.storage_layout import DatasetStorageManager
+from app.ml.datasets.validator import DatasetValidator
 
 
 @pytest.fixture
@@ -25,29 +26,106 @@ def sample_calgary_csv(tmp_path: Path) -> Path:
     csv_file = tmp_path / "test_calgary_meta.csv"
     with open(csv_file, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow([
-            "Subject_ID", "Gender", "Age", "Height_cm", "Mass_kg", "Speed_ms",
-            "Experience_Years", "Weekly_Mileage_km", "Injury_Status", "Injury_Type",
-            "Affected_Side", "Knee_Flexion_ROM", "Peak_Knee_Flexion", "Peak_Knee_Abduction",
-            "Hip_Flexion_ROM", "Peak_Hip_Adduction", "Peak_Hip_Internal_Rotation",
-            "Ankle_Dorsiflexion_ROM", "Peak_Trunk_Forward_Lean", "Peak_Vertical_GRF",
-            "Vertical_Loading_Rate"
-        ])
-        writer.writerow([
-            "SUBJ_0101", "Female", "27.5", "165.0", "58.0", "3.5", "4.0", "30.0",
-            "Injured", "PATELLOFEMORAL_PAIN", "Left", "42.0", "48.0", "9.5",
-            "38.0", "18.0", "12.0", "24.0", "12.5", "2.40", "68.0"
-        ])
-        writer.writerow([
-            "SUBJ_0102", "Male", "32.0", "178.0", "72.0", "3.5", "6.0", "45.0",
-            "Healthy", "HEALTHY_CONTROL", "None", "45.5", "51.5", "4.0",
-            "40.5", "13.0", "7.0", "27.0", "8.0", "2.30", "54.0"
-        ])
-        writer.writerow([
-            "SUBJ_0103", "Male", "40.0", "175.0", "70.0", "3.5", "10.0", "50.0",
-            "Injured", "IT_BAND_SYNDROME", "Right", "39.0", "44.5", "6.5",
-            "35.0", "20.0", "14.0", "", "11.0", "2.60", "75.0"  # Missing Ankle ROM
-        ])
+        writer.writerow(
+            [
+                "Subject_ID",
+                "Gender",
+                "Age",
+                "Height_cm",
+                "Mass_kg",
+                "Speed_ms",
+                "Experience_Years",
+                "Weekly_Mileage_km",
+                "Injury_Status",
+                "Injury_Type",
+                "Affected_Side",
+                "Knee_Flexion_ROM",
+                "Peak_Knee_Flexion",
+                "Peak_Knee_Abduction",
+                "Hip_Flexion_ROM",
+                "Peak_Hip_Adduction",
+                "Peak_Hip_Internal_Rotation",
+                "Ankle_Dorsiflexion_ROM",
+                "Peak_Trunk_Forward_Lean",
+                "Peak_Vertical_GRF",
+                "Vertical_Loading_Rate",
+            ]
+        )
+        writer.writerow(
+            [
+                "SUBJ_0101",
+                "Female",
+                "27.5",
+                "165.0",
+                "58.0",
+                "3.5",
+                "4.0",
+                "30.0",
+                "Injured",
+                "PATELLOFEMORAL_PAIN",
+                "Left",
+                "42.0",
+                "48.0",
+                "9.5",
+                "38.0",
+                "18.0",
+                "12.0",
+                "24.0",
+                "12.5",
+                "2.40",
+                "68.0",
+            ]
+        )
+        writer.writerow(
+            [
+                "SUBJ_0102",
+                "Male",
+                "32.0",
+                "178.0",
+                "72.0",
+                "3.5",
+                "6.0",
+                "45.0",
+                "Healthy",
+                "HEALTHY_CONTROL",
+                "None",
+                "45.5",
+                "51.5",
+                "4.0",
+                "40.5",
+                "13.0",
+                "7.0",
+                "27.0",
+                "8.0",
+                "2.30",
+                "54.0",
+            ]
+        )
+        writer.writerow(
+            [
+                "SUBJ_0103",
+                "Male",
+                "40.0",
+                "175.0",
+                "70.0",
+                "3.5",
+                "10.0",
+                "50.0",
+                "Injured",
+                "IT_BAND_SYNDROME",
+                "Right",
+                "39.0",
+                "44.5",
+                "6.5",
+                "35.0",
+                "20.0",
+                "14.0",
+                "",
+                "11.0",
+                "2.60",
+                "75.0",  # Missing Ankle ROM
+            ]
+        )
     return csv_file
 
 
@@ -169,7 +247,7 @@ def test_calgary_feature_mapping_correctness(sample_calgary_csv: Path, tmp_path:
     # Verify mapping report was written
     mapping_report_path = storage.get_labels_dir("calgary") / "mapping_report.json"
     assert mapping_report_path.exists()
-    with open(mapping_report_path, "r", encoding="utf-8") as f:
+    with open(mapping_report_path, encoding="utf-8") as f:
         mapping_data = json.load(f)
     assert len(mapping_data["mappings"]) == len(CALGARY_FIELD_MAPPINGS)
 
@@ -182,7 +260,7 @@ def test_calgary_compatibility_report(sample_calgary_csv: Path, tmp_path: Path):
 
     compat_report_path = storage.get_labels_dir("calgary") / "compatibility_report.json"
     assert compat_report_path.exists()
-    with open(compat_report_path, "r", encoding="utf-8") as f:
+    with open(compat_report_path, encoding="utf-8") as f:
         compat_data = json.load(f)
 
     assert compat_data["total_safemove_features_evaluated"] == len(SAFEMOVE_COMPATIBILITY_SPEC)

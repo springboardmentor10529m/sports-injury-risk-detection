@@ -1,12 +1,16 @@
 """Recommendation and notification models."""
+
 import uuid
 from datetime import datetime
-import enum
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, JSON, Enum as SAEnum, Uuid
+from enum import StrEnum
+
+from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, String, Uuid
+from sqlalchemy import Enum as SAEnum
+
 from app.db.postgresql import Base
 
 
-class RecCategory(str, enum.Enum):
+class RecCategory(StrEnum):
     EXERCISE = "EXERCISE"
     MOBILITY = "MOBILITY"
     TRAINING_MODIFICATION = "TRAINING_MODIFICATION"
@@ -14,21 +18,21 @@ class RecCategory(str, enum.Enum):
     REFERRAL = "REFERRAL"
 
 
-class RecPriority(str, enum.Enum):
+class RecPriority(StrEnum):
     LOW = "LOW"
     MEDIUM = "MEDIUM"
     HIGH = "HIGH"
     URGENT = "URGENT"
 
 
-class RecStatus(str, enum.Enum):
+class RecStatus(StrEnum):
     PENDING = "PENDING"
     IN_PROGRESS = "IN_PROGRESS"
     COMPLETED = "COMPLETED"
     DISMISSED = "DISMISSED"
 
 
-class NotificationType(str, enum.Enum):
+class NotificationType(StrEnum):
     RISK_ALERT = "RISK_ALERT"
     RECOMMENDATION = "RECOMMENDATION"
     SYSTEM = "SYSTEM"

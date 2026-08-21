@@ -3,23 +3,30 @@ Video Processing Pipeline Service.
 Coordinates pose extraction, temporal smoothing, kinematics computation,
 biomechanical anomaly detection, and database persistence.
 """
-import uuid
-import logging
-from datetime import datetime
-from typing import Optional, Dict, Any, List
-from fastapi import HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
 
-from app.models.video import VideoSession, VideoStatus
-from app.models.analysis import PoseSequence, KinematicAssessment, AnomalyAssessment, BiomechanicalAnomaly
+import logging
+import uuid
+from datetime import datetime
+from typing import Any
+
+from fastapi import HTTPException, status
+from sqlalchemy import delete, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.rbac import UserRole
+from app.ml.pose.pose_extractor import PoseExtractor
+from app.models.analysis import (
+    AnomalyAssessment,
+    BiomechanicalAnomaly,
+    KinematicAssessment,
+    PoseSequence,
+)
 from app.models.athlete import AthleteProfile
 from app.models.user import User
-from app.core.rbac import UserRole
-from app.services.storage_service import get_storage_service
-from app.ml.pose.pose_extractor import PoseExtractor
-from app.services.kinematics_engine import KinematicsEngine
+from app.models.video import VideoSession, VideoStatus
 from app.services.anomaly_detection_service import get_anomaly_service
+from app.services.kinematics_engine import KinematicsEngine
+from app.services.storage_service import get_storage_service
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -31,12 +38,7 @@ class PipelineService:
         self.kinematics_engine = KinematicsEngine()
         self.anomaly_service = get_anomaly_service()
 
-    async def _verify_video_access(
-        self,
-        video_id: uuid.UUID,
-        current_user: User,
-        db: AsyncSession
-    ) -> VideoSession:
+    async def _verify_video_access(self, video_id: uuid.UUID, current_user: User, db: AsyncSession) -> VideoSession:
         """Verify video exists and current user has authorization."""
         stmt = select(VideoSession).where(VideoSession.id == video_id)
         result = await db.execute(stmt)
@@ -45,7 +47,7 @@ class PipelineService:
         if not video:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Video session '{video_id}' not found."
+                detail=f"Video session '{video_id}' not found.",
             )
 
         if current_user.role == UserRole.ATHLETE:
@@ -56,7 +58,7 @@ class PipelineService:
             if not athlete_profile or (video.athlete_id != athlete_profile.id and video.uploaded_by != current_user.id):
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Access denied. You do not have permission to access this video session."
+                    detail="Access denied. You do not have permission to access this video session.",
                 )
 
         return video
@@ -67,8 +69,8 @@ class PipelineService:
         current_user: User,
         db: AsyncSession,
         reprocess: bool = False,
-        smoothing_method: str = "SAVITZKY_GOLAY"
-    ) -> Dict[str, Any]:
+        smoothing_method: str = "SAVITZKY_GOLAY",
+    ) -> dict[str, Any]:
         """
         Execute full pipeline on video session:
         1. Extract 15-keypoint pose timeseries via MediaPipe Pose with temporal smoothing.
@@ -85,7 +87,7 @@ class PipelineService:
                 "id": video.id,
                 "status": video.status,
                 "processed_at": video.processed_at,
-                "message": "Video session is already analyzed. Pass reprocess=true to rerun."
+                "message": "Video session is already analyzed. Pass reprocess=true to rerun.",
             }
 
         # 1. Transition: PREPROCESSING
@@ -98,7 +100,7 @@ class PipelineService:
             if not file_path.exists():
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Stored video binary '{video.filename}' is missing from filesystem."
+                    detail=f"Stored video binary '{video.filename}' is missing from filesystem.",
                 )
 
             # 3. Transition: PROCESSING
@@ -107,8 +109,7 @@ class PipelineService:
 
             # 4. Extract Pose Landmarks
             pose_result = self.pose_extractor.extract_from_video(
-                video_path=str(file_path),
-                smoothing_method=smoothing_method
+                video_path=str(file_path), smoothing_method=smoothing_method
             )
 
             # 5. Compute Kinematics
@@ -137,7 +138,7 @@ class PipelineService:
                 duration_seconds=pose_result["duration_seconds"],
                 frame_count=pose_result["frame_count"],
                 smoothing_method=pose_result["smoothing_method"],
-                frames=pose_result["frames"]
+                frames=pose_result["frames"],
             )
             db.add(pose_record)
 
@@ -151,7 +152,7 @@ class PipelineService:
                 angular_velocities=kinematics_result["angular_velocities"],
                 angular_accelerations=kinematics_result["angular_accelerations"],
                 asymmetry_metrics=kinematics_result["asymmetry_metrics"],
-                summary_metrics=kinematics_result["summary_metrics"]
+                summary_metrics=kinematics_result["summary_metrics"],
             )
             db.add(kinematics_record)
 
@@ -170,20 +171,22 @@ class PipelineService:
 
             # 11. Save Individual Anomaly Events
             for anom in anomaly_result["anomalies"]:
-                db.add(BiomechanicalAnomaly(
-                    id=uuid.uuid4(),
-                    video_session_id=video.id,
-                    athlete_id=video.athlete_id,
-                    metric_name=anom["metric_name"],
-                    timestamp_seconds=anom["timestamp_seconds"],
-                    observed_value=anom["observed_value"],
-                    baseline_value=anom["baseline_value"],
-                    deviation=anom["deviation"],
-                    z_score=anom["z_score"],
-                    severity=anom["severity"],
-                    baseline_type=anom["baseline_type"],
-                    description=anom["description"],
-                ))
+                db.add(
+                    BiomechanicalAnomaly(
+                        id=uuid.uuid4(),
+                        video_session_id=video.id,
+                        athlete_id=video.athlete_id,
+                        metric_name=anom["metric_name"],
+                        timestamp_seconds=anom["timestamp_seconds"],
+                        observed_value=anom["observed_value"],
+                        baseline_value=anom["baseline_value"],
+                        deviation=anom["deviation"],
+                        z_score=anom["z_score"],
+                        severity=anom["severity"],
+                        baseline_type=anom["baseline_type"],
+                        description=anom["description"],
+                    )
+                )
 
             # 12. Transition: ANALYZED
             video.status = VideoStatus.ANALYZED
@@ -197,8 +200,10 @@ class PipelineService:
             return {
                 "id": video.id,
                 "status": video.status,
-                "processed_at": video.processed_at,
-                "message": f"Successfully processed {pose_result['frame_count']} frames with {len(anomaly_result['anomalies'])} movement deviations identified."
+                "message": (
+                    f"Successfully processed {pose_result['frame_count']} frames "
+                    f"with {len(anomaly_result['anomalies'])} movement deviations identified."
+                ),
             }
 
         except Exception as e:
@@ -207,15 +212,10 @@ class PipelineService:
             await db.commit()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Video processing failed: {str(e)}"
+                detail=f"Video processing failed: {str(e)}",
             )
 
-    async def get_keypoints(
-        self,
-        video_id: uuid.UUID,
-        current_user: User,
-        db: AsyncSession
-    ) -> Dict[str, Any]:
+    async def get_keypoints(self, video_id: uuid.UUID, current_user: User, db: AsyncSession) -> dict[str, Any]:
         """Retrieve extracted landmark keypoints timeseries."""
         video = await self._verify_video_access(video_id, current_user, db)
 
@@ -226,7 +226,7 @@ class PipelineService:
         if not pose_seq:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Pose landmark sequence not found for video '{video_id}'. Please run process endpoint first."
+                detail=f"Pose landmark sequence not found for video '{video_id}'. Please run process endpoint first.",
             )
 
         return {
@@ -236,15 +236,10 @@ class PipelineService:
             "processed_fps": pose_seq.fps,
             "frame_count": pose_seq.frame_count,
             "smoothing_method": pose_seq.smoothing_method,
-            "frames": pose_seq.frames
+            "frames": pose_seq.frames,
         }
 
-    async def get_kinematics(
-        self,
-        video_id: uuid.UUID,
-        current_user: User,
-        db: AsyncSession
-    ) -> Dict[str, Any]:
+    async def get_kinematics(self, video_id: uuid.UUID, current_user: User, db: AsyncSession) -> dict[str, Any]:
         """Retrieve computed kinematics curves and metrics."""
         video = await self._verify_video_access(video_id, current_user, db)
 
@@ -255,7 +250,7 @@ class PipelineService:
         if not kin_record:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Kinematic assessment not found for video '{video_id}'. Please run process endpoint first."
+                detail=f"Kinematic assessment not found for video '{video_id}'. Please run process endpoint first.",
             )
 
         return {
@@ -267,15 +262,10 @@ class PipelineService:
             "angular_accelerations": kin_record.angular_accelerations,
             "asymmetry_metrics": kin_record.asymmetry_metrics,
             "summary_metrics": kin_record.summary_metrics,
-            "created_at": kin_record.created_at
+            "created_at": kin_record.created_at,
         }
 
-    async def get_anomalies(
-        self,
-        video_id: uuid.UUID,
-        current_user: User,
-        db: AsyncSession
-    ) -> Dict[str, Any]:
+    async def get_anomalies(self, video_id: uuid.UUID, current_user: User, db: AsyncSession) -> dict[str, Any]:
         """Retrieve biomechanical anomaly assessment and detected deviations."""
         video = await self._verify_video_access(video_id, current_user, db)
 
@@ -292,7 +282,10 @@ class PipelineService:
             if not kin:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Biomechanical anomaly assessment not found for video '{video_id}'. Please run process endpoint first."
+                    detail=(
+                        f"Biomechanical anomaly assessment not found for video '{video_id}'. "
+                        f"Please run process endpoint first."
+                    ),
                 )
 
             # Compute dynamically
@@ -328,7 +321,7 @@ class PipelineService:
         }
 
 
-_pipeline_service_instance: Optional[PipelineService] = None
+_pipeline_service_instance: PipelineService | None = None
 
 
 def get_pipeline_service() -> PipelineService:

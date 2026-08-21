@@ -2,7 +2,9 @@
 Injury Risk ML Model (Ensemble: XGBoost + DL).
 Phase 5 Implementation.
 """
+
 from app.ml.base import BaseModel
+
 
 class InjuryRiskModel(BaseModel):
     def __init__(self, version: str = "1.0.0"):

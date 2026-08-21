@@ -2,7 +2,9 @@
 Biomechanical Analysis ML Model.
 Phase 3 Implementation.
 """
+
 from app.ml.base import BaseModel
+
 
 class BiomechanicalModel(BaseModel):
     def __init__(self, version: str = "1.0.0"):

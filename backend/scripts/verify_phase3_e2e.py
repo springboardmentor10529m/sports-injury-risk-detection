@@ -1,21 +1,23 @@
 """Live End-to-End Verification Script for SafeMove Phase 3 (Pose & Kinematics)."""
+
 import asyncio
 import os
 import sys
-import uuid
 import tempfile
+import uuid
+
 import cv2
 import numpy as np
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from app.main import app
-from app.db.postgresql import init_db, get_session_factory
-from app.core.security import hash_password, create_access_token
 from app.core.rbac import UserRole
-from app.models.user import User
+from app.core.security import create_access_token, hash_password
+from app.db.postgresql import get_session_factory, init_db
+from app.main import app
 from app.models.athlete import AthleteProfile
+from app.models.user import User
 
 
 def create_sample_motion_video(num_frames=20) -> bytes:
@@ -34,17 +36,59 @@ def create_sample_motion_video(num_frames=20) -> bytes:
             # Head
             cv2.circle(frame, (320, 100 + squat_offset), 25, (255, 255, 255), -1)
             # Torso
-            cv2.line(frame, (320, 125 + squat_offset), (320, 260 + squat_offset), (255, 255, 255), 6)
+            cv2.line(
+                frame,
+                (320, 125 + squat_offset),
+                (320, 260 + squat_offset),
+                (255, 255, 255),
+                6,
+            )
             # Left Arm
-            cv2.line(frame, (320, 160 + squat_offset), (250, 220 + squat_offset), (255, 255, 255), 4)
+            cv2.line(
+                frame,
+                (320, 160 + squat_offset),
+                (250, 220 + squat_offset),
+                (255, 255, 255),
+                4,
+            )
             # Right Arm
-            cv2.line(frame, (320, 160 + squat_offset), (390, 220 + squat_offset), (255, 255, 255), 4)
+            cv2.line(
+                frame,
+                (320, 160 + squat_offset),
+                (390, 220 + squat_offset),
+                (255, 255, 255),
+                4,
+            )
             # Left Leg (Hips to Knee to Ankle)
-            cv2.line(frame, (320, 260 + squat_offset), (270, 350 + int(squat_offset * 1.3)), (255, 255, 255), 4)
-            cv2.line(frame, (270, 350 + int(squat_offset * 1.3)), (270, 440), (255, 255, 255), 4)
+            cv2.line(
+                frame,
+                (320, 260 + squat_offset),
+                (270, 350 + int(squat_offset * 1.3)),
+                (255, 255, 255),
+                4,
+            )
+            cv2.line(
+                frame,
+                (270, 350 + int(squat_offset * 1.3)),
+                (270, 440),
+                (255, 255, 255),
+                4,
+            )
             # Right Leg
-            cv2.line(frame, (320, 260 + squat_offset), (370, 350 + int(squat_offset * 1.3)), (255, 255, 255), 4)
-            cv2.line(frame, (370, 350 + int(squat_offset * 1.3)), (370, 440), (255, 255, 255), 4)
+            cv2.line(
+                frame,
+                (320, 260 + squat_offset),
+                (370, 350 + int(squat_offset * 1.3)),
+                (255, 255, 255),
+                4,
+            )
+            cv2.line(
+                frame,
+                (370, 350 + int(squat_offset * 1.3)),
+                (370, 440),
+                (255, 255, 255),
+                4,
+            )
 
             out.write(frame)
         out.release()
@@ -72,7 +116,7 @@ async def run_e2e_verification():
             email=f"e2e_athlete_{uuid.uuid4().hex[:6]}@safemove.test",
             password_hash=hash_password("SafeMove2026!"),
             full_name="Alex Motion",
-            role=UserRole.ATHLETE
+            role=UserRole.ATHLETE,
         )
         session.add(athlete_user)
         await session.commit()
@@ -81,7 +125,7 @@ async def run_e2e_verification():
             id=uuid.uuid4(),
             user_id=athlete_user.id,
             sport="Track & Field",
-            position="Sprinter"
+            position="Sprinter",
         )
         session.add(profile)
         await session.commit()
@@ -99,7 +143,7 @@ async def run_e2e_verification():
             "/api/v1/videos/upload",
             files={"file": ("squat_jump.mp4", video_bytes, "video/mp4")},
             data={"sport_type": "Squat Jump Analysis"},
-            headers=headers
+            headers=headers,
         )
         assert upload_res.status_code == 201, f"Upload failed: {upload_res.text}"
         video_data = upload_res.json()
@@ -111,7 +155,7 @@ async def run_e2e_verification():
         print("\n2. [Pipeline Execution] Triggering Pose Landmarker + Kinematics Pipeline...")
         process_res = await client.post(
             f"/api/v1/videos/{video_id}/process?smoothing_method=SAVITZKY_GOLAY",
-            headers=headers
+            headers=headers,
         )
         assert process_res.status_code == 200, f"Process failed: {process_res.text}"
         process_data = process_res.json()
@@ -130,7 +174,10 @@ async def run_e2e_verification():
             print(f"   -> Extracted Landmark Names ({len(first_frame_lms)}): {list(first_frame_lms.keys())}")
             if "LEFT_KNEE" in first_frame_lms:
                 lk = first_frame_lms["LEFT_KNEE"]
-                print(f"   -> Sample Keypoint [LEFT_KNEE]: x={lk['x']:.4f}, y={lk['y']:.4f}, z={lk['z']:.4f}, vis={lk['visibility']:.2f}")
+                print(
+                    f"   -> Sample Keypoint [LEFT_KNEE]: "
+                    f"x={lk['x']:.4f}, y={lk['y']:.4f}, z={lk['z']:.4f}, vis={lk['visibility']:.2f}"
+                )
 
         # 5. Fetch Kinematics
         print("\n4. [Kinematics Engine] Retrieving Joint Angles, Velocities, and Asymmetries...")
@@ -141,9 +188,13 @@ async def run_e2e_verification():
         curves = kin_data["joint_angle_curves"]
         print(f"   -> Computed Joint Curves: {list(curves.keys())}")
         asym = kin_data["asymmetry_metrics"]
-        print(f"   -> Bilateral Asymmetries:")
-        print(f"      * Knee Flexion Mean Asymmetry: {asym['knee_flexion_asymmetry']['mean']}% (Peak: {asym['knee_flexion_asymmetry']['peak']}%)")
-        print(f"      * Hip Flexion Mean Asymmetry: {asym['hip_flexion_asymmetry']['mean']}% (Peak: {asym['hip_flexion_asymmetry']['peak']}%)")
+        print("   -> Bilateral Asymmetries:")
+        knee_mean = asym["knee_flexion_asymmetry"]["mean"]
+        knee_peak = asym["knee_flexion_asymmetry"]["peak"]
+        print(f"      * Knee Flexion Mean Asymmetry: {knee_mean}% (Peak: {knee_peak}%)")
+        hip_mean = asym["hip_flexion_asymmetry"]["mean"]
+        hip_peak = asym["hip_flexion_asymmetry"]["peak"]
+        print(f"      * Hip Flexion Mean Asymmetry: {hip_mean}% (Peak: {hip_peak}%)")
         print(f"      * Knee Valgus Mean Proxy: {asym['knee_valgus_asymmetry']['mean']}%")
 
         summary = kin_data["summary_metrics"]

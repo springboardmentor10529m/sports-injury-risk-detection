@@ -1,14 +1,17 @@
 """Video schemas."""
-from typing import Optional, List, Dict, Any
-from uuid import UUID
+
 from datetime import datetime
+from typing import Any
+from uuid import UUID
+
 from pydantic import BaseModel, ConfigDict
+
 from app.models.video import VideoStatus
 
 
 class VideoBase(BaseModel):
     filename: str
-    sport_type: Optional[str] = None
+    sport_type: str | None = None
 
 
 class VideoUploadResponse(BaseModel):
@@ -17,7 +20,7 @@ class VideoUploadResponse(BaseModel):
     id: UUID
     athlete_id: UUID
     filename: str
-    original_filename: Optional[str] = None
+    original_filename: str | None = None
     status: VideoStatus
     uploaded_at: datetime
     message: str = "Video uploaded successfully"
@@ -28,8 +31,8 @@ class VideoStatusResponse(BaseModel):
 
     id: UUID
     status: VideoStatus
-    processed_at: Optional[datetime] = None
-    message: Optional[str] = None
+    processed_at: datetime | None = None
+    message: str | None = None
 
 
 class VideoDetailResponse(VideoBase):
@@ -37,18 +40,18 @@ class VideoDetailResponse(VideoBase):
 
     id: UUID
     athlete_id: UUID
-    uploaded_by: Optional[UUID] = None
-    original_filename: Optional[str] = None
-    storage_path: Optional[str] = None
-    storage_url: Optional[str] = None
-    content_type: Optional[str] = None
-    file_size: Optional[int] = None
+    uploaded_by: UUID | None = None
+    original_filename: str | None = None
+    storage_path: str | None = None
+    storage_url: str | None = None
+    content_type: str | None = None
+    file_size: int | None = None
     status: VideoStatus
-    fps: Optional[float] = None
-    duration_seconds: Optional[float] = None
-    resolution: Optional[str] = None
+    fps: float | None = None
+    duration_seconds: float | None = None
+    resolution: str | None = None
     uploaded_at: datetime
-    processed_at: Optional[datetime] = None
+    processed_at: datetime | None = None
 
 
 class KeypointsResponse(BaseModel):
@@ -60,4 +63,4 @@ class KeypointsResponse(BaseModel):
     processed_fps: float
     frame_count: int
     smoothing_method: str
-    frames: List[Dict[str, Any]]
+    frames: list[dict[str, Any]]

@@ -1,14 +1,14 @@
 """Authentication endpoints."""
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.postgresql import get_db
-from app.schemas.user import UserCreate, UserResponse, TokenResponse
-from app.services.user_service import UserService
-from app.core.security import get_current_user, create_access_token
-from jose import jwt, JWTError
 from app.config import get_settings
+from app.core.security import get_current_user
+from app.db.postgresql import get_db
+from app.schemas.user import TokenResponse, UserCreate, UserResponse
+from app.services.user_service import UserService
 
 router = APIRouter()
 settings = get_settings()
@@ -23,10 +23,7 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: AsyncSession = Depends(get_db)
-):
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
     """Authenticate and receive JWT access token."""
     service = UserService(db)
     user = await service.authenticate(form_data.username, form_data.password)
@@ -42,10 +39,7 @@ async def login(
             detail="Account is deactivated",
         )
     tokens = UserService.create_tokens(user)
-    return TokenResponse(
-        access_token=tokens["access_token"],
-        token_type=tokens["token_type"]
-    )
+    return TokenResponse(access_token=tokens["access_token"], token_type=tokens["token_type"])
 
 
 @router.post("/refresh", response_model=TokenResponse)
@@ -54,7 +48,4 @@ async def refresh_token(
 ):
     """Refresh access token using a valid existing token."""
     tokens = UserService.create_tokens(current_user)
-    return TokenResponse(
-        access_token=tokens["access_token"],
-        token_type=tokens["token_type"]
-    )
+    return TokenResponse(access_token=tokens["access_token"], token_type=tokens["token_type"])

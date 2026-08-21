@@ -2,7 +2,9 @@
 Fatigue Detection ML Model (Time-series).
 Phase 5 Implementation.
 """
+
 from app.ml.base import BaseModel
+
 
 class FatigueModel(BaseModel):
     def __init__(self, version: str = "1.0.0"):

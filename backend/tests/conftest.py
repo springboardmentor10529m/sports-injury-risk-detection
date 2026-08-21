@@ -1,26 +1,28 @@
 """Test configuration and fixtures."""
+
 import asyncio
-from typing import AsyncGenerator, Generator
+from collections.abc import AsyncGenerator
 from uuid import uuid4
 
 import pytest
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import (
-    create_async_engine,
-    async_sessionmaker,
     AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
 )
 
-from app.db.postgresql import Base, get_db
-from app.main import app as fastapi_app
-from app.core.security import hash_password, create_access_token
-from app.core.rbac import UserRole
-from app.models.user import User
+import app.models.analysis  # noqa: F401
+
 # Import all models to register them with Base.metadata
 import app.models.athlete  # noqa: F401
-import app.models.video  # noqa: F401
-import app.models.analysis  # noqa: F401
 import app.models.recommendation  # noqa: F401
+import app.models.video  # noqa: F401
+from app.core.rbac import UserRole
+from app.core.security import create_access_token, hash_password
+from app.db.postgresql import Base, get_db
+from app.main import app as fastapi_app
+from app.models.user import User
 
 # Use SQLite for tests (no PostgreSQL needed)
 TEST_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
@@ -57,17 +59,15 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
 @pytest.fixture
 async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     """Get an async test client with DB override."""
+
     async def _override_get_db():
         yield db_session
-    
+
     fastapi_app.dependency_overrides[get_db] = _override_get_db
-    
-    async with AsyncClient(
-        transport=ASGITransport(app=fastapi_app),
-        base_url="http://testserver"
-    ) as ac:
+
+    async with AsyncClient(transport=ASGITransport(app=fastapi_app), base_url="http://testserver") as ac:
         yield ac
-    
+
     fastapi_app.dependency_overrides.clear()
 
 

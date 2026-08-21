@@ -1,5 +1,7 @@
 """Biomechanical analysis service stub."""
+
 from abc import ABC, abstractmethod
+
 
 class BiomechanicalServiceBase(ABC):
     @abstractmethod
@@ -27,14 +29,19 @@ class BiomechanicalServiceBase(ABC):
         """Evaluate overall posture stability."""
         pass
 
+
 class BiomechanicalService(BiomechanicalServiceBase):
     def analyze_joint_angles(self, poses: list) -> dict:
         raise NotImplementedError("Phase 3 implementation")
+
     def calculate_rom(self, poses: list) -> dict:
         raise NotImplementedError("Phase 3 implementation")
+
     def assess_symmetry(self, poses: list) -> float:
         raise NotImplementedError("Phase 3 implementation")
+
     def estimate_forces(self, poses: list) -> dict:
         raise NotImplementedError("Phase 3 implementation")
+
     def evaluate_posture(self, poses: list) -> dict:
         raise NotImplementedError("Phase 3 implementation")

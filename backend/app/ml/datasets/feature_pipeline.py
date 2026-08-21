@@ -3,18 +3,22 @@ ML Feature Generation Pipeline for SafeMove.
 Orchestrates: Video -> Pose Extraction -> Kinematics -> Phase 4 Statistical Features -> Tabular ML Matrix.
 Strictly generates feature tables without training models or inventing injury labels.
 """
-from typing import List, Dict, Any, Optional
-from pathlib import Path
+
 import json
 import logging
+from pathlib import Path
+from typing import Any
+
 import pandas as pd
-import numpy as np
 
 from app.ml.datasets.schema import DatasetManifest, DatasetSample
 from app.ml.datasets.storage_layout import DatasetStorageManager
-from app.ml.pose.pose_extractor import get_pose_extractor, PoseExtractor
-from app.services.kinematics_engine import get_kinematics_engine, KinematicsEngine
-from app.services.anomaly_detection_service import get_anomaly_service, AnomalyDetectionService
+from app.ml.pose.pose_extractor import PoseExtractor, get_pose_extractor
+from app.services.anomaly_detection_service import (
+    AnomalyDetectionService,
+    get_anomaly_service,
+)
+from app.services.kinematics_engine import KinematicsEngine, get_kinematics_engine
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -24,10 +28,10 @@ class MLFeatureGenerator:
 
     def __init__(
         self,
-        storage_manager: Optional[DatasetStorageManager] = None,
-        pose_extractor: Optional[PoseExtractor] = None,
-        kinematics_engine: Optional[KinematicsEngine] = None,
-        anomaly_service: Optional[AnomalyDetectionService] = None,
+        storage_manager: DatasetStorageManager | None = None,
+        pose_extractor: PoseExtractor | None = None,
+        kinematics_engine: KinematicsEngine | None = None,
+        anomaly_service: AnomalyDetectionService | None = None,
     ):
         self.storage = storage_manager or DatasetStorageManager()
         self.pose_extractor = pose_extractor or get_pose_extractor()
@@ -35,11 +39,8 @@ class MLFeatureGenerator:
         self.anomaly_service = anomaly_service or get_anomaly_service()
 
     def process_sample(
-        self,
-        sample: DatasetSample,
-        dataset_name: str,
-        save_intermediate: bool = True
-    ) -> Dict[str, Any]:
+        self, sample: DatasetSample, dataset_name: str, save_intermediate: bool = True
+    ) -> dict[str, Any]:
         """
         Execute feature extraction for a single dataset sample:
         1. Pose Landmarking (15 points)
@@ -53,8 +54,7 @@ class MLFeatureGenerator:
 
         # 1. Pose Landmark Extraction
         pose_result = self.pose_extractor.extract_from_video(
-            video_path=str(video_path),
-            smoothing_method="SAVITZKY_GOLAY"
+            video_path=str(video_path), smoothing_method="SAVITZKY_GOLAY"
         )
 
         dirs = self.storage.initialize_dataset_directories(dataset_name)
@@ -85,14 +85,14 @@ class MLFeatureGenerator:
         deviations = anomaly_result["metric_deviations"]
 
         # Helper getters
-        def get_stat(metric: str, prop: str) -> Optional[float]:
+        def get_stat(metric: str, prop: str) -> float | None:
             return feat_sum.get(metric, {}).get(prop)
 
-        def get_dev(dev_key: str, prop: str) -> Optional[float]:
+        def get_dev(dev_key: str, prop: str) -> float | None:
             return deviations.get(dev_key, {}).get(prop)
 
         # 4. Construct Feature Row
-        row: Dict[str, Any] = {
+        row: dict[str, Any] = {
             # Provenance & Identifiers
             "sample_id": sample.sample_id,
             "video_id": sample.video_id,
@@ -103,13 +103,13 @@ class MLFeatureGenerator:
             "source_dataset": sample.source_dataset,
             "frame_count": pose_result.get("frame_count", 0),
             "fps": pose_result.get("fps", 0.0),
-
             # Lower Limb Range of Motion (ROM)
             "knee_flexion_rom_left": get_stat("left_knee_angle", "range"),
             "knee_flexion_rom_right": get_stat("right_knee_angle", "range"),
             "knee_flexion_rom_diff": (
                 abs((get_stat("left_knee_angle", "range") or 0.0) - (get_stat("right_knee_angle", "range") or 0.0))
-                if get_stat("left_knee_angle", "range") is not None and get_stat("right_knee_angle", "range") is not None
+                if get_stat("left_knee_angle", "range") is not None
+                and get_stat("right_knee_angle", "range") is not None
                 else None
             ),
             "peak_knee_flexion_left": get_stat("left_knee_angle", "max"),
@@ -118,14 +118,12 @@ class MLFeatureGenerator:
             "hip_flexion_rom_right": get_stat("right_hip_angle", "range"),
             "ankle_dorsiflexion_rom_left": get_stat("left_ankle_angle", "range"),
             "ankle_dorsiflexion_rom_right": get_stat("right_ankle_angle", "range"),
-
             # Trunk Planar Kinematics
             "trunk_lean_max": get_stat("trunk_lean", "max"),
             "trunk_lean_mean": get_stat("trunk_lean", "mean"),
             "trunk_lean_std": get_stat("trunk_lean", "std_dev"),
             "trunk_lateral_tilt_max": get_stat("trunk_lateral_tilt", "max"),
             "trunk_lateral_tilt_mean": get_stat("trunk_lateral_tilt", "mean"),
-
             # Frontal Plane Knee Valgus Proxy
             "knee_valgus_proxy_left_max": get_stat("left_knee_valgus", "max"),
             "knee_valgus_proxy_right_max": get_stat("right_knee_valgus", "max"),
@@ -134,17 +132,14 @@ class MLFeatureGenerator:
                 if get_stat("left_knee_valgus", "max") is not None and get_stat("right_knee_valgus", "max") is not None
                 else None
             ),
-
             # Bilateral Asymmetry Indices (%)
             "knee_flexion_asymmetry_mean": get_stat("knee_flexion_asymmetry", "mean"),
             "knee_flexion_asymmetry_peak": get_stat("knee_flexion_asymmetry", "max"),
             "hip_flexion_asymmetry_mean": get_stat("hip_flexion_asymmetry", "mean"),
             "knee_valgus_asymmetry_mean": get_stat("knee_valgus_asymmetry", "mean"),
-
             # Dynamic Velocity Features (°/s)
             "knee_peak_velocity_left": get_stat("left_knee_angle", "peak_velocity"),
             "knee_peak_velocity_right": get_stat("right_knee_angle", "peak_velocity"),
-
             # Developmental Statistical Distances (Z-scores)
             "z_score_knee_flexion_rom_left": get_dev("left_knee_angle_range", "z_score"),
             "z_score_knee_flexion_rom_right": get_dev("right_knee_angle_range", "z_score"),
@@ -153,12 +148,10 @@ class MLFeatureGenerator:
             "z_score_knee_valgus_left_max": get_dev("left_knee_valgus_max", "z_score"),
             "z_score_knee_valgus_right_max": get_dev("right_knee_valgus_max", "z_score"),
             "z_score_knee_flexion_asymmetry": get_dev("knee_flexion_asymmetry_mean", "z_score"),
-
             # Range Violations (Distance outside reference bounds)
             "range_viol_knee_flexion_rom_left": get_dev("left_knee_angle_range", "range_deviation"),
             "range_viol_trunk_lean_max": get_dev("trunk_lean_max", "range_deviation"),
             "range_viol_knee_valgus_left_max": get_dev("left_knee_valgus_max", "range_deviation"),
-
             # Target Ground Truth Label (DO NOT INVENT LABELS)
             "injury_label": sample.injury_label,
             "injury_type": sample.injury_type,
@@ -166,20 +159,18 @@ class MLFeatureGenerator:
 
         return row
 
-    def generate_feature_table(
-        self,
-        manifest: DatasetManifest,
-        output_format: str = "csv"
-    ) -> pd.DataFrame:
+    def generate_feature_table(self, manifest: DatasetManifest, output_format: str = "csv") -> pd.DataFrame:
         """
         Process all dataset samples and generate the tabular ML feature matrix.
         Exports features.csv / features.parquet.
         """
-        rows: List[Dict[str, Any]] = []
+        rows: list[dict[str, Any]] = []
         dataset_name = manifest.dataset_name
         dirs = self.storage.initialize_dataset_directories(dataset_name)
 
-        logger.info(f"Starting feature matrix generation for dataset '{dataset_name}' ({len(manifest.samples)} samples)")
+        logger.info(
+            f"Starting feature matrix generation for dataset '{dataset_name}' ({len(manifest.samples)} samples)"
+        )
 
         for idx, sample in enumerate(manifest.samples):
             try:
@@ -188,18 +179,20 @@ class MLFeatureGenerator:
             except Exception as e:
                 logger.error(f"Failed processing sample {sample.sample_id} ({sample.video_path}): {e}")
                 # Append empty row with error note to preserve sample alignment
-                rows.append({
-                    "sample_id": sample.sample_id,
-                    "video_id": sample.video_id,
-                    "athlete_id": sample.athlete_id or "ANONYMOUS",
-                    "sport": sample.sport,
-                    "movement_type": sample.movement_type,
-                    "laterality": sample.laterality.value,
-                    "source_dataset": sample.source_dataset,
-                    "injury_label": sample.injury_label,
-                    "injury_type": sample.injury_type,
-                    "processing_error": str(e),
-                })
+                rows.append(
+                    {
+                        "sample_id": sample.sample_id,
+                        "video_id": sample.video_id,
+                        "athlete_id": sample.athlete_id or "ANONYMOUS",
+                        "sport": sample.sport,
+                        "movement_type": sample.movement_type,
+                        "laterality": sample.laterality.value,
+                        "source_dataset": sample.source_dataset,
+                        "injury_label": sample.injury_label,
+                        "injury_type": sample.injury_type,
+                        "processing_error": str(e),
+                    }
+                )
 
         df = pd.DataFrame(rows)
 

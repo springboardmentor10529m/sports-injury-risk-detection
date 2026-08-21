@@ -3,8 +3,10 @@ SafeMove Kinematics Engine.
 Computes mathematical 3-point joint angles, angular velocities,
 accelerations, and bilateral asymmetry indexes from landmark timeseries.
 """
+
 import math
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Any
+
 import numpy as np
 
 
@@ -13,23 +15,23 @@ class KinematicsEngine:
 
     @staticmethod
     def calculate_3point_angle(
-        point_a: Dict[str, float],
-        point_b: Dict[str, float],
-        point_c: Dict[str, float],
-        dimension: int = 3
-    ) -> Optional[float]:
+        point_a: dict[str, float],
+        point_b: dict[str, float],
+        point_c: dict[str, float],
+        dimension: int = 3,
+    ) -> float | None:
         """
         Calculate the angle at vertex point_b formed by segments (A-B) and (C-B).
-        
+
         Formula:
             theta = arccos( (u . v) / (||u|| * ||v||) )
-            
+
         Args:
             point_a: First endpoint (e.g. Hip)
             point_b: Joint center vertex (e.g. Knee)
             point_c: Second endpoint (e.g. Ankle)
             dimension: 2 for planar (x, y) or 3 for spatial (x, y, z)
-            
+
         Returns:
             Angle in degrees [0.0, 180.0], or None if points are invalid or zero-length.
         """
@@ -42,19 +44,31 @@ class KinematicsEngine:
                 return None
 
         if dimension == 2:
-            u = np.array([point_a["x"] - point_b["x"], point_a["y"] - point_b["y"]], dtype=np.float64)
-            v = np.array([point_c["x"] - point_b["x"], point_c["y"] - point_b["y"]], dtype=np.float64)
+            u = np.array(
+                [point_a["x"] - point_b["x"], point_a["y"] - point_b["y"]],
+                dtype=np.float64,
+            )
+            v = np.array(
+                [point_c["x"] - point_b["x"], point_c["y"] - point_b["y"]],
+                dtype=np.float64,
+            )
         else:
-            u = np.array([
-                point_a["x"] - point_b["x"],
-                point_a["y"] - point_b["y"],
-                point_a.get("z", 0.0) - point_b.get("z", 0.0)
-            ], dtype=np.float64)
-            v = np.array([
-                point_c["x"] - point_b["x"],
-                point_c["y"] - point_b["y"],
-                point_c.get("z", 0.0) - point_b.get("z", 0.0)
-            ], dtype=np.float64)
+            u = np.array(
+                [
+                    point_a["x"] - point_b["x"],
+                    point_a["y"] - point_b["y"],
+                    point_a.get("z", 0.0) - point_b.get("z", 0.0),
+                ],
+                dtype=np.float64,
+            )
+            v = np.array(
+                [
+                    point_c["x"] - point_b["x"],
+                    point_c["y"] - point_b["y"],
+                    point_c.get("z", 0.0) - point_b.get("z", 0.0),
+                ],
+                dtype=np.float64,
+            )
 
         norm_u = np.linalg.norm(u)
         norm_v = np.linalg.norm(v)
@@ -72,11 +86,11 @@ class KinematicsEngine:
 
     @staticmethod
     def calculate_trunk_lean(
-        left_shoulder: Dict[str, float],
-        right_shoulder: Dict[str, float],
-        left_hip: Dict[str, float],
-        right_hip: Dict[str, float]
-    ) -> Optional[float]:
+        left_shoulder: dict[str, float],
+        right_shoulder: dict[str, float],
+        left_hip: dict[str, float],
+        right_hip: dict[str, float],
+    ) -> float | None:
         """
         Calculate forward trunk lean (angle of spine vector relative to vertical).
         """
@@ -96,11 +110,14 @@ class KinematicsEngine:
         }
 
         # Spine vector (from hip pointing up to shoulder)
-        spine = np.array([
-            mid_shoulder["x"] - mid_hip["x"],
-            mid_shoulder["y"] - mid_hip["y"],
-            mid_shoulder["z"] - mid_hip["z"]
-        ], dtype=np.float64)
+        spine = np.array(
+            [
+                mid_shoulder["x"] - mid_hip["x"],
+                mid_shoulder["y"] - mid_hip["y"],
+                mid_shoulder["z"] - mid_hip["z"],
+            ],
+            dtype=np.float64,
+        )
 
         # In image coords, up is (0, -1, 0)
         vertical = np.array([0.0, -1.0, 0.0], dtype=np.float64)
@@ -114,10 +131,7 @@ class KinematicsEngine:
         return round(math.degrees(math.acos(cos_angle)), 2)
 
     @staticmethod
-    def calculate_trunk_lateral_tilt(
-        left_shoulder: Dict[str, float],
-        right_shoulder: Dict[str, float]
-    ) -> Optional[float]:
+    def calculate_trunk_lateral_tilt(left_shoulder: dict[str, float], right_shoulder: dict[str, float]) -> float | None:
         """
         Calculate lateral shoulder tilt relative to horizontal ground line.
         """
@@ -137,10 +151,8 @@ class KinematicsEngine:
 
     @staticmethod
     def calculate_knee_valgus_proxy(
-        hip: Dict[str, float],
-        knee: Dict[str, float],
-        ankle: Dict[str, float]
-    ) -> Optional[float]:
+        hip: dict[str, float], knee: dict[str, float], ankle: dict[str, float]
+    ) -> float | None:
         """
         Calculate 2D frontal plane projection angle deviation (Knee Valgus / Varus Proxy).
         Deviation from straight line (180 - angle_2d).
@@ -152,7 +164,7 @@ class KinematicsEngine:
         return round(abs(180.0 - angle_2d), 2)
 
     @staticmethod
-    def calculate_asymmetry_index(left_val: Optional[float], right_val: Optional[float]) -> Optional[float]:
+    def calculate_asymmetry_index(left_val: float | None, right_val: float | None) -> float | None:
         """
         Compute Bilateral Asymmetry Index percentage:
             AI (%) = |L - R| / ((|L| + |R|) / 2) * 100
@@ -167,7 +179,7 @@ class KinematicsEngine:
         return round((abs(left_val - right_val) / denom) * 100.0, 2)
 
     @staticmethod
-    def calculate_derivative(values: List[Optional[float]], timestamps: List[float]) -> List[Optional[float]]:
+    def calculate_derivative(values: list[float | None], timestamps: list[float]) -> list[float | None]:
         """
         Calculate numerical derivative (dValues / dt) handling irregular timestamps and missing entries.
         """
@@ -175,7 +187,7 @@ class KinematicsEngine:
         if n < 2 or len(timestamps) != n:
             return [None] * n
 
-        derivatives: List[Optional[float]] = [None] * n
+        derivatives: list[float | None] = [None] * n
 
         for i in range(n):
             if values[i] is None:
@@ -207,7 +219,7 @@ class KinematicsEngine:
 
         return derivatives
 
-    def process_frames(self, pose_data: Dict[str, Any]) -> Dict[str, Any]:
+    def process_frames(self, pose_data: dict[str, Any]) -> dict[str, Any]:
         """
         Compute full kinematic angle curves, velocities, accelerations, and asymmetries
         for an entire pose landmark sequence.
@@ -217,10 +229,9 @@ class KinematicsEngine:
             raise ValueError("Pose landmark frames are empty.")
 
         timestamps = [f["timestamp_seconds"] for f in frames]
-        n_frames = len(frames)
 
         # Initialize joint angle curves
-        curves: Dict[str, List[Optional[float]]] = {
+        curves: dict[str, list[float | None]] = {
             "left_knee_angle": [],
             "right_knee_angle": [],
             "left_hip_angle": [],
@@ -230,36 +241,26 @@ class KinematicsEngine:
             "trunk_lean": [],
             "trunk_lateral_tilt": [],
             "left_knee_valgus": [],
-            "right_knee_valgus": []
+            "right_knee_valgus": [],
         }
 
         for frame in frames:
             lm = frame.get("landmarks", {})
 
             # Knee Flexion/Extension (Hip - Knee - Ankle)
-            lk_angle = self.calculate_3point_angle(
-                lm.get("LEFT_HIP"), lm.get("LEFT_KNEE"), lm.get("LEFT_ANKLE")
-            )
-            rk_angle = self.calculate_3point_angle(
-                lm.get("RIGHT_HIP"), lm.get("RIGHT_KNEE"), lm.get("RIGHT_ANKLE")
-            )
+            lk_angle = self.calculate_3point_angle(lm.get("LEFT_HIP"), lm.get("LEFT_KNEE"), lm.get("LEFT_ANKLE"))
+            rk_angle = self.calculate_3point_angle(lm.get("RIGHT_HIP"), lm.get("RIGHT_KNEE"), lm.get("RIGHT_ANKLE"))
             curves["left_knee_angle"].append(lk_angle)
             curves["right_knee_angle"].append(rk_angle)
 
             # Hip Flexion (Shoulder - Hip - Knee)
-            lh_angle = self.calculate_3point_angle(
-                lm.get("LEFT_SHOULDER"), lm.get("LEFT_HIP"), lm.get("LEFT_KNEE")
-            )
-            rh_angle = self.calculate_3point_angle(
-                lm.get("RIGHT_SHOULDER"), lm.get("RIGHT_HIP"), lm.get("RIGHT_KNEE")
-            )
+            lh_angle = self.calculate_3point_angle(lm.get("LEFT_SHOULDER"), lm.get("LEFT_HIP"), lm.get("LEFT_KNEE"))
+            rh_angle = self.calculate_3point_angle(lm.get("RIGHT_SHOULDER"), lm.get("RIGHT_HIP"), lm.get("RIGHT_KNEE"))
             curves["left_hip_angle"].append(lh_angle)
             curves["right_hip_angle"].append(rh_angle)
 
             # Ankle Angle (Knee - Ankle - Foot Index)
-            la_angle = self.calculate_3point_angle(
-                lm.get("LEFT_KNEE"), lm.get("LEFT_ANKLE"), lm.get("LEFT_FOOT_INDEX")
-            )
+            la_angle = self.calculate_3point_angle(lm.get("LEFT_KNEE"), lm.get("LEFT_ANKLE"), lm.get("LEFT_FOOT_INDEX"))
             ra_angle = self.calculate_3point_angle(
                 lm.get("RIGHT_KNEE"), lm.get("RIGHT_ANKLE"), lm.get("RIGHT_FOOT_INDEX")
             )
@@ -268,19 +269,17 @@ class KinematicsEngine:
 
             # Trunk lean and tilt
             t_lean = self.calculate_trunk_lean(
-                lm.get("LEFT_SHOULDER"), lm.get("RIGHT_SHOULDER"),
-                lm.get("LEFT_HIP"), lm.get("RIGHT_HIP")
+                lm.get("LEFT_SHOULDER"),
+                lm.get("RIGHT_SHOULDER"),
+                lm.get("LEFT_HIP"),
+                lm.get("RIGHT_HIP"),
             )
-            t_tilt = self.calculate_trunk_lateral_tilt(
-                lm.get("LEFT_SHOULDER"), lm.get("RIGHT_SHOULDER")
-            )
+            t_tilt = self.calculate_trunk_lateral_tilt(lm.get("LEFT_SHOULDER"), lm.get("RIGHT_SHOULDER"))
             curves["trunk_lean"].append(t_lean)
             curves["trunk_lateral_tilt"].append(t_tilt)
 
             # Knee Valgus deviation proxy
-            lv_angle = self.calculate_knee_valgus_proxy(
-                lm.get("LEFT_HIP"), lm.get("LEFT_KNEE"), lm.get("LEFT_ANKLE")
-            )
+            lv_angle = self.calculate_knee_valgus_proxy(lm.get("LEFT_HIP"), lm.get("LEFT_KNEE"), lm.get("LEFT_ANKLE"))
             rv_angle = self.calculate_knee_valgus_proxy(
                 lm.get("RIGHT_HIP"), lm.get("RIGHT_KNEE"), lm.get("RIGHT_ANKLE")
             )
@@ -288,8 +287,8 @@ class KinematicsEngine:
             curves["right_knee_valgus"].append(rv_angle)
 
         # Compute Angular Velocities (deg/s) and Accelerations (deg/s^2)
-        velocities: Dict[str, List[Optional[float]]] = {}
-        accelerations: Dict[str, List[Optional[float]]] = {}
+        velocities: dict[str, list[float | None]] = {}
+        accelerations: dict[str, list[float | None]] = {}
 
         for key, angle_series in curves.items():
             vel = self.calculate_derivative(angle_series, timestamps)
@@ -311,7 +310,7 @@ class KinematicsEngine:
             for lv, rv in zip(curves["left_knee_valgus"], curves["right_knee_valgus"])
         ]
 
-        def get_valid_stats(series: List[Optional[float]]) -> Dict[str, Optional[float]]:
+        def get_valid_stats(series: list[float | None]) -> dict[str, float | None]:
             valid = [v for v in series if v is not None]
             if not valid:
                 return {"min": None, "max": None, "mean": None, "range": None}
@@ -319,7 +318,7 @@ class KinematicsEngine:
                 "min": round(float(np.min(valid)), 2),
                 "max": round(float(np.max(valid)), 2),
                 "mean": round(float(np.mean(valid)), 2),
-                "range": round(float(np.ptp(valid)), 2)
+                "range": round(float(np.ptp(valid)), 2),
             }
 
         summary_metrics = {
@@ -339,18 +338,18 @@ class KinematicsEngine:
             "knee_flexion_asymmetry": {
                 "timeseries": knee_asymmetry_series,
                 "mean": get_valid_stats(knee_asymmetry_series).get("mean"),
-                "peak": get_valid_stats(knee_asymmetry_series).get("max")
+                "peak": get_valid_stats(knee_asymmetry_series).get("max"),
             },
             "hip_flexion_asymmetry": {
                 "timeseries": hip_asymmetry_series,
                 "mean": get_valid_stats(hip_asymmetry_series).get("mean"),
-                "peak": get_valid_stats(hip_asymmetry_series).get("max")
+                "peak": get_valid_stats(hip_asymmetry_series).get("max"),
             },
             "knee_valgus_asymmetry": {
                 "timeseries": valgus_asymmetry_series,
                 "mean": get_valid_stats(valgus_asymmetry_series).get("mean"),
-                "peak": get_valid_stats(valgus_asymmetry_series).get("max")
-            }
+                "peak": get_valid_stats(valgus_asymmetry_series).get("max"),
+            },
         }
 
         return {
@@ -359,7 +358,7 @@ class KinematicsEngine:
             "angular_velocities": velocities,
             "angular_accelerations": accelerations,
             "asymmetry_metrics": asymmetry_metrics,
-            "summary_metrics": summary_metrics
+            "summary_metrics": summary_metrics,
         }
 
 

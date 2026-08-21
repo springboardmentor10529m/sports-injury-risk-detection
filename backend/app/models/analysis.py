@@ -1,20 +1,24 @@
 """Analysis, pose, kinematics, anomaly detection, and audit models."""
+
 import uuid
 from datetime import datetime
-import enum
-from sqlalchemy import Column, String, Float, Integer, DateTime, ForeignKey, JSON, Enum as SAEnum, Uuid
+from enum import StrEnum
+
+from sqlalchemy import JSON, Column, DateTime, Float, ForeignKey, Integer, String, Uuid
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import relationship
+
 from app.db.postgresql import Base
 
 
-class RiskCategory(str, enum.Enum):
+class RiskCategory(StrEnum):
     LOW = "LOW"
     MODERATE = "MODERATE"
     HIGH = "HIGH"
     CRITICAL = "CRITICAL"
 
 
-class AnomalySeverity(str, enum.Enum):
+class AnomalySeverity(StrEnum):
     NORMAL = "NORMAL"
     MILD_DEVIATION = "MILD_DEVIATION"
     MODERATE_DEVIATION = "MODERATE_DEVIATION"
@@ -23,6 +27,7 @@ class AnomalySeverity(str, enum.Enum):
 
 class PoseSequence(Base):
     """15-keypoint landmark timeseries sequence extracted from a video session."""
+
     __tablename__ = "pose_sequences"
 
     id = Column(Uuid, primary_key=True, default=uuid.uuid4)
@@ -39,6 +44,7 @@ class PoseSequence(Base):
 
 class KinematicAssessment(Base):
     """Computed mathematical joint angles, velocities, accelerations, and asymmetries."""
+
     __tablename__ = "kinematic_assessments"
 
     id = Column(Uuid, primary_key=True, default=uuid.uuid4)
@@ -58,6 +64,7 @@ class KinematicAssessment(Base):
 
 class BiomechanicalAnomaly(Base):
     """Individual biomechanical movement deviation event."""
+
     __tablename__ = "biomechanical_anomalies"
 
     id = Column(Uuid, primary_key=True, default=uuid.uuid4)
@@ -80,6 +87,7 @@ class BiomechanicalAnomaly(Base):
 
 class AnomalyAssessment(Base):
     """Full session biomechanical anomaly and feature summary assessment."""
+
     __tablename__ = "anomaly_assessments"
 
     id = Column(Uuid, primary_key=True, default=uuid.uuid4)

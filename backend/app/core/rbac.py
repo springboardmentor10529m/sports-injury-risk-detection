@@ -8,12 +8,13 @@ RBAC Matrix:
 - COACH: Access to team dashboards, roster, risk summaries.
 - ATHLETE: Access to own profile, own videos, own reports.
 """
-from enum import Enum
-from typing import List
+
+from enum import StrEnum
+
 from fastapi import HTTPException, status
 
 
-class UserRole(str, Enum):
+class UserRole(StrEnum):
     ATHLETE = "ATHLETE"
     COACH = "COACH"
     PHYSIOTHERAPIST = "PHYSIOTHERAPIST"
@@ -21,10 +22,13 @@ class UserRole(str, Enum):
     ADMIN = "ADMIN"
 
 
-def check_role(user, allowed_roles: List[UserRole]) -> None:
+def check_role(user, allowed_roles: list[UserRole]) -> None:
     """Raise 403 if user's role is not in allowed_roles."""
     if user.role not in allowed_roles:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Access denied. Role '{user.role.value}' is not authorized. Required: {[r.value for r in allowed_roles]}"
+            detail=(
+                f"Access denied. Role '{user.role.value}' is not authorized. "
+                f"Required: {[r.value for r in allowed_roles]}"
+            ),
         )

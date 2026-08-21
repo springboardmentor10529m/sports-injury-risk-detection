@@ -2,16 +2,18 @@
 Pose extraction service using MediaPipe Pose Landmarker.
 Extracts 15 anatomical keypoints per frame with temporal smoothing.
 """
-import os
+
 import logging
-from typing import Dict, List, Any, Optional, Tuple
+import os
 from pathlib import Path
+from typing import Any
+
 import cv2
-import numpy as np
-from scipy.signal import savgol_filter
 import mediapipe as mp
+import numpy as np
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
+from scipy.signal import savgol_filter
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -36,22 +38,29 @@ LANDMARK_MAPPING = {
 
 PRIMARY_15_LANDMARKS = [
     "NOSE",
-    "LEFT_SHOULDER", "RIGHT_SHOULDER",
-    "LEFT_ELBOW", "RIGHT_ELBOW",
-    "LEFT_WRIST", "RIGHT_WRIST",
-    "LEFT_HIP", "RIGHT_HIP",
-    "LEFT_KNEE", "RIGHT_KNEE",
-    "LEFT_ANKLE", "RIGHT_ANKLE",
-    "LEFT_FOOT_INDEX", "RIGHT_FOOT_INDEX",
+    "LEFT_SHOULDER",
+    "RIGHT_SHOULDER",
+    "LEFT_ELBOW",
+    "RIGHT_ELBOW",
+    "LEFT_WRIST",
+    "RIGHT_WRIST",
+    "LEFT_HIP",
+    "RIGHT_HIP",
+    "LEFT_KNEE",
+    "RIGHT_KNEE",
+    "LEFT_ANKLE",
+    "RIGHT_ANKLE",
+    "LEFT_FOOT_INDEX",
+    "RIGHT_FOOT_INDEX",
 ]
 
 
 class PoseExtractor:
-    def __init__(self, model_path: Optional[str] = None):
+    def __init__(self, model_path: str | None = None):
         if model_path is None:
             base_dir = Path(__file__).resolve().parent
             model_path = str(base_dir / "pose_landmarker_lite.task")
-        
+
         self.model_path = model_path
         if not os.path.exists(self.model_path):
             raise FileNotFoundError(f"MediaPipe Pose model not found at {self.model_path}")
@@ -63,7 +72,7 @@ class PoseExtractor:
             num_poses=1,
             min_pose_detection_confidence=0.5,
             min_pose_presence_confidence=0.5,
-            min_tracking_confidence=0.5
+            min_tracking_confidence=0.5,
         )
 
     def extract_from_video(
@@ -71,8 +80,8 @@ class PoseExtractor:
         video_path: str,
         smoothing_method: str = "SAVITZKY_GOLAY",
         savgol_window: int = 7,
-        savgol_polyorder: int = 2
-    ) -> Dict[str, Any]:
+        savgol_polyorder: int = 2,
+    ) -> dict[str, Any]:
         """
         Process video file and extract 15-keypoint landmark timeseries.
         Retains both raw and temporally smoothed coordinate trajectories.
@@ -89,7 +98,7 @@ class PoseExtractor:
         duration_seconds = round(total_frames / fps, 2) if total_frames > 0 and fps > 0 else 0.0
 
         detector = vision.PoseLandmarker.create_from_options(self.options)
-        raw_frames: List[Dict[str, Any]] = []
+        raw_frames: list[dict[str, Any]] = []
 
         frame_idx = 0
         while True:
@@ -102,7 +111,7 @@ class PoseExtractor:
             mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame_rgb)
             detection_result = detector.detect(mp_image)
 
-            landmarks_dict: Dict[str, Dict[str, float]] = {}
+            landmarks_dict: dict[str, dict[str, float]] = {}
 
             if detection_result.pose_landmarks and len(detection_result.pose_landmarks) > 0:
                 pose_landmarks = detection_result.pose_landmarks[0]
@@ -113,14 +122,21 @@ class PoseExtractor:
                             "x": round(float(lm.x), 5),
                             "y": round(float(lm.y), 5),
                             "z": round(float(lm.z), 5),
-                            "visibility": round(float(lm.visibility if hasattr(lm, 'visibility') and lm.visibility is not None else 1.0), 4)
+                            "visibility": round(
+                                float(
+                                    lm.visibility if hasattr(lm, "visibility") and lm.visibility is not None else 1.0
+                                ),
+                                4,
+                            ),
                         }
 
-            raw_frames.append({
-                "frame_index": frame_idx,
-                "timestamp_seconds": timestamp_seconds,
-                "landmarks": landmarks_dict
-            })
+            raw_frames.append(
+                {
+                    "frame_index": frame_idx,
+                    "timestamp_seconds": timestamp_seconds,
+                    "landmarks": landmarks_dict,
+                }
+            )
             frame_idx += 1
 
         cap.release()
@@ -134,7 +150,7 @@ class PoseExtractor:
             raw_frames=raw_frames,
             method=smoothing_method,
             window_length=savgol_window,
-            polyorder=savgol_polyorder
+            polyorder=savgol_polyorder,
         )
 
         return {
@@ -142,25 +158,25 @@ class PoseExtractor:
             "duration_seconds": duration_seconds,
             "frame_count": len(raw_frames),
             "smoothing_method": smoothing_method,
-            "frames": smoothed_frames
+            "frames": smoothed_frames,
         }
 
     def apply_temporal_smoothing(
         self,
-        raw_frames: List[Dict[str, Any]],
+        raw_frames: list[dict[str, Any]],
         method: str = "SAVITZKY_GOLAY",
         window_length: int = 7,
-        polyorder: int = 2
-    ) -> List[Dict[str, Any]]:
+        polyorder: int = 2,
+    ) -> list[dict[str, Any]]:
         """
         Apply Savitzky-Golay or Moving Average temporal filter across landmark coordinates.
         Preserves raw values alongside smoothed values.
         """
         n_frames = len(raw_frames)
-        smoothed_frames: List[Dict[str, Any]] = []
+        smoothed_frames: list[dict[str, Any]] = []
 
         # Prepare landmark trajectories
-        landmark_trajectories: Dict[str, Dict[str, np.ndarray]] = {}
+        landmark_trajectories: dict[str, dict[str, np.ndarray]] = {}
 
         for lm_name in LANDMARK_MAPPING.keys():
             xs = np.zeros(n_frames, dtype=np.float32)
@@ -183,7 +199,7 @@ class PoseExtractor:
                 "visibility": vis,
                 "x_smooth": np.copy(xs),
                 "y_smooth": np.copy(ys),
-                "z_smooth": np.copy(zs)
+                "z_smooth": np.copy(zs),
             }
 
         # Apply smoothing when enough frames are present
@@ -218,7 +234,7 @@ class PoseExtractor:
         # Reconstruct output frame dictionaries
         for i, f in enumerate(raw_frames):
             frame_raw = f["landmarks"]
-            frame_smoothed: Dict[str, Dict[str, float]] = {}
+            frame_smoothed: dict[str, dict[str, float]] = {}
 
             for lm_name in LANDMARK_MAPPING.keys():
                 if lm_name in frame_raw:
@@ -226,15 +242,17 @@ class PoseExtractor:
                         "x": round(float(landmark_trajectories[lm_name]["x_smooth"][i]), 5),
                         "y": round(float(landmark_trajectories[lm_name]["y_smooth"][i]), 5),
                         "z": round(float(landmark_trajectories[lm_name]["z_smooth"][i]), 5),
-                        "visibility": frame_raw[lm_name]["visibility"]
+                        "visibility": frame_raw[lm_name]["visibility"],
                     }
 
-            smoothed_frames.append({
-                "frame_index": f["frame_index"],
-                "timestamp_seconds": f["timestamp_seconds"],
-                "raw_landmarks": frame_raw,
-                "landmarks": frame_smoothed
-            })
+            smoothed_frames.append(
+                {
+                    "frame_index": f["frame_index"],
+                    "timestamp_seconds": f["timestamp_seconds"],
+                    "raw_landmarks": frame_raw,
+                    "landmarks": frame_smoothed,
+                }
+            )
 
         return smoothed_frames
 

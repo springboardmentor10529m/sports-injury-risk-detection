@@ -1,19 +1,33 @@
 """Athlete and team related models."""
+
 import uuid
 from datetime import datetime
-import enum
-from sqlalchemy import Boolean, Column, String, Float, Integer, Date, DateTime, ForeignKey, Enum as SAEnum, Uuid
+from enum import StrEnum
+
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Uuid,
+)
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import relationship
+
 from app.db.postgresql import Base
 
 
-class DominantSide(str, enum.Enum):
+class DominantSide(StrEnum):
     LEFT = "LEFT"
     RIGHT = "RIGHT"
     AMBIDEXTROUS = "AMBIDEXTROUS"
 
 
-class InjuryType(str, enum.Enum):
+class InjuryType(StrEnum):
     ACL = "ACL"
     HAMSTRING = "HAMSTRING"
     ANKLE_SPRAIN = "ANKLE_SPRAIN"
@@ -22,7 +36,7 @@ class InjuryType(str, enum.Enum):
     OVERUSE = "OVERUSE"
 
 
-class Severity(str, enum.Enum):
+class Severity(StrEnum):
     MILD = "MILD"
     MODERATE = "MODERATE"
     SEVERE = "SEVERE"

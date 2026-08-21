@@ -3,13 +3,15 @@ PostgreSQL / SQLite connection setup via SQLAlchemy.
 Supports automatic local SQLite fallback for seamless developer onboarding
 when a live PostgreSQL server is not running on localhost:5432.
 """
+
 import logging
-from typing import Optional, AsyncGenerator
+from collections.abc import AsyncGenerator
+
 from sqlalchemy.ext.asyncio import (
-    create_async_engine,
-    async_sessionmaker,
-    AsyncSession,
     AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
 )
 from sqlalchemy.orm import declarative_base
 
@@ -19,8 +21,8 @@ logger = logging.getLogger("uvicorn.error")
 
 Base = declarative_base()
 
-_engine: Optional[AsyncEngine] = None
-_async_session_factory: Optional[async_sessionmaker] = None
+_engine: AsyncEngine | None = None
+_async_session_factory: async_sessionmaker | None = None
 
 
 async def init_db() -> None:
@@ -28,12 +30,12 @@ async def init_db() -> None:
     global _engine, _async_session_factory
 
     # Import models to ensure registration with Base.metadata
-    import app.models.user  # noqa: F401
-    import app.models.athlete  # noqa: F401
-    import app.models.video  # noqa: F401
     import app.models.analysis  # noqa: F401
+    import app.models.athlete  # noqa: F401
     import app.models.recommendation  # noqa: F401
     import app.models.risk  # noqa: F401
+    import app.models.user  # noqa: F401
+    import app.models.video  # noqa: F401
 
     settings = get_settings()
 
@@ -42,9 +44,7 @@ async def init_db() -> None:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         _engine = engine
-        _async_session_factory = async_sessionmaker(
-            _engine, expire_on_commit=False, class_=AsyncSession
-        )
+        _async_session_factory = async_sessionmaker(_engine, expire_on_commit=False, class_=AsyncSession)
         logger.info(f"Connected to primary database: {settings.DATABASE_URL}")
     except Exception as e:
         logger.warning(
@@ -54,9 +54,7 @@ async def init_db() -> None:
         _engine = create_async_engine("sqlite+aiosqlite:///./safemove.db", echo=False)
         async with _engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-        _async_session_factory = async_sessionmaker(
-            _engine, expire_on_commit=False, class_=AsyncSession
-        )
+        _async_session_factory = async_sessionmaker(_engine, expire_on_commit=False, class_=AsyncSession)
         logger.info("Local SQLite database initialized successfully at ./safemove.db")
 
 
@@ -76,9 +74,7 @@ def get_session_factory() -> async_sessionmaker:
     """Get or create the async session factory (lazy singleton)."""
     global _async_session_factory
     if _async_session_factory is None:
-        _async_session_factory = async_sessionmaker(
-            get_engine(), expire_on_commit=False, class_=AsyncSession
-        )
+        _async_session_factory = async_sessionmaker(get_engine(), expire_on_commit=False, class_=AsyncSession)
     return _async_session_factory
 
 

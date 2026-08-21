@@ -1,9 +1,17 @@
 """Central APIRouter for v1."""
+
 from fastapi import APIRouter
 
 from app.api.v1 import (
-    auth, users, athletes, videos, analysis,
-    risk, recommendations, analytics, admin
+    admin,
+    analysis,
+    analytics,
+    athletes,
+    auth,
+    recommendations,
+    risk,
+    users,
+    videos,
 )
 
 api_router = APIRouter()

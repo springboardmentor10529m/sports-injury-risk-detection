@@ -1,5 +1,6 @@
 from app.config import get_settings
 
+
 def test_settings_load_defaults():
     """Test that settings load correctly with expected defaults."""
     settings = get_settings()

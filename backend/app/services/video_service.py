@@ -1,17 +1,18 @@
 """Video service implementation for SafeMove Platform."""
+
 import os
 import uuid
 from pathlib import Path
-from typing import Optional, List
-from fastapi import UploadFile, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
+
+from fastapi import HTTPException, UploadFile, status
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
-from app.models.video import VideoSession, VideoStatus
+from app.core.rbac import UserRole
 from app.models.athlete import AthleteProfile
 from app.models.user import User
-from app.core.rbac import UserRole
+from app.models.video import VideoSession, VideoStatus
 from app.services.storage_service import get_storage_service
 
 
@@ -20,7 +21,7 @@ class VideoService:
         self.settings = get_settings()
         self.storage = get_storage_service()
 
-    def validate_video_file(self, filename: str, content_type: Optional[str], file_content: bytes) -> None:
+    def validate_video_file(self, filename: str, content_type: str | None, file_content: bytes) -> None:
         """
         Validate file size, extension, MIME type, and magic bytes for corruption/tampering.
         """
@@ -28,7 +29,7 @@ class VideoService:
         if not file_content or len(file_content) == 0:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Uploaded video file is empty (0 bytes)."
+                detail="Uploaded video file is empty (0 bytes).",
             )
 
         # 2. Maximum file size validation (100MB)
@@ -36,7 +37,7 @@ class VideoService:
         if len(file_content) > max_bytes:
             raise HTTPException(
                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                detail=f"File size exceeds maximum allowed limit of {self.settings.MAX_UPLOAD_SIZE_MB}MB."
+                detail=f"File size exceeds maximum allowed limit of {self.settings.MAX_UPLOAD_SIZE_MB}MB.",
             )
 
         # 3. File extension validation
@@ -45,7 +46,10 @@ class VideoService:
         if ext not in self.settings.ALLOWED_VIDEO_EXTENSIONS:
             raise HTTPException(
                 status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-                detail=f"Unsupported video file extension '{ext}'. Allowed formats: {self.settings.ALLOWED_VIDEO_EXTENSIONS}"
+                detail=(
+                    f"Unsupported video file extension '{ext}'. "
+                    f"Allowed formats: {self.settings.ALLOWED_VIDEO_EXTENSIONS}"
+                ),
             )
 
         # 4. MIME type validation (if present)
@@ -54,7 +58,7 @@ class VideoService:
             if normalized_mime not in self.settings.ALLOWED_VIDEO_MIME_TYPES:
                 raise HTTPException(
                     status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-                    detail=f"Invalid MIME content-type '{content_type}'."
+                    detail=f"Invalid MIME content-type '{content_type}'.",
                 )
 
         # 5. Magic header & binary signature validation
@@ -63,12 +67,7 @@ class VideoService:
 
         # MP4 / QuickTime MOV signatures
         if ext in [".mp4", ".mov"]:
-            if (
-                b"ftyp" in header or
-                b"moov" in header or
-                b"mdat" in header or
-                header.startswith(b"\x00\x00\x00")
-            ):
+            if b"ftyp" in header or b"moov" in header or b"mdat" in header or header.startswith(b"\x00\x00\x00"):
                 is_valid_header = True
         # WebM signature (EBML ID \x1a\x45\xdf\xa3)
         elif ext == ".webm":
@@ -82,16 +81,16 @@ class VideoService:
         if not is_valid_header:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid or corrupted video file header."
+                detail="Invalid or corrupted video file header.",
             )
 
     async def upload_video(
         self,
         file: UploadFile,
-        athlete_id: Optional[uuid.UUID],
-        sport_type: Optional[str],
+        athlete_id: uuid.UUID | None,
+        sport_type: str | None,
         current_user: User,
-        db: AsyncSession
+        db: AsyncSession,
     ) -> VideoSession:
         """
         Process video upload, enforce athlete association, validate binary,
@@ -109,14 +108,14 @@ class VideoService:
             if not athlete_profile:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Athlete profile not found. Please initialize your athlete profile first."
+                    detail="Athlete profile not found. Please initialize your athlete profile first.",
                 )
 
             # If athlete_id was passed, verify it matches own profile
             if athlete_id and athlete_id != athlete_profile.id:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Athletes can only upload videos for their own profile."
+                    detail="Athletes can only upload videos for their own profile.",
                 )
             target_athlete_id = athlete_profile.id
 
@@ -125,7 +124,7 @@ class VideoService:
             if not athlete_id:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail="athlete_id is required for coach and staff video uploads."
+                    detail="athlete_id is required for coach and staff video uploads.",
                 )
 
             # Verify target athlete exists
@@ -136,7 +135,7 @@ class VideoService:
             if not target_profile:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Athlete profile with ID '{athlete_id}' not found."
+                    detail=f"Athlete profile with ID '{athlete_id}' not found.",
                 )
             target_athlete_id = athlete_id
 
@@ -146,7 +145,7 @@ class VideoService:
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Failed to read uploaded file: {str(e)}"
+                detail=f"Failed to read uploaded file: {str(e)}",
             )
 
         # Sanitize original filename (prevent path traversal)
@@ -162,7 +161,7 @@ class VideoService:
         safe_filename, storage_path, fps, duration_seconds, resolution = self.storage.save_video_file(
             file_content=file_content,
             original_filename=safe_original_name,
-            video_id=video_id
+            video_id=video_id,
         )
 
         # Create database record
@@ -180,7 +179,7 @@ class VideoService:
             sport_type=sport_type or "General Movement",
             fps=fps,
             duration_seconds=duration_seconds,
-            resolution=resolution
+            resolution=resolution,
         )
 
         db.add(video_session)
@@ -191,12 +190,12 @@ class VideoService:
 
     async def list_videos(
         self,
-        athlete_id: Optional[uuid.UUID],
+        athlete_id: uuid.UUID | None,
         skip: int,
         limit: int,
         current_user: User,
-        db: AsyncSession
-    ) -> List[VideoSession]:
+        db: AsyncSession,
+    ) -> list[VideoSession]:
         """
         List videos accessible to the authenticated user.
         """
@@ -212,8 +211,7 @@ class VideoService:
                 return []
 
             stmt = stmt.where(
-                (VideoSession.athlete_id == athlete_profile.id) |
-                (VideoSession.uploaded_by == current_user.id)
+                (VideoSession.athlete_id == athlete_profile.id) | (VideoSession.uploaded_by == current_user.id)
             )
         else:
             if athlete_id:
@@ -223,12 +221,7 @@ class VideoService:
         result = await db.execute(stmt)
         return list(result.scalars().all())
 
-    async def get_video(
-        self,
-        video_id: uuid.UUID,
-        current_user: User,
-        db: AsyncSession
-    ) -> VideoSession:
+    async def get_video(self, video_id: uuid.UUID, current_user: User, db: AsyncSession) -> VideoSession:
         """
         Get video metadata and verify authorization.
         """
@@ -239,7 +232,7 @@ class VideoService:
         if not video:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Video session '{video_id}' not found."
+                detail=f"Video session '{video_id}' not found.",
             )
 
         # Authorization: athletes can only view their own videos
@@ -251,17 +244,12 @@ class VideoService:
             if not athlete_profile or (video.athlete_id != athlete_profile.id and video.uploaded_by != current_user.id):
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Access denied. You do not have permission to view this video."
+                    detail="Access denied. You do not have permission to view this video.",
                 )
 
         return video
 
-    async def get_video_file_path_for_stream(
-        self,
-        video_id: uuid.UUID,
-        current_user: User,
-        db: AsyncSession
-    ) -> Path:
+    async def get_video_file_path_for_stream(self, video_id: uuid.UUID, current_user: User, db: AsyncSession) -> Path:
         """
         Verify permissions and return validated file path for video streaming.
         """
@@ -271,13 +259,13 @@ class VideoService:
         if not file_path or not file_path.exists():
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Video file not found on storage server."
+                detail="Video file not found on storage server.",
             )
 
         return file_path
 
 
-_video_service_instance: Optional[VideoService] = None
+_video_service_instance: VideoService | None = None
 
 
 def get_video_service() -> VideoService:

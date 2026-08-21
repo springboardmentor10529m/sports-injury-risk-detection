@@ -1,13 +1,17 @@
 """Video session model."""
+
 import uuid
 from datetime import datetime
-import enum
-from sqlalchemy import Column, String, Float, Integer, DateTime, ForeignKey, Enum as SAEnum, Uuid
+from enum import StrEnum
+
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Uuid
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import relationship
+
 from app.db.postgresql import Base
 
 
-class VideoStatus(str, enum.Enum):
+class VideoStatus(StrEnum):
     UPLOADED = "UPLOADED"
     PREPROCESSING = "PREPROCESSING"
     PROCESSING = "PROCESSING"

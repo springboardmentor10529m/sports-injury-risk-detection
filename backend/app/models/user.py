@@ -1,10 +1,14 @@
 """User model."""
+
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Boolean, DateTime, Enum as SAEnum, Uuid
+
+from sqlalchemy import Boolean, Column, DateTime, String, Uuid
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import relationship
-from app.db.postgresql import Base
+
 from app.core.rbac import UserRole
+from app.db.postgresql import Base
 
 
 class User(Base):

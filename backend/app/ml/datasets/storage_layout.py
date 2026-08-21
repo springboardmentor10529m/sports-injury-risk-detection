@@ -3,15 +3,14 @@ Filesystem storage layout manager for SafeMove datasets.
 Enforces strict separation between raw data, processed videos, extracted poses,
 kinematic features, labels, splits, and compiled ML feature tables.
 """
+
 from pathlib import Path
-from typing import Dict, Optional
-import os
 
 
 class DatasetStorageManager:
     """Manages the separated storage directories for a named dataset."""
 
-    def __init__(self, base_data_dir: Optional[str] = None):
+    def __init__(self, base_data_dir: str | None = None):
         if base_data_dir:
             self.base_dir = Path(base_data_dir).resolve()
         else:
@@ -43,7 +42,7 @@ class DatasetStorageManager:
     def get_splits_dir(self, dataset_name: str) -> Path:
         return self.base_dir / "splits" / dataset_name
 
-    def initialize_dataset_directories(self, dataset_name: str) -> Dict[str, Path]:
+    def initialize_dataset_directories(self, dataset_name: str) -> dict[str, Path]:
         """Create all separated subdirectories for a dataset if they do not exist."""
         paths = {
             "raw": self.get_raw_dir(dataset_name),

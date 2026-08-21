@@ -1,71 +1,72 @@
 """Tests for kinematics calculations, pose extraction, and pipeline endpoints."""
+
 import uuid
-import pytest
+
 import numpy as np
+import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tests.conftest import auth_header
-from tests.test_videos import VALID_MP4_BYTES
 from app.models.athlete import AthleteProfile
-from app.models.video import VideoSession, VideoStatus
 from app.models.user import User
 from app.services.kinematics_engine import KinematicsEngine
-
+from tests.conftest import auth_header
+from tests.test_videos import VALID_MP4_BYTES
 
 # --- Unit Tests: Mathematical Formulas ---
 
+
 def test_angle_90_degrees():
     """Verify 90-degree orthogonal angle calculation."""
-    ptA = {"x": 0.0, "y": 1.0, "z": 0.0}
-    ptB = {"x": 0.0, "y": 0.0, "z": 0.0}
-    ptC = {"x": 1.0, "y": 0.0, "z": 0.0}
+    pt_a = {"x": 0.0, "y": 1.0, "z": 0.0}
+    pt_b = {"x": 0.0, "y": 0.0, "z": 0.0}
+    pt_c = {"x": 1.0, "y": 0.0, "z": 0.0}
 
-    angle = KinematicsEngine.calculate_3point_angle(ptA, ptB, ptC)
+    angle = KinematicsEngine.calculate_3point_angle(pt_a, pt_b, pt_c)
     assert angle is not None
     assert abs(angle - 90.0) < 1e-2
 
 
 def test_angle_180_straight_angle():
     """Verify 180-degree straight line angle calculation."""
-    ptA = {"x": -1.0, "y": 0.0, "z": 0.0}
-    ptB = {"x": 0.0, "y": 0.0, "z": 0.0}
-    ptC = {"x": 1.0, "y": 0.0, "z": 0.0}
+    pt_a = {"x": -1.0, "y": 0.0, "z": 0.0}
+    pt_b = {"x": 0.0, "y": 0.0, "z": 0.0}
+    pt_c = {"x": 1.0, "y": 0.0, "z": 0.0}
 
-    angle = KinematicsEngine.calculate_3point_angle(ptA, ptB, ptC)
+    angle = KinematicsEngine.calculate_3point_angle(pt_a, pt_b, pt_c)
     assert angle is not None
     assert abs(angle - 180.0) < 1e-2
 
 
 def test_angle_0_collinear():
     """Verify 0-degree angle calculation when rays coincide."""
-    ptA = {"x": 1.0, "y": 0.0, "z": 0.0}
-    ptB = {"x": 0.0, "y": 0.0, "z": 0.0}
-    ptC = {"x": 2.0, "y": 0.0, "z": 0.0}
+    pt_a = {"x": 1.0, "y": 0.0, "z": 0.0}
+    pt_b = {"x": 0.0, "y": 0.0, "z": 0.0}
+    pt_c = {"x": 2.0, "y": 0.0, "z": 0.0}
 
-    angle = KinematicsEngine.calculate_3point_angle(ptA, ptB, ptC)
+    angle = KinematicsEngine.calculate_3point_angle(pt_a, pt_b, pt_c)
     assert angle is not None
     assert abs(angle - 0.0) < 1e-2
 
 
 def test_angle_zero_length_vector():
     """Verify safe handling of zero-length vector (point coincides with vertex)."""
-    ptA = {"x": 0.0, "y": 0.0, "z": 0.0}
-    ptB = {"x": 0.0, "y": 0.0, "z": 0.0}
-    ptC = {"x": 1.0, "y": 1.0, "z": 0.0}
+    pt_a = {"x": 0.0, "y": 0.0, "z": 0.0}
+    pt_b = {"x": 0.0, "y": 0.0, "z": 0.0}
+    pt_c = {"x": 1.0, "y": 1.0, "z": 0.0}
 
-    angle = KinematicsEngine.calculate_3point_angle(ptA, ptB, ptC)
+    angle = KinematicsEngine.calculate_3point_angle(pt_a, pt_b, pt_c)
     assert angle is None
 
 
 def test_cosine_numerical_clamping():
     """Verify that floating point imprecision (> 1.0) is safely clamped and doesn't raise math domain error."""
     # Near collinear points
-    ptA = {"x": 1.0000000000000002, "y": 0.0, "z": 0.0}
-    ptB = {"x": 0.0, "y": 0.0, "z": 0.0}
-    ptC = {"x": 2.0000000000000004, "y": 0.0, "z": 0.0}
+    pt_a = {"x": 1.0000000000000002, "y": 0.0, "z": 0.0}
+    pt_b = {"x": 0.0, "y": 0.0, "z": 0.0}
+    pt_c = {"x": 2.0000000000000004, "y": 0.0, "z": 0.0}
 
-    angle = KinematicsEngine.calculate_3point_angle(ptA, ptB, ptC)
+    angle = KinematicsEngine.calculate_3point_angle(pt_a, pt_b, pt_c)
     assert angle is not None
     assert abs(angle - 0.0) < 1e-2
 
@@ -135,15 +136,11 @@ def test_trunk_lean_and_tilt():
 
 # --- Integration Tests: Video Processing Pipeline ---
 
+
 @pytest.fixture
 async def athlete_profile_1(db_session: AsyncSession, test_user: User) -> AthleteProfile:
     """Create athlete profile for test_user."""
-    profile = AthleteProfile(
-        id=uuid.uuid4(),
-        user_id=test_user.id,
-        sport="Basketball",
-        position="Guard"
-    )
+    profile = AthleteProfile(id=uuid.uuid4(), user_id=test_user.id, sport="Basketball", position="Guard")
     db_session.add(profile)
     await db_session.commit()
     await db_session.refresh(profile)
@@ -153,24 +150,21 @@ async def athlete_profile_1(db_session: AsyncSession, test_user: User) -> Athlet
 @pytest.fixture
 async def athlete_profile_2(db_session: AsyncSession) -> AthleteProfile:
     """Create a second athlete profile."""
-    from app.core.security import hash_password
     from app.core.rbac import UserRole
+    from app.core.security import hash_password
+
     second_user = User(
         id=uuid.uuid4(),
         email="athlete_other@test.com",
         password_hash=hash_password("testpass123"),
         full_name="Athlete Other",
-        role=UserRole.ATHLETE
+        role=UserRole.ATHLETE,
     )
     db_session.add(second_user)
     await db_session.commit()
     await db_session.refresh(second_user)
 
-    profile = AthleteProfile(
-        id=uuid.uuid4(),
-        user_id=second_user.id,
-        sport="Soccer"
-    )
+    profile = AthleteProfile(id=uuid.uuid4(), user_id=second_user.id, sport="Soccer")
     db_session.add(profile)
     await db_session.commit()
     await db_session.refresh(profile)
@@ -182,7 +176,7 @@ async def test_pipeline_unauthorized_processing(
     client: AsyncClient,
     test_user: User,
     athlete_profile_2: AthleteProfile,
-    coach_user: User
+    coach_user: User,
 ):
     """Test: Athlete 1 cannot trigger processing on Athlete 2's video."""
     # Coach uploads video for Athlete 2
@@ -190,16 +184,13 @@ async def test_pipeline_unauthorized_processing(
         "/api/v1/videos/upload",
         files={"file": ("drill.mp4", VALID_MP4_BYTES, "video/mp4")},
         data={"athlete_id": str(athlete_profile_2.id)},
-        headers=auth_header(coach_user)
+        headers=auth_header(coach_user),
     )
     assert upload_res.status_code == 201
     video_id = upload_res.json()["id"]
 
     # Athlete 1 attempts to process Athlete 2's video -> 403
-    process_res = await client.post(
-        f"/api/v1/videos/{video_id}/process",
-        headers=auth_header(test_user)
-    )
+    process_res = await client.post(f"/api/v1/videos/{video_id}/process", headers=auth_header(test_user))
     assert process_res.status_code == 403
 
 
@@ -213,9 +204,11 @@ async def test_pipeline_missing_video(client: AsyncClient, test_user: User):
 
 def generate_test_video_bytes() -> bytes:
     """Generate a minimal real 10-frame MP4 video binary using OpenCV."""
-    import tempfile
     import os
+    import tempfile
+
     import cv2
+
     with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp:
         tmp_path = tmp.name
 
@@ -244,9 +237,7 @@ def generate_test_video_bytes() -> bytes:
 
 @pytest.mark.asyncio
 async def test_pipeline_real_processing_and_retrieval(
-    client: AsyncClient,
-    test_user: User,
-    athlete_profile_1: AthleteProfile
+    client: AsyncClient, test_user: User, athlete_profile_1: AthleteProfile
 ):
     """Test: Upload valid video, run process pipeline, and fetch keypoints + kinematics."""
     real_video_bytes = generate_test_video_bytes()
@@ -256,26 +247,20 @@ async def test_pipeline_real_processing_and_retrieval(
         "/api/v1/videos/upload",
         files={"file": ("jump.mp4", real_video_bytes, "video/mp4")},
         data={"sport_type": "Jump Test"},
-        headers=auth_header(test_user)
+        headers=auth_header(test_user),
     )
     assert upload_res.status_code == 201
     video_id = upload_res.json()["id"]
 
     # 2. Trigger pipeline processing
-    process_res = await client.post(
-        f"/api/v1/videos/{video_id}/process",
-        headers=auth_header(test_user)
-    )
+    process_res = await client.post(f"/api/v1/videos/{video_id}/process", headers=auth_header(test_user))
     assert process_res.status_code == 200
     p_data = process_res.json()
     assert p_data["id"] == video_id
     assert p_data["status"] == "ANALYZED"
 
     # 3. Retrieve Keypoints
-    keypoints_res = await client.get(
-        f"/api/v1/videos/{video_id}/keypoints",
-        headers=auth_header(test_user)
-    )
+    keypoints_res = await client.get(f"/api/v1/videos/{video_id}/keypoints", headers=auth_header(test_user))
     assert keypoints_res.status_code == 200
     kp_data = keypoints_res.json()
     assert kp_data["video_id"] == video_id
@@ -284,10 +269,7 @@ async def test_pipeline_real_processing_and_retrieval(
     assert "landmarks" in kp_data["frames"][0]
 
     # 4. Retrieve Kinematics
-    kinematics_res = await client.get(
-        f"/api/v1/analysis/{video_id}/kinematics",
-        headers=auth_header(test_user)
-    )
+    kinematics_res = await client.get(f"/api/v1/analysis/{video_id}/kinematics", headers=auth_header(test_user))
     assert kinematics_res.status_code == 200
     kin_data = kinematics_res.json()
     assert kin_data["video_id"] == video_id

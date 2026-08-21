@@ -3,27 +3,29 @@ Train/Validation/Test Splitter with Strict Athlete-Level Leakage Prevention.
 Ensures that all video recordings from the same athlete/subject are placed
 exclusively in ONE split partition.
 """
-from typing import List, Dict, Set, Any, Optional, Tuple
-import random
-import json
-from pathlib import Path
-from pydantic import BaseModel, Field
 
-from app.ml.datasets.schema import DatasetSample, DatasetManifest
+import json
+import random
+from pathlib import Path
+
+from pydantic import BaseModel
+
+from app.ml.datasets.schema import DatasetManifest, DatasetSample
 
 
 class SplitResult(BaseModel):
     """Container for dataset split partitions and leakage validation audit."""
+
     train_count: int
     val_count: int
     test_count: int
-    train_samples: List[DatasetSample]
-    val_samples: List[DatasetSample]
-    test_samples: List[DatasetSample]
-    train_athletes: List[str]
-    val_athletes: List[str]
-    test_athletes: List[str]
-    class_distribution_per_split: Dict[str, Dict[str, int]]
+    train_samples: list[DatasetSample]
+    val_samples: list[DatasetSample]
+    test_samples: list[DatasetSample]
+    train_athletes: list[str]
+    val_athletes: list[str]
+    test_athletes: list[str]
+    class_distribution_per_split: dict[str, dict[str, int]]
     leakage_verified: bool = True
     leakage_notes: str = "Zero athlete-level leakage across partitions verified."
 
@@ -36,7 +38,7 @@ class DatasetSplitter:
         train_ratio: float = 0.70,
         val_ratio: float = 0.15,
         test_ratio: float = 0.15,
-        random_seed: int = 42
+        random_seed: int = 42,
     ):
         total = train_ratio + val_ratio + test_ratio
         if abs(total - 1.0) > 1e-4:
@@ -53,7 +55,7 @@ class DatasetSplitter:
         rng = random.Random(self.random_seed)
 
         # 1. Group samples by athlete_id (or fallback to unique sample_id for unassigned)
-        athlete_groups: Dict[str, List[DatasetSample]] = {}
+        athlete_groups: dict[str, list[DatasetSample]] = {}
         for sample in manifest.samples:
             group_key = sample.athlete_id if sample.athlete_id else f"ANON_SAMPLE_{sample.sample_id}"
             if group_key not in athlete_groups:
@@ -68,20 +70,22 @@ class DatasetSplitter:
         target_train_count = int(total_samples * self.train_ratio)
         target_val_count = int(total_samples * self.val_ratio)
 
-        train_samples: List[DatasetSample] = []
-        val_samples: List[DatasetSample] = []
-        test_samples: List[DatasetSample] = []
+        train_samples: list[DatasetSample] = []
+        val_samples: list[DatasetSample] = []
+        test_samples: list[DatasetSample] = []
 
-        train_athletes: Set[str] = set()
-        val_athletes: Set[str] = set()
-        test_athletes: Set[str] = set()
+        train_athletes: set[str] = set()
+        val_athletes: set[str] = set()
+        test_athletes: set[str] = set()
 
         for group_key in all_group_keys:
             group_samples = athlete_groups[group_key]
             current_train_count = len(train_samples)
             current_val_count = len(val_samples)
 
-            if current_train_count + len(group_samples) <= target_train_count or (current_train_count < target_train_count):
+            if current_train_count + len(group_samples) <= target_train_count or (
+                current_train_count < target_train_count
+            ):
                 train_samples.extend(group_samples)
                 train_athletes.add(group_key)
             elif current_val_count + len(group_samples) <= target_val_count or (current_val_count < target_val_count):
@@ -106,8 +110,8 @@ class DatasetSplitter:
             )
 
         # 4. Compile Class Distributions per Split
-        def count_classes(samples: List[DatasetSample]) -> Dict[str, int]:
-            dist: Dict[str, int] = {}
+        def count_classes(samples: list[DatasetSample]) -> dict[str, int]:
+            dist: dict[str, int] = {}
             for s in samples:
                 k = str(s.injury_label) if s.injury_label is not None else "UNLABELED"
                 dist[k] = dist.get(k, 0) + 1
@@ -131,10 +135,10 @@ class DatasetSplitter:
             test_athletes=sorted(list(test_athletes)),
             class_distribution_per_split=class_dist,
             leakage_verified=True,
-            leakage_notes="Zero athlete-level leakage: All athlete groups partitioned exclusively into a single split."
+            leakage_notes="Zero athlete-level leakage: All athlete groups partitioned exclusively into a single split.",
         )
 
-    def save_splits(self, split_result: SplitResult, output_dir: Path) -> Dict[str, Path]:
+    def save_splits(self, split_result: SplitResult, output_dir: Path) -> dict[str, Path]:
         """Write partitioned split manifests to JSON files."""
         output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -142,7 +146,7 @@ class DatasetSplitter:
             "train": output_dir / "train_manifest.json",
             "val": output_dir / "val_manifest.json",
             "test": output_dir / "test_manifest.json",
-            "summary": output_dir / "split_summary.json"
+            "summary": output_dir / "split_summary.json",
         }
 
         with open(files["train"], "w", encoding="utf-8") as f:
@@ -155,15 +159,19 @@ class DatasetSplitter:
             json.dump([s.model_dump() for s in split_result.test_samples], f, indent=2)
 
         with open(files["summary"], "w", encoding="utf-8") as f:
-            json.dump({
-                "train_count": split_result.train_count,
-                "val_count": split_result.val_count,
-                "test_count": split_result.test_count,
-                "train_athletes": split_result.train_athletes,
-                "val_athletes": split_result.val_athletes,
-                "test_athletes": split_result.test_athletes,
-                "class_distribution_per_split": split_result.class_distribution_per_split,
-                "leakage_verified": split_result.leakage_verified,
-            }, f, indent=2)
+            json.dump(
+                {
+                    "train_count": split_result.train_count,
+                    "val_count": split_result.val_count,
+                    "test_count": split_result.test_count,
+                    "train_athletes": split_result.train_athletes,
+                    "val_athletes": split_result.val_athletes,
+                    "test_athletes": split_result.test_athletes,
+                    "class_distribution_per_split": split_result.class_distribution_per_split,
+                    "leakage_verified": split_result.leakage_verified,
+                },
+                f,
+                indent=2,
+            )
 
         return files

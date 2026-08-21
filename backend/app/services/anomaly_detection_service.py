@@ -8,15 +8,17 @@ IMPORTANT SCIENTIFIC NOTICE:
 Outputs represent non-clinical kinematic movement deviations against provisional
 developmental baselines. No medical diagnosis or injury prediction is performed.
 """
+
 import logging
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Any
+
 import numpy as np
 
 from app.core.baselines import (
-    MovementBaseline,
     BaselineRegistry,
-    SeverityRuleConfig,
     DerivationStrategy,
+    MovementBaseline,
+    SeverityRuleConfig,
     get_baseline_registry,
 )
 from app.models.analysis import AnomalySeverity
@@ -27,17 +29,17 @@ logger = logging.getLogger("uvicorn.error")
 class AnomalyDetectionService:
     """Service for extracting kinematic feature summaries and evaluating biomechanical deviations."""
 
-    def __init__(self, baseline_registry: Optional[BaselineRegistry] = None):
+    def __init__(self, baseline_registry: BaselineRegistry | None = None):
         self.registry = baseline_registry or get_baseline_registry()
 
     @staticmethod
     def extract_feature_summary(
-        timestamps: List[float],
-        joint_angles: Dict[str, List[Optional[float]]],
-        angular_velocities: Optional[Dict[str, List[Optional[float]]]] = None,
-        angular_accelerations: Optional[Dict[str, List[Optional[float]]]] = None,
-        asymmetry_metrics: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Dict[str, Optional[float]]]:
+        timestamps: list[float],
+        joint_angles: dict[str, list[float | None]],
+        angular_velocities: dict[str, list[float | None]] | None = None,
+        angular_accelerations: dict[str, list[float | None]] | None = None,
+        asymmetry_metrics: dict[str, Any] | None = None,
+    ) -> dict[str, dict[str, float | None]]:
         """
         Extract comprehensive statistical feature summaries for each kinematic metric.
         Calculates: min, max, mean, median, std_dev, range (ROM), peak_velocity, peak_acceleration.
@@ -46,7 +48,7 @@ class AnomalyDetectionService:
         angular_accelerations = angular_accelerations or {}
         asymmetry_metrics = asymmetry_metrics or {}
 
-        summary: Dict[str, Dict[str, Optional[float]]] = {}
+        summary: dict[str, dict[str, float | None]] = {}
 
         # 1. Summarize Joint Angle Curves
         for metric_name, values in joint_angles.items():
@@ -125,36 +127,43 @@ class AnomalyDetectionService:
 
     @staticmethod
     def detect_temporal_peaks(
-        timestamps: List[float],
-        joint_angles: Dict[str, List[Optional[float]]],
-        angular_velocities: Optional[Dict[str, List[Optional[float]]]] = None,
-        asymmetry_metrics: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Dict[str, Optional[float]]]:
+        timestamps: list[float],
+        joint_angles: dict[str, list[float | None]],
+        angular_velocities: dict[str, list[float | None]] | None = None,
+        asymmetry_metrics: dict[str, Any] | None = None,
+    ) -> dict[str, dict[str, float | None]]:
         """
         Identify exact video timestamps corresponding to maximum kinematic events.
         Enables clickable video scrubbing to specific movement deviation moments.
         """
-        temporal_events: Dict[str, Dict[str, Optional[float]]] = {}
+        temporal_events: dict[str, dict[str, float | None]] = {}
 
         if not timestamps:
             return temporal_events
 
         # Helper to find timestamp of maximum value
-        def find_peak(values: List[Optional[float]]) -> Dict[str, Optional[float]]:
+        def find_peak(values: list[float | None]) -> dict[str, float | None]:
             if not values or len(values) != len(timestamps):
                 return {"peak_value": None, "timestamp_seconds": None}
             valid_pairs = [(v, t) for v, t in zip(values, timestamps) if v is not None and not np.isnan(v)]
             if not valid_pairs:
                 return {"peak_value": None, "timestamp_seconds": None}
             peak_val, peak_time = max(valid_pairs, key=lambda p: p[0])
-            return {"peak_value": round(peak_val, 2), "timestamp_seconds": round(peak_time, 3)}
+            return {
+                "peak_value": round(peak_val, 2),
+                "timestamp_seconds": round(peak_time, 3),
+            }
 
         # 1. Joint Angle Peaks
         for key in [
-            "left_knee_angle", "right_knee_angle",
-            "left_hip_angle", "right_hip_angle",
-            "trunk_lean", "trunk_lateral_tilt",
-            "left_knee_valgus", "right_knee_valgus"
+            "left_knee_angle",
+            "right_knee_angle",
+            "left_hip_angle",
+            "right_hip_angle",
+            "trunk_lean",
+            "trunk_lateral_tilt",
+            "left_knee_valgus",
+            "right_knee_valgus",
         ]:
             if key in joint_angles:
                 temporal_events[key] = find_peak(joint_angles[key])
@@ -175,10 +184,10 @@ class AnomalyDetectionService:
 
     def calculate_deviation(
         self,
-        observed_value: Optional[float],
+        observed_value: float | None,
         baseline: MovementBaseline,
-        rule_config: Optional[SeverityRuleConfig] = None
-    ) -> Dict[str, Any]:
+        rule_config: SeverityRuleConfig | None = None,
+    ) -> dict[str, Any]:
         """
         Calculate each statistical metric independently:
         1. Z-Score (when baseline std_dev > 0)
@@ -210,12 +219,12 @@ class AnomalyDetectionService:
         abs_dev = abs(observed_value - baseline.mean)
 
         # 2. Percentage Deviation (stored independently)
-        pct_dev: Optional[float] = None
+        pct_dev: float | None = None
         if baseline.mean != 0.0:
             pct_dev = (abs_dev / abs(baseline.mean)) * 100.0
 
         # 3. Z-Score (stored independently)
-        z_score: Optional[float] = None
+        z_score: float | None = None
         if baseline.std_dev > 0.0:
             z_score = (observed_value - baseline.mean) / baseline.std_dev
 
@@ -237,7 +246,7 @@ class AnomalyDetectionService:
             is_out_of_range=is_out_of_range,
             observed_val=observed_value,
             baseline=baseline,
-            cfg=cfg
+            cfg=cfg,
         )
 
         return {
@@ -258,14 +267,14 @@ class AnomalyDetectionService:
 
     @staticmethod
     def _derive_severity(
-        z_score: Optional[float],
-        pct_dev: Optional[float],
+        z_score: float | None,
+        pct_dev: float | None,
         range_dev: float,
         is_out_of_range: bool,
         observed_val: float,
         baseline: MovementBaseline,
-        cfg: SeverityRuleConfig
-    ) -> Tuple[str, str]:
+        cfg: SeverityRuleConfig,
+    ) -> tuple[str, str]:
         """
         Derive displayed severity using clearly documented, configurable rules.
         """
@@ -277,10 +286,15 @@ class AnomalyDetectionService:
                 rule = f"Z-score rule: |Z| = {abs_z:.2f} > {cfg.z_score_high} -> HIGH_DEVIATION"
             elif abs_z > cfg.z_score_moderate:
                 severity = AnomalySeverity.MODERATE_DEVIATION.value
-                rule = f"Z-score rule: {cfg.z_score_moderate} < |Z| ({abs_z:.2f}) <= {cfg.z_score_high} -> MODERATE_DEVIATION"
+                rule = (
+                    f"Z-score rule: {cfg.z_score_moderate} < |Z| ({abs_z:.2f}) "
+                    f"<= {cfg.z_score_high} -> MODERATE_DEVIATION"
+                )
             elif abs_z > cfg.z_score_mild:
                 severity = AnomalySeverity.MILD_DEVIATION.value
-                rule = f"Z-score rule: {cfg.z_score_mild} < |Z| ({abs_z:.2f}) <= {cfg.z_score_moderate} -> MILD_DEVIATION"
+                rule = (
+                    f"Z-score rule: {cfg.z_score_mild} < |Z| ({abs_z:.2f}) <= {cfg.z_score_moderate} -> MILD_DEVIATION"
+                )
             else:
                 severity = AnomalySeverity.NORMAL.value
                 rule = f"Z-score rule: |Z| = {abs_z:.2f} <= {cfg.z_score_mild} -> NORMAL"
@@ -288,7 +302,10 @@ class AnomalyDetectionService:
             # Optional elevation if value falls outside developmental bounds
             if cfg.elevate_on_range_violation and is_out_of_range and severity == AnomalySeverity.NORMAL.value:
                 severity = AnomalySeverity.MILD_DEVIATION.value
-                rule += f" (Elevated to MILD_DEVIATION: observed {observed_val}{baseline.unit} outside developmental bounds [{baseline.min_norm}, {baseline.max_norm}])"
+                rule += (
+                    f" (Elevated to MILD_DEVIATION: observed {observed_val}{baseline.unit} "
+                    f"outside developmental bounds [{baseline.min_norm}, {baseline.max_norm}])"
+                )
 
             return severity, rule
 
@@ -299,10 +316,16 @@ class AnomalyDetectionService:
                 rule = f"Percentage rule: deviation {pct_dev:.1f}% >= {cfg.pct_high}% -> HIGH_DEVIATION"
             elif pct_dev >= cfg.pct_moderate:
                 severity = AnomalySeverity.MODERATE_DEVIATION.value
-                rule = f"Percentage rule: {cfg.pct_moderate}% <= deviation ({pct_dev:.1f}%) < {cfg.pct_high}% -> MODERATE_DEVIATION"
+                rule = (
+                    f"Percentage rule: {cfg.pct_moderate}% <= deviation ({pct_dev:.1f}%) "
+                    f"< {cfg.pct_high}% -> MODERATE_DEVIATION"
+                )
             elif pct_dev >= cfg.pct_mild or (cfg.elevate_on_range_violation and is_out_of_range):
                 severity = AnomalySeverity.MILD_DEVIATION.value
-                rule = f"Percentage/Range rule: deviation {pct_dev:.1f}% >= {cfg.pct_mild}% or out-of-range -> MILD_DEVIATION"
+                rule = (
+                    f"Percentage/Range rule: deviation {pct_dev:.1f}% >= {cfg.pct_mild}% "
+                    f"or out-of-range -> MILD_DEVIATION"
+                )
             else:
                 severity = AnomalySeverity.NORMAL.value
                 rule = f"Percentage rule: deviation {pct_dev:.1f}% < {cfg.pct_mild}% -> NORMAL"
@@ -310,18 +333,27 @@ class AnomalyDetectionService:
 
         # Strategy C: Range-only fallback
         if is_out_of_range:
-            return AnomalySeverity.MILD_DEVIATION.value, f"Range rule: observed {observed_val} outside [{baseline.min_norm}, {baseline.max_norm}] -> MILD_DEVIATION"
+            return (
+                AnomalySeverity.MILD_DEVIATION.value,
+                (
+                    f"Range rule: observed {observed_val} outside "
+                    f"[{baseline.min_norm}, {baseline.max_norm}] -> MILD_DEVIATION"
+                ),
+            )
 
-        return AnomalySeverity.NORMAL.value, "Default rule: metric within expected baseline range -> NORMAL"
+        return (
+            AnomalySeverity.NORMAL.value,
+            "Default rule: metric within expected baseline range -> NORMAL",
+        )
 
     def analyze_session(
         self,
-        timestamps: List[float],
-        joint_angles: Dict[str, List[Optional[float]]],
-        angular_velocities: Optional[Dict[str, List[Optional[float]]]] = None,
-        angular_accelerations: Optional[Dict[str, List[Optional[float]]]] = None,
-        asymmetry_metrics: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        timestamps: list[float],
+        joint_angles: dict[str, list[float | None]],
+        angular_velocities: dict[str, list[float | None]] | None = None,
+        angular_accelerations: dict[str, list[float | None]] | None = None,
+        asymmetry_metrics: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """
         Execute full Phase 4 biomechanical anomaly assessment.
         Returns independent statistical feature summaries, metric deviations,
@@ -342,27 +374,87 @@ class AnomalyDetectionService:
             asymmetry_metrics=asymmetry_metrics,
         )
 
-        metric_deviations: Dict[str, Any] = {}
-        anomalies_list: List[Dict[str, Any]] = []
+        metric_deviations: dict[str, Any] = {}
+        anomalies_list: list[dict[str, Any]] = []
 
         baseline_mappings = [
             ("knee_flexion_rom", "left_knee_angle", "range", "Knee Flexion ROM (Left)"),
-            ("knee_flexion_rom", "right_knee_angle", "range", "Knee Flexion ROM (Right)"),
+            (
+                "knee_flexion_rom",
+                "right_knee_angle",
+                "range",
+                "Knee Flexion ROM (Right)",
+            ),
             ("peak_knee_flexion", "left_knee_angle", "max", "Peak Knee Flexion (Left)"),
-            ("peak_knee_flexion", "right_knee_angle", "max", "Peak Knee Flexion (Right)"),
+            (
+                "peak_knee_flexion",
+                "right_knee_angle",
+                "max",
+                "Peak Knee Flexion (Right)",
+            ),
             ("hip_flexion_rom", "left_hip_angle", "range", "Hip Flexion ROM (Left)"),
             ("hip_flexion_rom", "right_hip_angle", "range", "Hip Flexion ROM (Right)"),
-            ("ankle_dorsiflexion_rom", "left_ankle_angle", "range", "Ankle Sagittal ROM (Left)"),
-            ("ankle_dorsiflexion_rom", "right_ankle_angle", "range", "Ankle Sagittal ROM (Right)"),
+            (
+                "ankle_dorsiflexion_rom",
+                "left_ankle_angle",
+                "range",
+                "Ankle Sagittal ROM (Left)",
+            ),
+            (
+                "ankle_dorsiflexion_rom",
+                "right_ankle_angle",
+                "range",
+                "Ankle Sagittal ROM (Right)",
+            ),
             ("trunk_lean_max", "trunk_lean", "max", "Trunk Forward Lean (Peak)"),
-            ("trunk_lateral_tilt_max", "trunk_lateral_tilt", "max", "Trunk Lateral Tilt (Peak)"),
-            ("knee_valgus_proxy_max", "left_knee_valgus", "max", "Dynamic Knee Valgus Proxy (Left Peak)"),
-            ("knee_valgus_proxy_max", "right_knee_valgus", "max", "Dynamic Knee Valgus Proxy (Right Peak)"),
-            ("knee_flexion_asymmetry", "knee_flexion_asymmetry", "mean", "Bilateral Knee Flexion Asymmetry"),
-            ("hip_flexion_asymmetry", "hip_flexion_asymmetry", "mean", "Bilateral Hip Flexion Asymmetry"),
-            ("knee_valgus_asymmetry", "knee_valgus_asymmetry", "mean", "Bilateral Knee Valgus Asymmetry"),
-            ("peak_angular_velocity", "left_knee_angle", "peak_velocity", "Peak Knee Velocity (Left)"),
-            ("peak_angular_velocity", "right_knee_angle", "peak_velocity", "Peak Knee Velocity (Right)"),
+            (
+                "trunk_lateral_tilt_max",
+                "trunk_lateral_tilt",
+                "max",
+                "Trunk Lateral Tilt (Peak)",
+            ),
+            (
+                "knee_valgus_proxy_max",
+                "left_knee_valgus",
+                "max",
+                "Dynamic Knee Valgus Proxy (Left Peak)",
+            ),
+            (
+                "knee_valgus_proxy_max",
+                "right_knee_valgus",
+                "max",
+                "Dynamic Knee Valgus Proxy (Right Peak)",
+            ),
+            (
+                "knee_flexion_asymmetry",
+                "knee_flexion_asymmetry",
+                "mean",
+                "Bilateral Knee Flexion Asymmetry",
+            ),
+            (
+                "hip_flexion_asymmetry",
+                "hip_flexion_asymmetry",
+                "mean",
+                "Bilateral Hip Flexion Asymmetry",
+            ),
+            (
+                "knee_valgus_asymmetry",
+                "knee_valgus_asymmetry",
+                "mean",
+                "Bilateral Knee Valgus Asymmetry",
+            ),
+            (
+                "peak_angular_velocity",
+                "left_knee_angle",
+                "peak_velocity",
+                "Peak Knee Velocity (Left)",
+            ),
+            (
+                "peak_angular_velocity",
+                "right_knee_angle",
+                "peak_velocity",
+                "Peak Knee Velocity (Right)",
+            ),
         ]
 
         for base_key, feat_metric, stat_prop, label in baseline_mappings:
@@ -379,7 +471,7 @@ class AnomalyDetectionService:
                 "label": label,
                 "category": baseline.category,
                 "unit": baseline.unit,
-                **dev_result
+                **dev_result,
             }
 
             # Record non-NORMAL deviations as anomaly events
@@ -388,29 +480,32 @@ class AnomalyDetectionService:
                 timestamp = peak_time_info.get("timestamp_seconds")
 
                 desc = (
-                    f"{label} observed at {observed_val}{baseline.unit} (Developmental baseline: {baseline.mean}{baseline.unit} "
+                    f"{label} observed at {observed_val}{baseline.unit} "
+                    f"(Developmental baseline: {baseline.mean}{baseline.unit} "
                     f"± {baseline.std_dev}{baseline.unit}). "
                     f"{dev_result['severity_derivation_rule']}."
                 )
 
-                anomalies_list.append({
-                    "metric": dev_result["metric"],
-                    "metric_name": label,
-                    "timestamp_seconds": timestamp,
-                    "observed": dev_result["observed"],
-                    "observed_value": dev_result["observed"],
-                    "baseline_mean": dev_result["baseline_mean"],
-                    "baseline_value": dev_result["baseline_mean"],
-                    "baseline_std": dev_result["baseline_std"],
-                    "z_score": dev_result["z_score"],
-                    "percent_deviation": dev_result["percent_deviation"],
-                    "percentage_deviation": dev_result["percent_deviation"],
-                    "range_deviation": dev_result["range_deviation"],
-                    "severity": dev_result["severity"],
-                    "severity_derivation_rule": dev_result["severity_derivation_rule"],
-                    "baseline_type": dev_result["baseline_type"],
-                    "description": desc,
-                })
+                anomalies_list.append(
+                    {
+                        "metric": dev_result["metric"],
+                        "metric_name": label,
+                        "timestamp_seconds": timestamp,
+                        "observed": dev_result["observed"],
+                        "observed_value": dev_result["observed"],
+                        "baseline_mean": dev_result["baseline_mean"],
+                        "baseline_value": dev_result["baseline_mean"],
+                        "baseline_std": dev_result["baseline_std"],
+                        "z_score": dev_result["z_score"],
+                        "percent_deviation": dev_result["percent_deviation"],
+                        "percentage_deviation": dev_result["percent_deviation"],
+                        "range_deviation": dev_result["range_deviation"],
+                        "severity": dev_result["severity"],
+                        "severity_derivation_rule": dev_result["severity_derivation_rule"],
+                        "baseline_type": dev_result["baseline_type"],
+                        "description": desc,
+                    }
+                )
 
         # Derive overall session movement classification
         severities = [a["severity"] for a in anomalies_list]
@@ -433,10 +528,13 @@ class AnomalyDetectionService:
                 "baseline_type": "DEVELOPMENTAL",
                 "is_provisional": True,
                 "derivation_strategy": self.registry.rule_config.strategy.value,
-                "disclaimer": "Developmental kinematic baselines for movement pattern comparison. Not a clinical medical diagnosis or injury risk score.",
+                "disclaimer": (
+                    "Developmental kinematic baselines for movement pattern comparison. "
+                    "Not a clinical medical diagnosis or injury risk score."
+                ),
                 "total_metrics_evaluated": len(metric_deviations),
                 "total_anomalies_detected": len(anomalies_list),
-            }
+            },
         }
 
 
