@@ -199,14 +199,6 @@ function Settings() {
 
                 </div>
 
-
-                <button
-                  className="settings-action"
-                  type="button"
-                >
-                  Edit
-                </button>
-
               </div>
 
 

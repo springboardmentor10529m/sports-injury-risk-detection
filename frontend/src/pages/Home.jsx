@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import Logo from '../components/Logo'
 
 function Home() {
   return (
@@ -8,9 +9,7 @@ function Home() {
       <nav className="navbar navbar-expand-lg bg-white border-bottom">
         <div className="container py-2">
 
-          <Link to="/" className="navbar-brand fw-bold brand-name">
-            Sports Injury Risk Detection
-          </Link>
+          <Logo linked />
 
           <div className="d-flex align-items-center gap-3">
             <Link to="/login" className="login-link">
@@ -313,7 +312,7 @@ function Home() {
         <div className="container text-center">
 
           <h5 className="fw-bold">
-            Sports Injury Risk Detection
+            Sports Injury Risk Prediction
           </h5>
 
           <p className="mb-0">

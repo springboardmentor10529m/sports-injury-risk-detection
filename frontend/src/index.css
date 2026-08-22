@@ -21,6 +21,45 @@ a {
   text-decoration: none;
 }
 
+.app-logo-link {
+  display: inline-flex;
+  color: inherit;
+  text-decoration: none;
+}
+
+.app-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #0f2747;
+}
+
+.brand-mark {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+}
+
+.brand-wordmark {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.08;
+  white-space: nowrap;
+}
+
+.brand-wordmark strong {
+  font-size: 0.98rem;
+  font-weight: 800;
+}
+
+.brand-wordmark span {
+  color: #2563eb;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
 
 /* =====================================================
    HOME PAGE
@@ -488,6 +527,27 @@ a {
   padding: 28px 24px;
   min-height: 105px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-brand .app-logo {
+  color: #ffffff;
+}
+
+.sidebar-brand .brand-mark {
+  filter: brightness(0) invert(1);
+}
+
+.sidebar-brand .brand-wordmark strong {
+  font-size: 0.9rem;
+}
+
+.sidebar-brand .brand-wordmark span {
+  color: #60a5fa;
+  font-size: 0.7rem;
+}
+
+.app-logo-compact {
+  gap: 9px;
 }
 
 .sidebar-brand-text {

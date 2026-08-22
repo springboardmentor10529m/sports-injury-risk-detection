@@ -19,13 +19,15 @@ export function hasActiveOrganizationMembership(user) {
   )
 }
 
-export function createIndependentAthleteAccount({ name, email, password }) {
+export function createIndependentAthleteAccount({ name, email, password, height, weight }) {
   return {
     id: `demo-athlete-${email.trim().toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
     name: name.trim(),
     email: email.trim(),
     password,
     role: ROLES.ATHLETE,
+    height: height.trim(),
+    weight: weight.trim(),
     organizationId: null,
     organizationName: null,
     membershipStatus: MEMBERSHIP_STATUS.INDEPENDENT,

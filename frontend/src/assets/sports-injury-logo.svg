@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-labelledby="logo-title logo-desc">
+  <title id="logo-title">Sports Injury Risk Prediction mark</title>
+  <desc id="logo-desc">A protected athlete motion mark with a heartbeat and neural network detail.</desc>
+  <path d="M48 5 82 18v25c0 22-13 39-34 48C27 82 14 65 14 43V18L48 5Z" fill="none" stroke="#102f57" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M24 53c8-17 20-24 35-22 7 1 11 5 17 4 5-1 9-5 12-11-3 11-10 19-20 22-9 3-17-4-24-3-8 1-13 7-20 17Z" fill="#146de1"/>
+  <circle cx="58" cy="24" r="6" fill="#102f57"/>
+  <path d="M17 47h15l4-10 6 21 6-28 6 22 5-9h10" fill="none" stroke="#12b9c9" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M59 59 72 52m-13 7 2 13m-2-13-12 9" fill="none" stroke="#12b9c9" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="59" cy="59" r="3.5" fill="#12b9c9"/>
+  <circle cx="72" cy="52" r="3.5" fill="#12b9c9"/>
+  <circle cx="61" cy="72" r="3.5" fill="#12b9c9"/>
+  <circle cx="49" cy="68" r="3.5" fill="#12b9c9"/>
+</svg>

@@ -1,111 +1,118 @@
-import { createContext, useContext, useMemo, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { isRole } from '../config/roles'
-import { MEMBERSHIP_STATUS } from '../config/organizationAccess'
+import { authApi } from '../services/authApi'
 
 const AuthContext = createContext(null)
-const SESSION_KEY = 'sports-injury-current-user'
-const REGISTRATION_KEY = 'sports-injury-demo-registration'
-const EDITABLE_PROFILE_FIELDS = ['name', 'phone', 'address', 'height', 'weight', 'sport']
+const TOKEN_KEY = 'sports-injury-token'
+const USER_KEY = 'sports-injury-current-user'
 
-function normalizeText(value, fallback = '') {
-  return typeof value === 'string' ? value.trim() : fallback
-}
-
-function readSession() {
+function readLocalUser() {
   try {
-    const user = JSON.parse(localStorage.getItem(SESSION_KEY))
-    return user && isRole(user.role) ? normalizeUser(user) : null
+    const user = JSON.parse(localStorage.getItem(USER_KEY))
+    return user && isRole(user.role) ? user : null
   } catch {
     return null
   }
-}
-
-function normalizeUser(user) {
-  const hasOrganization = Boolean(user.organizationId && user.organizationName)
-  const email = normalizeText(user.email)
-  const derivedName = email ? email.split('@')[0] : 'User'
-
-  return {
-    id: user.id || `demo-user-${email.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'unknown'}`,
-    name: normalizeText(user.name, derivedName),
-    email,
-    role: user.role,
-    phone: normalizeText(user.phone),
-    address: normalizeText(user.address),
-    height: normalizeText(user.height),
-    weight: normalizeText(user.weight),
-    sport: normalizeText(user.sport),
-    organizationId: hasOrganization ? user.organizationId : null,
-    organizationName: hasOrganization ? user.organizationName : null,
-    membershipStatus: user.membershipStatus || (hasOrganization ? MEMBERSHIP_STATUS.INACTIVE : MEMBERSHIP_STATUS.INDEPENDENT),
-  }
-}
-
-function readRegistrationAccount() {
-  try {
-    return JSON.parse(localStorage.getItem(REGISTRATION_KEY))
-  } catch {
-    return null
-  }
-}
-
-function persistSessionUser(user) {
-  localStorage.setItem(SESSION_KEY, JSON.stringify(user))
-  localStorage.setItem('currentUser', JSON.stringify(user))
 }
 
 export function AuthProvider({ children }) {
-  const [currentUser, setCurrentUser] = useState(readSession)
+  const [currentUser, setCurrentUser] = useState(readLocalUser)
+  const [loading, setLoading] = useState(true)
 
-  const login = (account) => {
-    const { role } = account
-    if (!isRole(role)) throw new Error('A valid role is required to sign in.')
-
-    const user = normalizeUser(account)
-
-    persistSessionUser(user)
-    setCurrentUser(user)
-    return user
-  }
-
-  const updateProfile = (updates) => {
-    if (!currentUser) return null
-
-    const sanitizedUpdates = EDITABLE_PROFILE_FIELDS.reduce((accumulator, field) => {
-      if (Object.prototype.hasOwnProperty.call(updates || {}, field)) {
-        accumulator[field] = normalizeText(updates[field])
+  // Verify authenticated session with PostgreSQL backend on app mount
+  useEffect(() => {
+    async function restoreSession() {
+      const token = localStorage.getItem(TOKEN_KEY)
+      if (!token) {
+        setLoading(false)
+        return
       }
-      return accumulator
-    }, {})
 
-    const updatedUser = normalizeUser({ ...currentUser, ...sanitizedUpdates })
-    persistSessionUser(updatedUser)
-    setCurrentUser(updatedUser)
-
-    const registeredAccount = readRegistrationAccount()
-    if (registeredAccount && normalizeText(registeredAccount.email).toLowerCase() === updatedUser.email.toLowerCase()) {
-      const updatedRegisteredAccount = { ...registeredAccount, ...sanitizedUpdates, name: updatedUser.name }
-      localStorage.setItem(REGISTRATION_KEY, JSON.stringify(updatedRegisteredAccount))
+      try {
+        const response = await authApi.getMe()
+        if (response?.user && isRole(response.user.role)) {
+          setCurrentUser(response.user)
+          localStorage.setItem(USER_KEY, JSON.stringify(response.user))
+        } else {
+          localStorage.removeItem(TOKEN_KEY)
+          localStorage.removeItem(USER_KEY)
+          setCurrentUser(null)
+        }
+      } catch (err) {
+        console.warn('Session verification failed, using stored state or resetting:', err.message)
+      } finally {
+        setLoading(false)
+      }
     }
 
-    return updatedUser
+    restoreSession()
+  }, [])
+
+  const login = async ({ email, password, role }) => {
+    if (!isRole(role)) throw new Error('A valid role is required to sign in.')
+
+    const data = await authApi.login({ email, password, role })
+    if (data?.token && data?.user) {
+      localStorage.setItem(TOKEN_KEY, data.token)
+      localStorage.setItem(USER_KEY, JSON.stringify(data.user))
+      setCurrentUser(data.user)
+      return data.user
+    }
+    throw new Error('Authentication succeeded but invalid response format received.')
   }
 
-  const logout = () => {
-    localStorage.removeItem(SESSION_KEY)
-    localStorage.removeItem('currentUser')
-    setCurrentUser(null)
+  const register = async (athleteData) => {
+    const data = await authApi.register({ ...athleteData, role: 'athlete' })
+    return data
   }
 
-  const value = useMemo(() => ({
-    currentUser,
-    login,
-    logout,
-    updateProfile,
-    isAuthenticated: Boolean(currentUser),
-    userRole: currentUser?.role || null,
-    userName: currentUser?.name || '',
-  }), [currentUser])
+  const updateProfile = async (updates) => {
+    if (!currentUser) return null
+    const data = await authApi.updateProfile(updates)
+    if (data?.user) {
+      localStorage.setItem(USER_KEY, JSON.stringify(data.user))
+      setCurrentUser(data.user)
+      return data.user
+    }
+    return currentUser
+  }
+
+  const logout = async () => {
+    try {
+      await authApi.logout()
+    } catch {
+      // ignore network errors on logout
+    } finally {
+      localStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem(USER_KEY)
+      setCurrentUser(null)
+    }
+  }
+
+  const forgotPassword = async (email) => {
+    return authApi.forgotPassword({ email })
+  }
+
+  const resetPassword = async (email, newPassword) => {
+    return authApi.resetPassword({ email, newPassword })
+  }
+
+  const value = useMemo(
+    () => ({
+      currentUser,
+      loading,
+      login,
+      register,
+      logout,
+      updateProfile,
+      forgotPassword,
+      resetPassword,
+      isAuthenticated: Boolean(currentUser),
+      userRole: currentUser?.role || null,
+      userName: currentUser?.name || '',
+    }),
+    [currentUser, loading]
+  )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

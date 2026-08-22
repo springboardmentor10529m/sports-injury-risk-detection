@@ -1,0 +1,226 @@
+.video-upload-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.notice-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: rgba(13, 110, 253, 0.08);
+  border: 1px solid rgba(13, 110, 253, 0.25);
+  border-radius: 8px;
+  color: var(--text-color, #1e293b);
+  font-size: 0.925rem;
+  line-height: 1.5;
+}
+
+.notice-banner-icon {
+  font-size: 1.25rem;
+  color: #0d6efd;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.video-upload-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 991px) {
+  .video-upload-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dropzone {
+  border: 2px dashed rgba(148, 163, 184, 0.4);
+  border-radius: 12px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  background: var(--bg-surface, #ffffff);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+}
+
+.dropzone:hover, .dropzone.active {
+  border-color: #0d6efd;
+  background: rgba(13, 110, 253, 0.03);
+}
+
+.dropzone-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+  color: #64748b;
+}
+
+.dropzone-text {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.dropzone-subtext {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.video-preview-wrapper {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  position: relative;
+  max-height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.video-preview-element {
+  width: 100%;
+  max-height: 320px;
+  object-fit: contain;
+}
+
+.change-video-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+}
+
+.change-video-btn:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.upload-progress-container {
+  margin-top: 1rem;
+}
+
+.upload-progress-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.upload-progress-fill {
+  height: 100%;
+  background: #0d6efd;
+  transition: width 0.2s ease;
+}
+
+.uploaded-videos-section {
+  margin-top: 2rem;
+}
+
+.video-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+.video-card {
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg-surface, #ffffff);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.video-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.video-card-player {
+  width: 100%;
+  height: 170px;
+  background: #0f172a;
+  object-fit: cover;
+}
+
+.video-card-body {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex-grow: 1;
+}
+
+.video-card-title {
+  font-weight: 600;
+  font-size: 1rem;
+  margin: 0;
+  color: var(--text-color, #0f172a);
+}
+
+.video-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.exercise-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-badge-pending {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #fef3c7;
+  color: #b45309;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.video-card-footer {
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.delete-video-btn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.delete-video-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
