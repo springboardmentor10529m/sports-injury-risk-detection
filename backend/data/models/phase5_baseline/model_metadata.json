@@ -1,0 +1,33 @@
+{
+  "dataset_name": "Calgary_Running_Injury_Biomechanical_Dataset",
+  "dataset_version": "1.0.0",
+  "cohort_total_subjects": 20,
+  "development_subjects": 17,
+  "test_subjects": 3,
+  "target_variable": "injury_label (0=Healthy Control, 1=Injured)",
+  "cross_validation_strategy": "StratifiedGroupKFold (Subject-Level Isolation, 0 Cross-Fold Leakage)",
+  "random_seed": 42,
+  "champion_model_config": {
+    "experiment_id": "A",
+    "model_key": "logistic_regression",
+    "feature_names": [
+      "knee_flexion_rom_left",
+      "peak_knee_flexion_left",
+      "hip_flexion_rom_left",
+      "ankle_dorsiflexion_rom_left",
+      "trunk_lean_max",
+      "hip_adduction_max",
+      "hip_internal_rotation_max",
+      "peak_vertical_grf",
+      "vertical_loading_rate"
+    ],
+    "composite_score": 1.0
+  },
+  "trained_timestamp_utc": "2026-08-23T12:52:51.221111+00:00",
+  "library_versions": {
+    "sklearn": "1.9.0",
+    "xgboost": "3.4.1",
+    "pandas": "3.0.5"
+  },
+  "disclaimer": "RESEARCH PROTOTYPE \u2014 NOT CLINICALLY VALIDATED. Baseline research experiment only."
+}

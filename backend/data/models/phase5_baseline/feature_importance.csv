@@ -1,0 +1,10 @@
+feature,model_contribution,contribution_type,permutation_importance_mean,permutation_importance_std
+hip_adduction_max,0.46124,Logistic Regression Coefficient (Log-Odds Ratio),0.0,0.0
+hip_internal_rotation_max,0.46046,Logistic Regression Coefficient (Log-Odds Ratio),0.0,0.0
+vertical_loading_rate,0.45835,Logistic Regression Coefficient (Log-Odds Ratio),0.0,0.0
+knee_flexion_rom_left,-0.45599,Logistic Regression Coefficient (Log-Odds Ratio),0.0,0.0
+trunk_lean_max,0.44322,Logistic Regression Coefficient (Log-Odds Ratio),0.0,0.0
+peak_knee_flexion_left,-0.43409,Logistic Regression Coefficient (Log-Odds Ratio),0.0,0.0
+hip_flexion_rom_left,-0.42954,Logistic Regression Coefficient (Log-Odds Ratio),0.0,0.0
+peak_vertical_grf,0.41543,Logistic Regression Coefficient (Log-Odds Ratio),0.0,0.0
+ankle_dorsiflexion_rom_left,-0.40571,Logistic Regression Coefficient (Log-Odds Ratio),0.0,0.0

@@ -1,20 +1,25 @@
 """
-Injury Risk ML Model (Ensemble: XGBoost + DL).
-Phase 5 Implementation.
+SafeMove Phase 5B — Injury Risk Baseline Machine Learning Subsystem.
+
+Provides feature selection, preprocessing pipelines, model factories,
+subject-isolated grouped cross-validation, and explainability for research baselines.
 """
 
-from app.ml.base import BaseModel
+from app.ml.risk.cross_validation import SubjectGroupedCV, calculate_classification_metrics
+from app.ml.risk.experiment_runner import BaselineExperimentRunner
+from app.ml.risk.explainability import ModelExplainer
+from app.ml.risk.feature_selection import FeatureSelector
+from app.ml.risk.models import build_baseline_model, build_full_pipeline, get_model_hyperparameters
+from app.ml.risk.preprocessing import build_preprocessing_pipeline
 
-
-class InjuryRiskModel(BaseModel):
-    def __init__(self, version: str = "1.0.0"):
-        super().__init__(version)
-
-    def load_model(self, model_path: str):
-        raise NotImplementedError("Phase 5 implementation")
-
-    def predict(self, input_data: any) -> any:
-        raise NotImplementedError("Phase 5 implementation")
-
-    def evaluate(self, dataset: any) -> dict:
-        raise NotImplementedError("Phase 5 implementation")
+__all__ = [
+    "FeatureSelector",
+    "build_preprocessing_pipeline",
+    "build_baseline_model",
+    "build_full_pipeline",
+    "get_model_hyperparameters",
+    "SubjectGroupedCV",
+    "calculate_classification_metrics",
+    "ModelExplainer",
+    "BaselineExperimentRunner",
+]
