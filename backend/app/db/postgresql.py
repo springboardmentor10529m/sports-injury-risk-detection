@@ -25,6 +25,17 @@ _engine: AsyncEngine | None = None
 _async_session_factory: async_sessionmaker | None = None
 
 
+def _normalize_db_url(url: str) -> str:
+    """Ensure database URL specifies an async driver for SQLAlchemy async engines."""
+    if url.startswith("postgresql://"):
+        return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    elif url.startswith("postgres://"):
+        return url.replace("postgres://", "postgresql+asyncpg://", 1)
+    elif url.startswith("sqlite://") and not url.startswith("sqlite+aiosqlite://"):
+        return url.replace("sqlite://", "sqlite+aiosqlite://", 1)
+    return url
+
+
 async def init_db() -> None:
     """Initialize database connection and auto-create tables on startup."""
     global _engine, _async_session_factory
@@ -38,23 +49,28 @@ async def init_db() -> None:
     import app.models.video  # noqa: F401
 
     settings = get_settings()
+    db_url = _normalize_db_url(settings.DATABASE_URL)
 
     try:
-        engine = create_async_engine(settings.DATABASE_URL, echo=False)
+        engine = create_async_engine(db_url, echo=False)
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         _engine = engine
-        _async_session_factory = async_sessionmaker(_engine, expire_on_commit=False, class_=AsyncSession)
-        logger.info(f"Connected to primary database: {settings.DATABASE_URL}")
+        _async_session_factory = async_sessionmaker(
+            _engine, expire_on_commit=False, class_=AsyncSession
+        )
+        logger.info(f"Connected to primary database: {db_url}")
     except Exception as e:
         logger.warning(
-            f"Primary database ({settings.DATABASE_URL}) unreachable: {e}. "
+            f"Primary database ({db_url}) unreachable: {e}. "
             "Falling back to local SQLite database (safemove.db) for local execution."
         )
         _engine = create_async_engine("sqlite+aiosqlite:///./safemove.db", echo=False)
         async with _engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-        _async_session_factory = async_sessionmaker(_engine, expire_on_commit=False, class_=AsyncSession)
+        _async_session_factory = async_sessionmaker(
+            _engine, expire_on_commit=False, class_=AsyncSession
+        )
         logger.info("Local SQLite database initialized successfully at ./safemove.db")
 
 
@@ -63,8 +79,9 @@ def get_engine() -> AsyncEngine:
     global _engine
     if _engine is None:
         settings = get_settings()
+        db_url = _normalize_db_url(settings.DATABASE_URL)
         try:
-            _engine = create_async_engine(settings.DATABASE_URL, echo=settings.DEBUG)
+            _engine = create_async_engine(db_url, echo=settings.DEBUG)
         except Exception:
             _engine = create_async_engine("sqlite+aiosqlite:///./safemove.db", echo=False)
     return _engine

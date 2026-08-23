@@ -1,0 +1,47 @@
+.git
+.github
+.vscode
+.idea
+.ruff_cache
+.pytest_cache
+scratch
+docs
+*.md
+!README.md
+
+# Frontend build artifacts
+frontend/node_modules
+frontend/.next
+frontend/out
+frontend/build
+frontend/dist
+
+# Backend build artifacts
+backend/__pycache__
+backend/*/__pycache__
+backend/*/*/__pycache__
+backend/*/*/*/__pycache__
+backend/.pytest_cache
+backend/.ruff_cache
+backend/.venv
+backend/venv
+backend/safemove.db
+backend/test.db
+backend/storage/videos/*
+!backend/storage/videos/.gitkeep
+backend/data/raw/*
+!backend/data/raw/.gitkeep
+backend/data/processed/*
+!backend/data/processed/.gitkeep
+backend/data/pose/*
+!backend/data/pose/.gitkeep
+backend/data/kinematics/*
+!backend/data/kinematics/.gitkeep
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.production

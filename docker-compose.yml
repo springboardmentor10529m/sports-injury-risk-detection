@@ -24,7 +24,7 @@ services:
 
   backend:
     build:
-      context: ../backend
+      context: ./backend
       dockerfile: Dockerfile
       target: prod
     container_name: safemove_backend
@@ -58,7 +58,7 @@ services:
 
   frontend:
     build:
-      context: ../frontend
+      context: ./frontend
       dockerfile: Dockerfile
       target: runner
       args:

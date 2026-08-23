@@ -58,8 +58,18 @@ PRIMARY_15_LANDMARKS = [
 class PoseExtractor:
     def __init__(self, model_path: str | None = None):
         if model_path is None:
-            base_dir = Path(__file__).resolve().parent
-            model_path = str(base_dir / "pose_landmarker_lite.task")
+            env_path = os.environ.get("POSE_MODEL_PATH")
+            if env_path and os.path.exists(env_path):
+                model_path = env_path
+            else:
+                base_dir = Path(__file__).resolve().parent
+                default_task = base_dir / "pose_landmarker_lite.task"
+                if default_task.exists():
+                    model_path = str(default_task)
+                elif Path("/app/models/pose_landmarker_lite.task").exists():
+                    model_path = "/app/models/pose_landmarker_lite.task"
+                else:
+                    model_path = str(default_task)
 
         self.model_path = model_path
         if not os.path.exists(self.model_path):

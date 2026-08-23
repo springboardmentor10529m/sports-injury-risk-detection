@@ -1,0 +1,85 @@
+name: safemove-dev
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: safemove_postgres_dev
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-safemove}
+      POSTGRES_USER: ${POSTGRES_USER:-safemove}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-safemove_dev}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-safemove} -d ${POSTGRES_DB:-safemove}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - safemove_dev_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: dev
+    container_name: safemove_backend_dev
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-safemove}:${POSTGRES_PASSWORD:-safemove_dev}@postgres:5432/${POSTGRES_DB:-safemove}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-safemove-dev-secret-key}
+      JWT_ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 120
+      CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001
+      VIDEO_STORAGE_PATH: /app/storage/videos
+      POSE_MODEL_PATH: /app/app/ml/pose/pose_landmarker_lite.task
+      DEBUG: "true"
+      ENVIRONMENT: development
+    volumes:
+      - ./backend:/app
+      - safemove_uploads_dev:/app/storage/videos
+      - safemove_data_dev:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - safemove_dev_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: dev
+    container_name: safemove_frontend_dev
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
+    networks:
+      - safemove_dev_network
+
+volumes:
+  postgres_data_dev:
+    name: safemove_postgres_data_dev
+  safemove_data_dev:
+    name: safemove_data_dev
+  safemove_uploads_dev:
+    name: safemove_uploads_dev
+
+networks:
+  safemove_dev_network:
+    name: safemove_dev_network
+    driver: bridge
