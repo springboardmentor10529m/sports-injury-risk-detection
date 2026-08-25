@@ -33,4 +33,8 @@ export const authApi = {
   updateProfile: (updates) => request('/users/profile', { method: 'PUT', body: JSON.stringify(updates) }),
   forgotPassword: (data) => request('/auth/forgot-password', { method: 'POST', body: JSON.stringify(data) }),
   resetPassword: (data) => request('/auth/reset-password', { method: 'POST', body: JSON.stringify(data) }),
+  searchAthlete: (email) => request(`/admin/athletes/search?email=${encodeURIComponent(email)}`, { method: 'GET' }),
+  getAthletes: () => request('/admin/athletes', { method: 'GET' }),
+  assignAthlete: (userId, data = {}) => request(`/admin/athletes/${userId}/assign`, { method: 'POST', body: JSON.stringify(data) }),
+  unassignAthlete: (userId) => request(`/admin/athletes/${userId}/unassign`, { method: 'POST' }),
 };

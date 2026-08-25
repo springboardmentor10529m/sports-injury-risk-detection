@@ -1,8 +1,9 @@
-import { useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useCallback, useEffect, useState } from 'react'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ActionButton, DashboardShell, DataTable, EmptyState, Panel, SearchFilterBar, StatusBadge } from '../../components/DashboardUI'
 import VideoUploadWorkspace from '../../components/VideoUploadWorkspace'
 import { ROLES } from '../../config/roles'
+import { authApi } from '../../services/authApi'
 
 const pageConfig = {
   athletes: { title: 'Athletes', breadcrumb: 'Organization / Athletes', description: 'View and manage athlete organization profiles within your administrator scope.', action: 'Add Athlete', actionTo: '/admin/athletes/add', empty: 'No organization athletes have been added yet.' },
@@ -20,59 +21,330 @@ const pageConfig = {
   management: { title: 'Injury Management', breadcrumb: 'Care / Injury Management', description: 'Review injury records, severity, treatment status, recovery status, and timelines.', empty: 'No injury records are available.' },
   injury: { title: 'Injury History', breadcrumb: 'Health / Injury History', description: 'Review injury records, status, severity, and recovery timelines within your permitted scope.', empty: 'No injury records are available.' },
   settings: { title: 'Organization Settings', breadcrumb: 'Organization / Settings', description: 'Manage organization information, status, preferences, and membership settings.', action: 'Edit Organization Settings', empty: 'Organization settings are ready for authorized configuration.' },
-  athleteProfile: { title: 'Athlete Profile', breadcrumb: 'Team / Athlete Profile', description: 'Review an assigned athlete organization profile and its connected records.', empty: 'No athlete profile was found for this identifier.' },
-}
-
-function readAthletes() {
-  try { const value = JSON.parse(localStorage.getItem('athletes')); return Array.isArray(value) ? value : [] } catch { return [] }
+  athleteProfile: { title: 'Athlete Profile', breadcrumb: 'Organization / Athlete Profile', description: 'Review assigned athlete organization profile details and connected records.', empty: 'No athlete profile was found for this identifier.' },
 }
 
 function WorkspacePage({ type, role = ROLES.ADMIN }) {
   const config = pageConfig[type] || pageConfig.reports
   const { id } = useParams()
+  const navigate = useNavigate()
+  const location = useLocation()
+
   const [search, setSearch] = useState('')
-  const localAthletes = type === 'athletes' ? readAthletes() : []
-  const athlete = type === 'athleteProfile' ? readAthletes().find((item) => item.id === id) : null
-  const rows = localAthletes.filter((athlete) => `${athlete.name} ${athlete.id} ${athlete.sport}`.toLowerCase().includes(search.toLowerCase()))
-  const columns = [{ key: 'name', label: 'Athlete', render: (row) => <strong>{row.name}</strong> }, { key: 'id', label: 'ID' }, { key: 'sport', label: 'Sport' }, { key: 'status', label: 'Organization status', render: () => <StatusBadge tone="active">Active</StatusBadge> }, { key: 'action', label: 'Action', render: (row) => <ActionButton to={role === ROLES.ADMIN ? `/admin/athletes/${row.id}/edit` : `/coach/athletes/${row.id}`} secondary>View</ActionButton> }]
-  const isAdminAthleteList = type === 'athletes' && role === ROLES.ADMIN
+  const [dbAthletes, setDbAthletes] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [successBanner, setSuccessBanner] = useState('')
+
+  const [athleteToRemove, setAthleteToRemove] = useState(null)
+  const [isRemoving, setIsRemoving] = useState(false)
+
+  const isAthleteScope = type === 'athletes' || type === 'athleteProfile'
+
+  const fetchAthletes = useCallback(() => {
+    if (isAthleteScope) {
+      setLoading(true)
+      setError('')
+      authApi
+        .getAthletes()
+        .then((res) => {
+          if (Array.isArray(res?.athletes)) {
+            setDbAthletes(res.athletes)
+          } else {
+            setDbAthletes([])
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to fetch organization athletes:', err)
+          setError(err.message || 'Failed to fetch organization athletes.')
+        })
+        .finally(() => {
+          setLoading(false)
+        })
+    }
+  }, [isAthleteScope])
+
+  useEffect(() => {
+    fetchAthletes()
+  }, [fetchAthletes])
+
+  useEffect(() => {
+    if (location.state?.message) {
+      setSuccessBanner(location.state.message)
+      window.history.replaceState({}, document.title)
+    }
+  }, [location])
+
+  const handleConfirmRemove = async () => {
+    if (!athleteToRemove) return
+    const targetId = athleteToRemove.id || athleteToRemove.userId
+    setIsRemoving(true)
+    setSuccessBanner('')
+    try {
+      await authApi.unassignAthlete(targetId)
+      setSuccessBanner('Athlete removed from the organization successfully.')
+      setAthleteToRemove(null)
+      fetchAthletes()
+      if (type === 'athleteProfile') {
+        navigate('/admin/athletes', { replace: true })
+      }
+    } catch (err) {
+      console.error('Failed to remove athlete:', err)
+      alert(err.message || 'Failed to remove athlete from organization.')
+    } finally {
+      setIsRemoving(false)
+    }
+  }
+
+  const athlete = type === 'athleteProfile' ? dbAthletes.find((item) => item.id === id || item.userId === id || item.athleteId === id) : null
+
+  const rows = dbAthletes.filter((a) =>
+    `${a.name} ${a.email} ${a.id} ${a.sport} ${a.organizationId} ${a.organizationMemberId} ${a.organizationName}`
+      .toLowerCase()
+      .includes(search.toLowerCase())
+  )
+
+  const columns = [
+    {
+      key: 'name',
+      label: 'Athlete Name',
+      render: (row) => (
+        <div>
+          <strong>{row.name}</strong>
+          <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{row.email}</div>
+        </div>
+      ),
+    },
+    { key: 'sport', label: 'Sport', render: (row) => row.sport || 'Not specified' },
+    { key: 'organizationMemberId', label: 'Member ID', render: (row) => <strong>{row.organizationMemberId || 'ORG-DEV-001'}</strong> },
+    { key: 'height', label: 'Height', render: (row) => row.height || 'N/A' },
+    { key: 'weight', label: 'Weight', render: (row) => row.weight || 'N/A' },
+    {
+      key: 'status',
+      label: 'Status',
+      render: (row) => (
+        <StatusBadge tone={row.membershipStatus === 'active' ? 'active' : 'neutral'}>
+          {row.membershipStatus === 'active' ? 'Active' : row.membershipStatus || 'Independent'}
+        </StatusBadge>
+      ),
+    },
+    {
+      key: 'action',
+      label: 'Action',
+      render: (row) => (
+        <ActionButton to={role === ROLES.ADMIN ? `/admin/athletes/${row.id || row.userId}` : `/coach/athletes/${row.id || row.userId}`} secondary>
+          View Profile
+        </ActionButton>
+      ),
+    },
+  ]
 
   return (
-    <DashboardShell title={config.title} breadcrumb={config.breadcrumb} action={type !== 'video' && config.action && <ActionButton to={config.actionTo}>{config.action}</ActionButton>}>
+    <DashboardShell title={config.title} breadcrumb={config.breadcrumb} action={type !== 'video' && type !== 'athleteProfile' && config.action && <ActionButton to={config.actionTo}>{config.action}</ActionButton>}>
       <section className="dashboard-intro">
-        <h2>{config.title}</h2>
-        <p>{config.description}</p>
+        <h2>{type === 'athleteProfile' && athlete ? athlete.name : config.title}</h2>
+        <p>{type === 'athleteProfile' && athlete ? `Member ID: ${athlete.organizationMemberId || 'ORG-DEV-001'} · ${athlete.sport || 'Sport not specified'}` : config.description}</p>
       </section>
+
+      {successBanner && (
+        <div
+          style={{
+            background: '#f0fdf4',
+            border: '1px solid #bbf7d0',
+            color: '#166534',
+            padding: '14px 18px',
+            borderRadius: '8px',
+            marginBottom: '20px',
+            fontSize: '0.875rem',
+            fontWeight: 600,
+          }}
+        >
+          ✓ {successBanner}
+        </div>
+      )}
 
       {type === 'video' ? (
         <VideoUploadWorkspace />
       ) : type === 'athleteProfile' ? (
-        <Panel title={athlete?.name || config.title} description={athlete ? `${athlete.id} · ${athlete.sport || 'Sport not specified'}` : undefined}>
-          {athlete ? (
-            <div className="profile-summary-grid">
-              <div><span>Age</span><strong>{athlete.age || 'Not recorded'}</strong></div>
-              <div><span>Height</span><strong>{athlete.height || 'Not recorded'}</strong></div>
-              <div><span>Weight</span><strong>{athlete.weight || 'Not recorded'}</strong></div>
-              <div><span>Organization status</span><StatusBadge tone="active">Active</StatusBadge></div>
-            </div>
-          ) : (
-            <EmptyState title={config.empty} description="Only records available in the permitted organization scope can be displayed." />
-          )}
-        </Panel>
+        <div>
+          <div style={{ marginBottom: '16px' }}>
+            <Link to={role === ROLES.ADMIN ? '/admin/athletes' : '/coach/athletes'} style={{ color: '#2563eb', textDecoration: 'none', fontWeight: 600, fontSize: '0.875rem' }}>
+              ← Back to Athletes
+            </Link>
+          </div>
+
+          <Panel title="Athlete Details" description="Database-backed athlete information from PostgreSQL.">
+            {loading ? (
+              <div style={{ padding: '24px', textAlign: 'center', color: '#64748b' }}>Loading athlete profile...</div>
+            ) : athlete ? (
+              <div>
+                <div className="profile-details-grid" style={{ marginBottom: '24px' }}>
+                  <div>
+                    <span>Full Name</span>
+                    <strong>{athlete.name}</strong>
+                  </div>
+                  <div>
+                    <span>Email</span>
+                    <strong>{athlete.email}</strong>
+                  </div>
+                  <div>
+                    <span>Sport</span>
+                    <strong>{athlete.sport || 'Not specified'}</strong>
+                  </div>
+                  <div>
+                    <span>Height</span>
+                    <strong>{athlete.height || 'N/A'}</strong>
+                  </div>
+                  <div>
+                    <span>Weight</span>
+                    <strong>{athlete.weight || 'N/A'}</strong>
+                  </div>
+                  <div>
+                    <span>Organization ID</span>
+                    <strong>{athlete.organizationId || 'ORG-DEV'}</strong>
+                  </div>
+                  <div>
+                    <span>Member ID</span>
+                    <strong style={{ color: '#2563eb' }}>{athlete.organizationMemberId || 'ORG-DEV-001'}</strong>
+                  </div>
+                  <div>
+                    <span>Membership Status</span>
+                    <strong style={{ textTransform: 'capitalize', color: athlete.membershipStatus === 'active' ? '#16a34a' : '#0f2747' }}>
+                      {athlete.membershipStatus || 'active'}
+                    </strong>
+                  </div>
+                </div>
+
+                {role === ROLES.ADMIN && (
+                  <div style={{ marginTop: '32px', paddingTop: '20px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end' }}>
+                    <button
+                      type="button"
+                      style={{
+                        background: '#fef2f2',
+                        color: '#dc2626',
+                        border: '1px solid #fecaca',
+                        borderRadius: '6px',
+                        padding: '10px 20px',
+                        fontSize: '0.875rem',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                      }}
+                      onClick={() => setAthleteToRemove(athlete)}
+                    >
+                      Remove Athlete from Organization
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <EmptyState title={config.empty} description="No athlete profile was found for this identifier in your organization." />
+            )}
+          </Panel>
+        </div>
       ) : (
         <Panel title={type === 'access' ? 'Organization members' : type === 'analytics' ? 'Analytics workspace' : config.title} description={type === 'analytics' ? 'Risk distribution, assessment activity, injury trends, and team activity are intentionally empty until backend records are connected.' : undefined}>
-          {isAdminAthleteList && (
-            <SearchFilterBar placeholder="Search athletes by name, ID, or sport">
-              <select aria-label="Filter athletes"><option>All statuses</option><option>Active</option><option>Inactive</option></select>
+          {type === 'athletes' && (
+            <SearchFilterBar placeholder="Search athletes by name, Member ID, or sport" value={search} onChange={(e) => setSearch(e.target.value)}>
+              <select aria-label="Filter athletes"><option>All statuses</option><option>Active</option></select>
               <select aria-label="Filter sports"><option>All sports</option></select>
             </SearchFilterBar>
           )}
-          {isAdminAthleteList ? (
-            <DataTable columns={columns} rows={rows} emptyTitle={config.empty} emptyDescription="Use Add Athlete to create an organization athlete record." />
+          {type === 'athletes' ? (
+            loading ? (
+              <div style={{ padding: '24px', textAlign: 'center', color: '#64748b' }}>Loading organization athletes...</div>
+            ) : error ? (
+              <div style={{ padding: '16px', color: '#dc2626', background: '#fef2f2', borderRadius: '8px' }}>{error}</div>
+            ) : (
+              <DataTable columns={columns} rows={rows} emptyTitle={config.empty} emptyDescription="Use Add Athlete to assign a registered athlete to your organization." />
+            )
           ) : (
             <EmptyState title={config.empty} description="This production UI is ready for connected records. No business data has been fabricated." action={config.action && <ActionButton>{config.action}</ActionButton>} />
           )}
         </Panel>
+      )}
+
+      {athleteToRemove && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px',
+          }}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: '12px',
+              maxWidth: '480px',
+              width: '100%',
+              padding: '24px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+            }}
+          >
+            <h3 style={{ margin: '0 0 8px', fontSize: '1.15rem', color: '#0f172a' }}>
+              Remove Athlete from Organization?
+            </h3>
+            <p style={{ margin: '0 0 16px', fontSize: '0.875rem', color: '#64748b', lineHeight: '1.5' }}>
+              This will remove the athlete from your organization, but their account and athlete profile will not be deleted.
+            </p>
+
+            <div
+              style={{
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                marginBottom: '20px',
+              }}
+            >
+              <strong style={{ display: 'block', color: '#1e293b' }}>{athleteToRemove.name}</strong>
+              <small style={{ color: '#64748b' }}>{athleteToRemove.email} · Member ID: {athleteToRemove.organizationMemberId || 'N/A'}</small>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button
+                type="button"
+                disabled={isRemoving}
+                onClick={() => setAthleteToRemove(null)}
+                style={{
+                  background: '#f1f5f9',
+                  color: '#475569',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '6px',
+                  padding: '8px 16px',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isRemoving}
+                onClick={handleConfirmRemove}
+                style={{
+                  background: '#dc2626',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '8px 16px',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                }}
+              >
+                {isRemoving ? 'Removing...' : 'Remove Athlete'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {(type === 'analytics' || type === 'reports' || type === 'access') && (

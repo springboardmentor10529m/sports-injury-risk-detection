@@ -34,6 +34,7 @@ function LegacyAthletesRedirect() {
 function LegacyAthleteProfileRedirect() {
   const { id } = useParams()
   const { userRole } = useAuth()
+  if (userRole === ROLES.ADMIN) return <Navigate to={`/admin/athletes/${id}`} replace />
   if (userRole === ROLES.COACH) return <Navigate to={`/coach/athletes/${id}`} replace />
   return <Navigate to={ROLE_DASHBOARDS[userRole]} replace />
 }
@@ -96,6 +97,7 @@ function AppRoutes() {
           <Route path="/admin/analytics" element={<WorkspacePage type="analytics" />} />
           <Route path="/admin/users" element={<WorkspacePage type="access" />} />
           <Route path="/admin/athletes" element={<WorkspacePage type="athletes" />} />
+          <Route path="/admin/athletes/:id" element={<WorkspacePage type="athleteProfile" role={ROLES.ADMIN} />} />
           <Route path="/admin/injury-history" element={<WorkspacePage type="injury" />} />
           <Route path="/admin/athletes/add" element={<AddAthlete />} />
           <Route path="/admin/athletes/:id/edit" element={<EditAthlete />} />

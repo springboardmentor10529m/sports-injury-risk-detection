@@ -24,8 +24,8 @@ export function EmptyState({ title, description, action, icon = '◌' }) {
   return <div className="empty-state"><span className="empty-state-icon">{icon}</span><h3>{title}</h3><p>{description}</p>{action}</div>
 }
 
-export function SearchFilterBar({ placeholder = 'Search records...', children }) {
-  return <div className="search-filter-bar"><label className="search-field"><span aria-hidden="true">⌕</span><input type="search" placeholder={placeholder} /></label>{children}</div>
+export function SearchFilterBar({ placeholder = 'Search records...', children, value, onChange }) {
+  return <div className="search-filter-bar"><label className="search-field"><span aria-hidden="true">⌕</span><input type="search" placeholder={placeholder} value={value} onChange={onChange} /></label>{children}</div>
 }
 
 export function StatusBadge({ children, tone = 'neutral' }) {
