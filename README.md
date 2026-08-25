@@ -1,1026 +1,160 @@
-# KINETIQ — Sports Injury Risk Detection
+# InjuryGuard AI — Full Platform (All 5 Roles)
 
-**KINETIQ** is a sports intelligence platform designed to support video-based sports injury risk detection and athlete performance monitoring.
+Real, working implementation of the video → pose estimation → biomechanics →
+injury risk → recommendations pipeline, now with all 5 roles from the spec:
+**Athlete, Coach, Physiotherapist, Sports Scientist, and Administrator.**
+No mocked data anywhere: every number a user sees is computed from real
+uploaded videos, real profile data, or real database queries.
 
-The current implementation provides a web-based dashboard, role-based application flow, video upload functionality, and a FastAPI backend prepared for future AI-powered movement and injury-risk analysis.
+## What's real here
 
----
+- **Pose estimation**: MediaPipe BlazePose (Tasks API, `pose_landmarker_full`
+  model), 33 keypoints, run frame-by-frame on your uploaded video.
+- **Biomechanics**: joint angles, knee valgus, trunk lean, symmetry, hip
+  stability, balance, stride length, and a fatigue signal — all computed with
+  real vector math on the detected 3D keypoints (`backend/app/services/biomechanics.py`).
+- **Risk scoring**: the exact weighted formula from the spec (35% biomechanical
+  deviation / 20% historical injury / 20% asymmetry / 15% training load / 10%
+  fatigue), fully deterministic and auditable (`backend/app/services/risk_scoring.py`).
+- **Recommendations**: rule-based, each one only fires when a specific
+  computed metric crosses a documented threshold (`backend/app/services/recommendations.py`).
+- **Role-based access control**: a coach/physio/scientist can only see an
+  athlete's data after that athlete is explicitly linked to them (by email) -
+  enforced server-side on every request, not just hidden in the UI. Verified
+  with real cross-role tests (see below).
+- **Admin**: real platform stats from live DB queries (user counts by role,
+  video pipeline status breakdown, platform-wide average risk), user
+  activation/deactivation that's actually enforced at login, and role changes.
+- **Physiotherapist clinical notes**: real free-text notes logged against an
+  athlete by phase (mobility/strength/return-to-sport) - not a fabricated
+  "recovery %" that no pipeline actually computes.
+- **Sports Scientist analytics**: real aggregate stats (avg risk, category
+  distribution, avg biomechanics metrics) and a real Pearson correlation
+  between training-load risk and overall risk, computed across the
+  scientist's linked athlete dataset with numpy.
 
-## 📌 Project Overview
+## Architecture
 
-Sports injuries can occur due to factors such as improper movement, fatigue, excessive training load, poor biomechanics, and repetitive stress.
-
-KINETIQ aims to use sports video analysis to identify potentially risky movement patterns and provide useful insights to athletes, coaches, and sports professionals.
-
-### Current Implementation
-
-The current version includes:
-
-* KINETIQ landing page
-* Role selection
-* Login interface
-* Dashboard
-* Dashboard statistics
-* Sports video upload
-* Video format validation
-* Unique uploaded-video filenames
-* FastAPI backend
-* REST API endpoints
-* CORS configuration
-* Health-check endpoint
-* Interactive Swagger API documentation
-
-### Future Development
-
-The platform can be extended with:
-
-* AI-based pose estimation
-* Movement analysis
-* Injury-risk prediction
-* Athlete-specific risk scores
-* Fatigue detection
-* Training-load analysis
-* Historical assessment tracking
-* AI-generated recommendations
-* Athlete and coach management
-* Database-backed user authentication
-
----
-
-# 🛠️ Technology Stack
-
-## Frontend
-
-* React
-* Vite
-* React Router
-* Lucide React
-* JavaScript
-* CSS
-
-## Backend
-
-* Python
-* FastAPI
-* Uvicorn
-* SQLAlchemy
-* Pydantic
-* Python Multipart
-* Python-Jose
-* Passlib
-* Python Dotenv
-
----
-
-# 📂 Project Structure
-
-```text
-sports-injury-risk-detection/
-│
-├── backend/
-│   │
-│   ├── app/
-│   │   └── main.py
-│   │
-│   ├── requirements.txt
-│   └── uploads/
-│
-├── frontend/
-│   │
-│   ├── public/
-│   │   ├── favicon.svg
-│   │   └── icons.svg
-│   │
-│   ├── src/
-│   │   │
-│   │   ├── api/
-│   │   │   ├── analysis.js
-│   │   │   ├── auth.js
-│   │   │   ├── client.js
-│   │   │   ├── dashboard.js
-│   │   │   ├── upload.js
-│   │   │   └── video.js
-│   │   │
-│   │   ├── components/
-│   │   │   ├── DashboardLayout.jsx
-│   │   │   ├── Sidebar.jsx
-│   │   │   ├── StatCard.jsx
-│   │   │   ├── Topbar.jsx
-│   │   │   └── VideoUpload.jsx
-│   │   │
-│   │   ├── pages/
-│   │   │   ├── Home.jsx
-│   │   │   ├── Login.jsx
-│   │   │   ├── RoleSelection.jsx
-│   │   │   ├── UploadVideo.jsx
-│   │   │   └── dashboards/
-│   │   │       └── Dashboard.jsx
-│   │   │
-│   │   ├── App.jsx
-│   │   ├── App.css
-│   │   ├── index.css
-│   │   └── main.jsx
-│   │
-│   ├── package.json
-│   ├── package-lock.json
-│   ├── vite.config.js
-│   └── eslint.config.js
-│
-├── docs/
-│
-├── .gitignore
-├── LICENSE
-└── README.md
+```
+frontend/          React 19 + Vite, plain CSS, recharts for the trend chart
+backend/
+  app/
+    main.py               FastAPI app, CORS, router registration
+    models.py              SQLAlchemy models (User + 4 role profiles, AthleteLink, ClinicalNote, VideoAnalysis)
+    schemas.py              Pydantic request/response schemas
+    core/
+      config.py             Settings (.env driven)
+      database.py            SQLAlchemy engine/session
+      security.py            JWT + bcrypt password hashing
+    routers/
+      auth.py                 Registration (all 5 roles) + login
+      athlete.py               Athlete's own profile
+      video.py                  Video upload + pipeline trigger
+      analysis.py                Athlete's own dashboard/history
+      coach.py                    Team roster, add/remove athletes, athlete detail
+      physio.py                    Patient roster, athlete detail, clinical notes
+      scientist.py                  Dataset roster, aggregate analytics
+      admin.py                      Platform stats, user management
+      deps.py                        Role guards + AthleteLink access-control dependency
+    services/
+      pose_estimation.py     MediaPipe wrapper
+      biomechanics.py         Joint-angle / symmetry / fatigue math
+      risk_scoring.py          Weighted risk formula
+      recommendations.py       Rule engine
+      pipeline.py               Orchestrates the full pipeline + status updates
+      roster.py                  Shared roster-building helper (coach/physio/scientist)
+    video_processing/
+      frame_extractor.py       OpenCV frame sampling
+    ml_models/                 Pose model bundle goes here (downloaded, not committed)
+  scripts/
+    download_models.sh         Fetches the MediaPipe model bundle
+    create_admin.py             Bootstraps the first admin account (CLI)
+docker-compose.yml            Postgres + backend, for a spec-compliant deployment
 ```
 
----
+## Setup
 
-# 🚀 Getting Started
-
-Follow the instructions below to run KINETIQ locally.
-
-## Prerequisites
-
-Make sure the following are installed:
-
-* Git
-* Python 3.9 or higher
-* Node.js 18 or higher
-* npm
-
-Verify the installations:
-
-```bash
-git --version
-python --version
-node --version
-npm --version
-```
-
----
-
-# 📥 Clone the Repository
-
-The current KINETIQ implementation is available on the development branch:
-
-```text
-samitha-muthyala
-```
-
-Clone the repository directly using:
-
-```bash
-git clone -b samitha-muthyala https://github.com/springboardmentor10529m/sports-injury-risk-detection.git
-```
-
-Enter the project directory:
-
-```bash
-cd sports-injury-risk-detection
-```
-
----
-
-# ⚙️ Backend Setup
-
-The backend is built using **FastAPI**.
-
-## 1. Navigate to Backend
+### 1. Backend
 
 ```bash
 cd backend
-```
-
-## 2. Create a Python Virtual Environment
-
-### Windows
-
-```powershell
-python -m venv venv
-```
-
-Activate the virtual environment:
-
-```powershell
-.\venv\Scripts\Activate.ps1
-```
-
-If PowerShell does not allow the activation command, try:
-
-```powershell
-.\venv\Scripts\activate
-```
-
-### macOS / Linux
-
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
----
-
-## 3. Install Backend Dependencies
-
-```bash
+python3 -m venv venv && source venv/bin/activate   # or use your preferred env manager
 pip install -r requirements.txt
+
+cp .env.example .env
+# Defaults to SQLite for zero-setup local dev. Switch DATABASE_URL to Postgres
+# in .env when you want the spec-compliant database (see docker-compose.yml).
+
+./scripts/download_models.sh   # fetches pose_landmarker_full.task (~30MB) — required, run once
+
+uvicorn app.main:app --reload --port 8000
 ```
 
-The backend dependencies include:
+API docs at `http://localhost:8000/docs` once running.
 
-```text
-fastapi
-uvicorn
-python-multipart
-python-jose
-passlib
-sqlalchemy
-python-dotenv
-pydantic
-```
-
----
-
-# ▶️ Start the Backend
-
-Make sure you are inside the `backend` directory.
-
-Run:
-
+**Create the first admin account** (admin accounts aren't publicly
+self-registrable, per the spec):
 ```bash
-python -m uvicorn app.main:app --reload
+python3 scripts/create_admin.py
 ```
 
-The backend will start at:
-
-```text
-http://127.0.0.1:8000
-```
-
-You should see a message similar to:
-
-```text
-Application startup complete.
-```
-
----
-
-# 📚 FastAPI Swagger Documentation
-
-KINETIQ uses FastAPI's built-in interactive API documentation.
-
-Once the backend is running, open:
-
-```text
-http://127.0.0.1:8000/docs
-```
-
-Swagger allows you to:
-
-* View available API endpoints
-* Test API requests
-* Test the health-check endpoint
-* Retrieve dashboard data
-* Upload sports videos
-* Inspect API responses
-
-Alternative documentation is available at:
-
-```text
-http://127.0.0.1:8000/redoc
-```
-
----
-
-# 🔌 Backend API Endpoints
-
-The current backend provides the following endpoints.
-
-## 1. Root Endpoint
-
-```http
-GET /
-```
-
-Returns the current API status.
-
-Example response:
-
-```json
-{
-  "message": "KINETIQ API is running",
-  "status": "ok"
-}
-```
-
----
-
-## 2. Health Check
-
-```http
-GET /api/health
-```
-
-Used to verify that the KINETIQ backend is healthy and running.
-
-Example response:
-
-```json
-{
-  "status": "healthy",
-  "service": "KINETIQ Backend"
-}
-```
-
----
-
-## 3. Dashboard Data
-
-```http
-GET /api/dashboard
-```
-
-Returns dashboard statistics used by the frontend.
-
-The response currently contains information such as:
-
-* Injury risk
-* Movement score
-* Fatigue level
-* Training load
-* Number of athletes
-* High-risk athletes
-* Recovery
-* Assessments
-* Athletes analyzed
-* Risk detections
-* Total users
-* Active users
-* Number of analyses
-* System status
-
----
-
-## 4. Video Upload
-
-```http
-POST /api/upload
-```
-
-Accepts a video file using multipart form data.
-
-### Supported formats
-
-```text
-.mp4
-.mov
-.avi
-.mkv
-.webm
-```
-
-The backend:
-
-1. Checks whether a file was selected.
-2. Validates the video extension.
-3. Extracts the original filename safely.
-4. Generates a unique filename using a timestamp.
-5. Saves the video to the upload directory.
-6. Calculates the file size.
-7. Returns upload information to the frontend.
-
-Example response:
-
-```json
-{
-  "status": "success",
-  "message": "Video uploaded successfully",
-  "filename": "20260818_123456_123456_sample.mp4",
-  "original_filename": "sample.mp4",
-  "file_path": "uploads/20260818_123456_123456_sample.mp4",
-  "file_size": 1234567,
-  "analysis_status": "pending",
-  "ai_analysis": false
-}
-```
-
----
-
-# 💻 Frontend Setup
-
-Open a **new terminal** while keeping the backend running.
-
-From the project root:
+### 2. Frontend
 
 ```bash
 cd frontend
-```
-
-Install the frontend dependencies:
-
-```bash
-npm install
-```
-
----
-
-# ▶️ Start the Frontend
-
-Run:
-
-```bash
-npm run dev
-```
-
-Vite will start the development server.
-
-The application will normally be available at:
-
-```text
-http://localhost:5173
-```
-
-Open the URL shown in the terminal.
-
----
-
-# 🖥️ Frontend Application Flow
-
-The current frontend follows this general flow:
-
-```text
-┌─────────────────────────┐
-│     KINETIQ Home        │
-└────────────┬────────────┘
-             │
-             ▼
-┌─────────────────────────┐
-│     Role Selection      │
-└────────────┬────────────┘
-             │
-             ▼
-┌─────────────────────────┐
-│         Login           │
-└────────────┬────────────┘
-             │
-             ▼
-┌─────────────────────────┐
-│       Dashboard         │
-└────────────┬────────────┘
-             │
-       ┌─────┴─────┐
-       ▼           ▼
-┌─────────────┐ ┌─────────────┐
-│   Upload    │ │  Dashboard  │
-│    Video    │ │    Stats    │
-└──────┬──────┘ └─────────────┘
-       │
-       ▼
-┌─────────────────────────┐
-│   Video Upload API      │
-└────────────┬────────────┘
-             │
-             ▼
-┌─────────────────────────┐
-│ Future AI Analysis      │
-│ & Injury Risk Detection │
-└─────────────────────────┘
-```
-
----
-
-# 🧩 Frontend Pages
-
-The frontend currently contains the following major pages.
-
-### Home
-
-```text
-frontend/src/pages/Home.jsx
-```
-
-Landing page for KINETIQ.
-
-### Role Selection
-
-```text
-frontend/src/pages/RoleSelection.jsx
-```
-
-Allows the user to select the relevant application role.
-
-### Login
-
-```text
-frontend/src/pages/Login.jsx
-```
-
-Provides the login interface.
-
-### Dashboard
-
-```text
-frontend/src/pages/dashboards/Dashboard.jsx
-```
-
-Displays KINETIQ dashboard information and statistics.
-
-### Upload Video
-
-```text
-frontend/src/pages/UploadVideo.jsx
-```
-
-Provides the interface for uploading sports videos.
-
----
-
-# 🧱 Reusable Components
-
-The frontend uses reusable React components.
-
-```text
-frontend/src/components/
-```
-
-Important components include:
-
-### DashboardLayout
-
-Provides the overall dashboard layout.
-
-### Sidebar
-
-Provides dashboard navigation.
-
-### Topbar
-
-Provides the dashboard header/navigation area.
-
-### StatCard
-
-Displays dashboard statistics.
-
-### VideoUpload
-
-Handles the video-upload interface.
-
----
-
-# 🔗 Frontend API Modules
-
-API communication is separated into dedicated JavaScript modules.
-
-```text
-frontend/src/api/
-```
-
-### `client.js`
-
-Central API client configuration.
-
-### `auth.js`
-
-Authentication-related API functions.
-
-### `dashboard.js`
-
-Dashboard API functions.
-
-### `upload.js`
-
-Video upload API functionality.
-
-### `video.js`
-
-Video-related API functionality.
-
-### `analysis.js`
-
-Analysis-related API functionality prepared for future integration.
-
----
-
-# 🔄 Running Frontend and Backend Together
-
-KINETIQ requires **two terminals** during development.
-
-## Terminal 1 — Backend
-
-```bash
-cd sports-injury-risk-detection/backend
-```
-
-Activate the virtual environment and run:
-
-```bash
-python -m uvicorn app.main:app --reload
-```
-
-Backend:
-
-```text
-http://127.0.0.1:8000
-```
-
-Swagger:
-
-```text
-http://127.0.0.1:8000/docs
-```
-
----
-
-## Terminal 2 — Frontend
-
-```bash
-cd sports-injury-risk-detection/frontend
+cp .env.example .env    # points VITE_API_BASE_URL at http://localhost:8000
 npm install
 npm run dev
 ```
 
-Frontend:
+Open `http://localhost:5173`. Go to **Sign up** to register as an Athlete,
+Coach, Physiotherapist, or Sports Scientist. Log in as the admin you created
+above to reach `/admin/dashboard`.
 
-```text
-http://localhost:5173
-```
-
----
-
-# 🧪 Frontend Development Commands
-
-## Start development server
+### 3. (Optional) Postgres via Docker
 
 ```bash
-npm run dev
+docker compose up --build
 ```
 
-## Build for production
+## Using the multi-role features
+
+1. Register an **Athlete** account and fill in their profile.
+2. Register a **Coach** (or Physiotherapist / Sports Scientist) account.
+3. From that staff account's dashboard, use **Add athlete** / **Add patient**
+   / **Add to dataset** and enter the athlete's email — this creates the
+   access-control link. Until this link exists, that staff account gets a
+   403 if it tries to query that athlete directly.
+4. Have the athlete upload and complete a video analysis (needs the pose
+   model downloaded, see above) — the staff dashboards will then show real
+   risk scores, biomechanics, and (for physios) let you log clinical notes.
+5. Log in as the **Admin** to see live platform-wide stats and manage any
+   user's active/deactivated status or role.
+
+## Scope & honest limitations (read before demoing)
+
+A few things worth understanding about the pipeline itself:
+
+- **No calibrated camera** means metrics like knee valgus and stride length
+  are computed from MediaPipe's hip-centered "world landmarks" (approximate
+  metric scale), not true goniometry. They're internally consistent and
+  comparable run-to-run for the same athlete/camera setup, but shouldn't be
+  read as clinical-grade measurements.
+- **No trained ML risk model.** The risk engine is the deterministic
+  weighted formula from the spec, not a classifier — there's no labeled
+  injury dataset to train one on yet. Every sub-score is traceable to a
+  specific rule in `risk_scoring.py`.
+- **No invite/acceptance flow.** A coach/physio/scientist adds an athlete by
+  email and the link is created immediately (no athlete-side approval step).
+  This was a deliberate scope simplification - add an `AthleteLink.status`
+  field (pending/accepted) and a confirmation endpoint if you want that.
+- **Background processing runs in-process** (FastAPI `BackgroundTasks`), fine
+  for local use and small deployments. For production concurrency, swap this
+  for Celery/RQ + a task queue — the pipeline function itself
+  (`services/pipeline.py`) doesn't need to change.
+- **Not built yet**: notification/alert system, PDF/Excel export, calendar,
+  organizations/multi-tenant grouping. The data model and routing already
+  separate cleanly so these are additive.
+- **All output is decision support, not diagnosis** — surfaced explicitly in
+  the recommendations payload and the UI.
 
-```bash
-npm run build
-```
-
-## Preview production build
-
-```bash
-npm run preview
-```
-
-## Run ESLint
-
-```bash
-npm run lint
-```
-
----
-
-# 📤 Video Upload Storage
-
-Uploaded videos are temporarily stored in:
-
-```text
-backend/uploads/
-```
-
-The upload directory is automatically created by the FastAPI application when the backend starts.
-
-Uploaded files should **not** be committed to GitHub.
-
-Make sure the following is included in the root `.gitignore`:
-
-```text
-backend/uploads/
-```
-
----
-
-# 🔐 Security Considerations
-
-The project includes dependencies and architecture intended to support secure application development, including:
-
-* JWT authentication support
-* Password hashing
-* CORS configuration
-* Input validation
-* File extension validation
-* Safe filename extraction
-* Environment variable support
-
-The current implementation is a development version and should undergo additional security hardening before production deployment.
-
----
-
-# 🤖 AI Analysis — Development Status
-
-The long-term objective of KINETIQ is to analyze uploaded sports videos and identify movement patterns associated with potential injury risks.
-
-The current backend upload response contains:
-
-```json
-{
-  "analysis_status": "pending",
-  "ai_analysis": false
-}
-```
-
-This indicates that **AI-based video analysis is not yet connected to the current upload endpoint**.
-
-Future analysis functionality may include:
-
-* Human pose estimation
-* Joint-angle analysis
-* Movement-pattern detection
-* Biomechanical analysis
-* Fatigue indicators
-* Injury-risk scoring
-* Athlete performance trends
-* Risk alerts
-* Personalized recommendations
-
-This separation allows the current application architecture to be extended with an AI analysis pipeline later.
-
----
-
-# 🗄️ Database
-
-SQLAlchemy is included in the backend dependencies to support database integration.
-
-The database layer can be extended to store:
-
-* User accounts
-* Athlete profiles
-* Coach profiles
-* Uploaded videos
-* Analysis results
-* Injury-risk scores
-* Historical assessments
-* Training information
-* Recovery information
-
-The current dashboard endpoint uses demonstration/static data while the database-backed functionality is being developed.
-
----
-
-# 🌐 CORS Configuration
-
-The backend currently allows requests from the local Vite development servers:
-
-```text
-http://localhost:5173
-http://127.0.0.1:5173
-```
-
-This allows the React frontend to communicate with the FastAPI backend during local development.
-
----
-
-# 🐛 Troubleshooting
-
-## `uvicorn` is not recognized
-
-Instead of:
-
-```bash
-uvicorn app.main:app --reload
-```
-
-use:
-
-```bash
-python -m uvicorn app.main:app --reload
-```
-
----
-
-## Python virtual environment cannot be activated
-
-On Windows PowerShell:
-
-```powershell
-.\venv\Scripts\Activate.ps1
-```
-
-If necessary, use:
-
-```powershell
-.\venv\Scripts\activate
-```
-
----
-
-## Backend dependencies are missing
-
-Make sure the virtual environment is active and run:
-
-```bash
-pip install -r requirements.txt
-```
-
----
-
-## Frontend dependencies are missing
-
-Inside the frontend directory:
-
-```bash
-npm install
-```
-
-Then:
-
-```bash
-npm run dev
-```
-
----
-
-## Frontend cannot connect to backend
-
-Make sure the backend is running:
-
-```bash
-python -m uvicorn app.main:app --reload
-```
-
-Then verify:
-
-```text
-http://127.0.0.1:8000/api/health
-```
-
-You should receive:
-
-```json
-{
-  "status": "healthy",
-  "service": "KINETIQ Backend"
-}
-```
-
-Also make sure the frontend is running at:
-
-```text
-http://localhost:5173
-```
-
----
-
-## Swagger page is not opening
-
-Verify that the backend is running and open:
-
-```text
-http://127.0.0.1:8000/docs
-```
-
-If the backend terminal shows:
-
-```text
-Application startup complete.
-```
-
-the API should be available.
-
----
-
-# 🌿 Git Branch
-
-The current implementation is available on:
-
-```text
-samitha-muthyala
-```
-
-To switch to this branch after cloning:
-
-```bash
-git checkout samitha-muthyala
-```
-
-Or clone it directly:
-
-```bash
-git clone -b samitha-muthyala https://github.com/springboardmentor10529m/sports-injury-risk-detection.git
-```
-
-The `main` branch may not contain the latest KINETIQ implementation.
-
----
-
-# 📋 Quick Start
-
-For a quick setup:
-
-### Clone
-
-```bash
-git clone -b samitha-muthyala https://github.com/springboardmentor10529m/sports-injury-risk-detection.git
-cd sports-injury-risk-detection
-```
-
-### Backend
-
-```bash
-cd backend
-python -m venv venv
-```
-
-Windows:
-
-```powershell
-.\venv\Scripts\Activate.ps1
-```
-
-Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-Start server:
-
-```bash
-python -m uvicorn app.main:app --reload
-```
-
-Backend:
-
-```text
-http://127.0.0.1:8000
-```
-
-Swagger:
-
-```text
-http://127.0.0.1:8000/docs
-```
-
-### Frontend
-
-Open another terminal:
-
-```bash
-cd sports-injury-risk-detection/frontend
-npm install
-npm run dev
-```
-
-Frontend:
-
-```text
-http://localhost:5173
-```
-
----
-
-# 📌 Current Status
-
-| Component                | Status            |
-| ------------------------ | ----------------- |
-| KINETIQ Home Page        | ✅ Implemented     |
-| Role Selection           | ✅ Implemented     |
-| Login Interface          | ✅ Implemented     |
-| Dashboard                | ✅ Implemented     |
-| Dashboard Statistics API | ✅ Implemented     |
-| Video Upload UI          | ✅ Implemented     |
-| Video Upload API         | ✅ Implemented     |
-| Video Format Validation  | ✅ Implemented     |
-| FastAPI Backend          | ✅ Implemented     |
-| Swagger Documentation    | ✅ Available       |
-| Health Check API         | ✅ Implemented     |
-| Database Integration     | 🔄 In Development |
-| Authentication Backend   | 🔄 In Development |
-| AI Video Analysis        | 🔄 Planned        |
-| Injury Risk Prediction   | 🔄 Planned        |
-| Pose Estimation          | 🔄 Planned        |
-
----
-
-# 👩‍💻 Project Information
-
-**Project Name:** KINETIQ — Sports Injury Risk Detection
-
-**Repository:** `sports-injury-risk-detection`
-
-**Development Branch:** `samitha-muthyala`
-
-**Frontend:** React + Vite
-
-**Backend:** FastAPI + Python
-
-**API Documentation:** FastAPI Swagger UI
-
----
-
-# 📄 License
-
-This project is distributed under the license included in the repository.
-
-See the [`LICENSE`](LICENSE) file for details.
-
----
-
-## KINETIQ
-
-**Sports Intelligence • Video Analysis • Injury Risk Detection**
