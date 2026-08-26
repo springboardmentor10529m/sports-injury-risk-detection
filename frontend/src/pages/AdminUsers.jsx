@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Plus, ShieldCheck, X } from "lucide-react";
 import { createAdminUser, deleteAdminUser, getAdminUsers, updateAdminUser } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 
@@ -22,12 +23,10 @@ export default function AdminUsers() {
     await updateAdminUser(u.id, { is_active: !u.is_active });
     await refresh();
   }
-
   async function changeRole(u, role) {
     await updateAdminUser(u.id, { role });
     await refresh();
   }
-
   async function handleDelete(u) {
     if (!confirm(`Delete ${u.email}? This cannot be undone.`)) return;
     await deleteAdminUser(u.id);
@@ -36,13 +35,14 @@ export default function AdminUsers() {
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: 24, marginBottom: 4 }}>Users</h1>
+          <div className="eyebrow" style={{ marginBottom: 6 }}>Access Control</div>
+          <h1 style={{ fontSize: 26, marginBottom: 4 }}>Users</h1>
           <p style={{ color: "var(--text-dim)" }}>{users.length} accounts</p>
         </div>
         <button className="btn btn-primary" onClick={() => setShowCreate((s) => !s)}>
-          {showCreate ? "Cancel" : "+ Create account"}
+          {showCreate ? <><X size={15} /> Cancel</> : <><Plus size={15} /> Create account</>}
         </button>
       </div>
 
@@ -55,27 +55,20 @@ export default function AdminUsers() {
         />
       )}
 
-      <div className="card">
+      <div className="card animate-in">
         {loading ? (
           <p style={{ color: "var(--text-dim)" }}>Loading...</p>
         ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+          <table className="data-table">
             <thead>
-              <tr style={{ color: "var(--text-dim)", textAlign: "left" }}>
-                <th style={{ padding: "6px 4px", fontWeight: 500 }}>Name</th>
-                <th style={{ padding: "6px 4px", fontWeight: 500 }}>Email</th>
-                <th style={{ padding: "6px 4px", fontWeight: 500 }}>Role</th>
-                <th style={{ padding: "6px 4px", fontWeight: 500 }}>Status</th>
-                <th style={{ padding: "6px 4px", fontWeight: 500 }}>Joined</th>
-                <th></th>
-              </tr>
+              <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th><th></th></tr>
             </thead>
             <tbody>
               {users.map((u) => (
-                <tr key={u.id} style={{ borderTop: "1px solid var(--border)" }}>
-                  <td style={{ padding: "10px 4px" }}>{u.full_name}{u.id === me.id && <span style={{ color: "var(--text-faint)" }}> (you)</span>}</td>
-                  <td style={{ padding: "10px 4px", color: "var(--text-dim)" }}>{u.email}</td>
-                  <td style={{ padding: "10px 4px" }}>
+                <tr key={u.id}>
+                  <td>{u.full_name}{u.id === me.id && <span style={{ color: "var(--text-faint)" }}> (you)</span>}</td>
+                  <td style={{ color: "var(--text-dim)" }}>{u.email}</td>
+                  <td>
                     <select
                       value={u.role}
                       onChange={(e) => changeRole(u, e.target.value)}
@@ -85,17 +78,18 @@ export default function AdminUsers() {
                       {ROLES.map((r) => <option key={r} value={r}>{r.replace(/_/g, " ")}</option>)}
                     </select>
                   </td>
-                  <td style={{ padding: "10px 4px" }}>
-                    <span style={{ color: u.is_active ? "var(--risk-low)" : "var(--risk-critical)", fontSize: 12 }}>
-                      {u.is_active ? "Active" : "Deactivated"}
+                  <td>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12 }}>
+                      <span style={{ width: 7, height: 7, borderRadius: "50%", background: u.is_active ? "var(--risk-low)" : "var(--risk-critical)", boxShadow: `0 0 8px ${u.is_active ? "var(--risk-low)" : "var(--risk-critical)"}` }} />
+                      <span style={{ color: u.is_active ? "var(--risk-low)" : "var(--risk-critical)" }}>{u.is_active ? "Active" : "Deactivated"}</span>
                     </span>
                   </td>
-                  <td style={{ padding: "10px 4px", color: "var(--text-dim)" }}>{new Date(u.created_at).toLocaleDateString()}</td>
-                  <td style={{ padding: "10px 4px", textAlign: "right", whiteSpace: "nowrap" }}>
+                  <td style={{ color: "var(--text-dim)" }}>{new Date(u.created_at).toLocaleDateString()}</td>
+                  <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
                     <button
                       onClick={() => toggleActive(u)}
                       disabled={u.id === me.id}
-                      style={{ background: "none", border: "none", color: "var(--accent)", fontSize: 12, cursor: "pointer", marginRight: 12, opacity: u.id === me.id ? 0.4 : 1 }}
+                      style={{ background: "none", border: "none", color: "var(--accent)", fontSize: 12, cursor: "pointer", marginRight: 14, opacity: u.id === me.id ? 0.4 : 1 }}
                     >
                       {u.is_active ? "Deactivate" : "Activate"}
                     </button>
@@ -137,9 +131,9 @@ function CreateUserForm({ onCreated }) {
   }
 
   return (
-    <div className="card" style={{ marginBottom: 20 }}>
-      <h3 style={{ fontSize: 14, marginBottom: 4 }}>Create a staff account</h3>
-      <p style={{ fontSize: 12, color: "var(--text-faint)", marginBottom: 14 }}>
+    <div className="card animate-in" style={{ marginBottom: 20 }}>
+      <div className="card-title"><ShieldCheck size={15} color="var(--accent)" /> Create a staff account</div>
+      <p style={{ fontSize: 12, color: "var(--text-faint)", marginTop: -10, marginBottom: 16 }}>
         Creates a profile-less account (mainly for additional admins). For athlete/coach/physio/scientist
         accounts with full profiles, have them self-register instead.
       </p>

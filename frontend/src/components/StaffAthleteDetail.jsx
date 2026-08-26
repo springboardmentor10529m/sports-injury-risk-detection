@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { ArrowLeft, FileClock } from "lucide-react";
 import RiskPill from "./RiskPill";
 
 export default function StaffAthleteDetail({ athleteId, fetchProfile, fetchVideos, backTo, backLabel, extra }) {
@@ -15,8 +16,11 @@ export default function StaffAthleteDetail({ athleteId, fetchProfile, fetchVideo
 
   return (
     <div>
-      <Link to={backTo} style={{ color: "var(--accent)", fontSize: 13 }}>← {backLabel}</Link>
-      <h1 style={{ fontSize: 24, margin: "10px 0 20px" }}>{profile.sport} athlete profile</h1>
+      <Link to={backTo} style={{ color: "var(--accent)", fontSize: 13, display: "inline-flex", alignItems: "center", gap: 5 }}>
+        <ArrowLeft size={13} /> {backLabel}
+      </Link>
+      <div className="eyebrow" style={{ margin: "14px 0 4px" }}>Athlete Profile</div>
+      <h1 style={{ fontSize: 26, marginBottom: 20, textTransform: "capitalize" }}>{profile.sport} athlete</h1>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14, marginBottom: 20 }}>
         <StatBox label="Sport" value={profile.sport} />
@@ -30,19 +34,19 @@ export default function StaffAthleteDetail({ athleteId, fetchProfile, fetchVideo
       </div>
 
       {videos && (
-        <div className="card" style={{ marginBottom: 20 }}>
-          <h3 style={{ fontSize: 14, marginBottom: 14 }}>Analysis history</h3>
+        <div className="card animate-in" style={{ marginBottom: 20 }}>
+          <div className="card-title"><FileClock size={15} color="var(--accent)" /> Analysis history</div>
           {videos.length === 0 ? (
             <p style={{ color: "var(--text-faint)", fontSize: 13 }}>No videos analyzed yet.</p>
           ) : (
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+            <table className="data-table">
               <tbody>
                 {videos.map((v) => (
-                  <tr key={v.id} style={{ borderTop: "1px solid var(--border)" }}>
-                    <td style={{ padding: "10px 4px", textTransform: "capitalize" }}>{v.activity_type}</td>
-                    <td style={{ padding: "10px 4px", color: "var(--text-dim)" }}>{new Date(v.created_at).toLocaleDateString()}</td>
-                    <td style={{ padding: "10px 4px", textTransform: "capitalize" }}>{v.status.replace(/_/g, " ")}</td>
-                    <td style={{ padding: "10px 4px" }}>
+                  <tr key={v.id}>
+                    <td style={{ textTransform: "capitalize", width: 140 }}>{v.activity_type}</td>
+                    <td style={{ color: "var(--text-dim)" }}>{new Date(v.created_at).toLocaleDateString()}</td>
+                    <td style={{ textTransform: "capitalize" }}>{v.status.replace(/_/g, " ")}</td>
+                    <td>
                       {v.status === "completed" ? <RiskPill category={v.risk_category} score={v.overall_risk_score} /> : null}
                     </td>
                   </tr>
@@ -60,11 +64,9 @@ export default function StaffAthleteDetail({ athleteId, fetchProfile, fetchVideo
 
 function StatBox({ label, value, warn }) {
   return (
-    <div className="card">
-      <div style={{ fontSize: 11, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>
-        {label}
-      </div>
-      <div style={{ fontSize: 16, color: warn ? "var(--risk-high)" : "var(--text)" }}>{value}</div>
+    <div className="stat-card">
+      <div className="stat-card-label" style={{ marginTop: 0, marginBottom: 8 }}>{label}</div>
+      <div style={{ fontSize: 17, color: warn ? "var(--risk-high)" : "var(--text)", fontWeight: 500 }}>{value}</div>
     </div>
   );
 }

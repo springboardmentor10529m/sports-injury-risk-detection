@@ -240,3 +240,19 @@ class AdminCreateUserRequest(BaseModel):
     password: str = Field(min_length=8)
     full_name: str
     role: UserRole
+
+
+# ---------- Notifications ----------
+
+
+class NotificationOut(BaseModel):
+    id: str
+    type: str
+    title: str
+    message: str
+    link: str | None
+    is_read: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

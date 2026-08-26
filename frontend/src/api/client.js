@@ -75,6 +75,11 @@ export const getScientistAthletes = () => api.get("/api/scientist/athletes");
 export const addScientistAthlete = (athlete_email) => api.post("/api/scientist/athletes/add", { athlete_email });
 export const getScientistAthleteProfile = (athleteId) => api.get(`/api/scientist/athletes/${athleteId}`);
 export const getScientistAthleteVideos = (athleteId) => api.get(`/api/scientist/athletes/${athleteId}/videos`);
+
+// ---- Notifications ----
+export const getNotifications = () => api.get("/api/notifications");
+export const markNotificationRead = (id) => api.post(`/api/notifications/${id}/read`);
+export const markAllNotificationsRead = () => api.post("/api/notifications/read-all");
 export const getScientistAnalytics = () => api.get("/api/scientist/analytics");
 
 // ---- Admin ----

@@ -8,7 +8,7 @@ const CATEGORY_COLOR = {
 // A 270-degree instrument dial (like a lab gauge, not a generic progress
 // ring) with tick marks at the four risk-category boundaries from the spec:
 // LOW 0-35, MODERATE 36-60, HIGH 61-80, CRITICAL 81-100.
-export default function RiskGauge({ score, category, size = 220 }) {
+export default function RiskGauge({ score, category, size = 200 }) {
   const startAngle = -225;
   const sweep = 270;
   const r = 80;
@@ -42,16 +42,16 @@ export default function RiskGauge({ score, category, size = 220 }) {
         );
       })}
       {/* value arc */}
-      <path d={arcPath(0, score, r)} stroke={color} strokeWidth="10" fill="none" strokeLinecap="round" />
+      <path d={arcPath(0, score, r)} stroke={color} strokeWidth="10" fill="none" strokeLinecap="round" style={{ filter: `drop-shadow(0 0 6px ${color})` }} />
       {/* needle tip marker */}
       {(() => {
         const [nx, ny] = polar(angleForValue(score), r);
-        return <circle cx={nx} cy={ny} r="6" fill={color} />;
+        return <circle cx={nx} cy={ny} r="6" fill={color} style={{ filter: `drop-shadow(0 0 4px ${color})` }} />;
       })()}
-      <text x="100" y="95" textAnchor="middle" fontSize="34" fontFamily="var(--font-mono)" fill="var(--text)">
+      <text x="100" y="93" textAnchor="middle" fontSize="36" fontWeight="500" fontFamily="var(--font-mono)" fill="var(--text)">
         {score}
       </text>
-      <text x="100" y="118" textAnchor="middle" fontSize="12" letterSpacing="0.08em" fontFamily="var(--font-body)" fill={color}>
+      <text x="100" y="116" textAnchor="middle" fontSize="12" letterSpacing="0.1em" fontWeight="600" fontFamily="var(--font-body)" fill={color}>
         {category} RISK
       </text>
     </svg>

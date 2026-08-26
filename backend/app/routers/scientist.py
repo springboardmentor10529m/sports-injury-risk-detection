@@ -5,6 +5,7 @@ from app.core.database import get_db
 from app.models import AthleteLink, LinkType, User, VideoAnalysis, VideoStatus
 from app.routers.deps import require_linked_athlete, require_scientist
 from app.schemas import AddAthleteRequest, AthleteProfileOut, RosterAthleteOut, VideoAnalysisListItem
+from app.services.notifications import notify_athlete_linked
 from app.services.roster import find_athlete_by_email, get_roster
 
 router = APIRouter(prefix="/api/scientist", tags=["sports-scientist"])
@@ -32,6 +33,7 @@ def add_athlete(payload: AddAthleteRequest, current_user: User = Depends(require
 
     db.add(AthleteLink(professional_user_id=current_user.id, athlete_id=athlete.id, link_type=LinkType.SPORTS_SCIENTIST))
     db.commit()
+    notify_athlete_linked(db, athlete.user_id, current_user.full_name, LinkType.SPORTS_SCIENTIST)
 
     roster = get_roster(db, current_user.id, LinkType.SPORTS_SCIENTIST)
     return next(a for a in roster if a["athlete_id"] == athlete.id)

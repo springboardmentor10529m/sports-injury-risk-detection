@@ -152,6 +152,31 @@ class ClinicalNote(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
+class NotificationType(str, enum.Enum):
+    HIGH_RISK_ALERT = "high_risk_alert"
+    TRAINING_LOAD_WARNING = "training_load_warning"
+    ASSESSMENT_COMPLETED = "assessment_completed"
+    ASSESSMENT_FAILED = "assessment_failed"
+    NEW_USER_REGISTERED = "new_user_registered"
+    ATHLETE_LINKED = "athlete_linked"
+
+
+class Notification(Base):
+    """Every row here is created by a real event in services/notifications.py
+    (a pipeline finishing, a risk threshold being crossed, a new
+    registration) - never seeded or fabricated for display purposes."""
+    __tablename__ = "notifications"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=gen_uuid)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    type: Mapped[NotificationType] = mapped_column(Enum(NotificationType), nullable=False)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    link: Mapped[str] = mapped_column(String, nullable=True)
+    is_read: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class AthleteProfile(Base):
     __tablename__ = "athlete_profiles"
 

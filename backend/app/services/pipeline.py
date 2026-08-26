@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.models import AthleteProfile, VideoAnalysis, VideoStatus
 from app.services import biomechanics as biomech_svc
+from app.services import notifications as notif_svc
 from app.services import recommendations as reco_svc
 from app.services import risk_scoring
 from app.services.pose_estimation import PoseEstimator, frame_pose_to_json
@@ -82,12 +83,14 @@ def run_pipeline(video_id: str, db_session_factory) -> None:
             video.status = VideoStatus.COMPLETED
             video.completed_at = datetime.utcnow()
             db.commit()
+            notif_svc.notify_after_pipeline(db, video)
 
         except Exception as exc:  # noqa: BLE001
             logger.exception("Pipeline failed for video %s", video_id)
             video.status = VideoStatus.FAILED
             video.error_message = str(exc)
             db.commit()
+            notif_svc.notify_after_pipeline(db, video)
     finally:
         db.close()
 

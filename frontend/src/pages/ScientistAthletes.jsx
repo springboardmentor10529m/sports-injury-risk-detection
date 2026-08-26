@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { ArrowRight, FlaskConical } from "lucide-react";
 import { addScientistAthlete, getScientistAthletes } from "../api/client";
 import AddAthleteForm from "../components/AddAthleteForm";
 import RiskPill from "../components/RiskPill";
@@ -23,7 +24,8 @@ export default function ScientistAthletes() {
 
   return (
     <div>
-      <h1 style={{ fontSize: 24, marginBottom: 4 }}>Athlete Dataset</h1>
+      <div className="eyebrow" style={{ marginBottom: 6 }}>Dataset</div>
+      <h1 style={{ fontSize: 26, marginBottom: 4 }}>Athlete Dataset</h1>
       <p style={{ color: "var(--text-dim)", marginBottom: 20 }}>
         Add athletes by email to include their completed analyses in your research dashboard.
       </p>
@@ -32,31 +34,30 @@ export default function ScientistAthletes() {
         <AddAthleteForm onAdd={handleAdd} buttonLabel="Add to dataset" />
       </div>
 
-      <div className="card">
+      <div className="card animate-in">
         {loading ? (
           <p style={{ color: "var(--text-dim)" }}>Loading...</p>
         ) : athletes.length === 0 ? (
-          <p style={{ color: "var(--text-faint)", fontSize: 13 }}>No athletes in your dataset yet.</p>
+          <div className="empty-state">
+            <div className="empty-state-icon"><FlaskConical size={20} /></div>
+            <p style={{ color: "var(--text-faint)", fontSize: 13 }}>No athletes in your dataset yet.</p>
+          </div>
         ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+          <table className="data-table">
             <thead>
-              <tr style={{ color: "var(--text-dim)", textAlign: "left" }}>
-                <th style={{ padding: "6px 4px", fontWeight: 500 }}>Name</th>
-                <th style={{ padding: "6px 4px", fontWeight: 500 }}>Sport</th>
-                <th style={{ padding: "6px 4px", fontWeight: 500 }}>Analyses</th>
-                <th style={{ padding: "6px 4px", fontWeight: 500 }}>Latest risk</th>
-                <th></th>
-              </tr>
+              <tr><th>Name</th><th>Sport</th><th>Analyses</th><th>Latest risk</th><th></th></tr>
             </thead>
             <tbody>
               {athletes.map((a) => (
-                <tr key={a.athlete_id} style={{ borderTop: "1px solid var(--border)" }}>
-                  <td style={{ padding: "10px 4px" }}>{a.full_name}</td>
-                  <td style={{ padding: "10px 4px" }}>{a.sport}</td>
-                  <td style={{ padding: "10px 4px" }}>{a.total_analyses}</td>
-                  <td style={{ padding: "10px 4px" }}><RiskPill category={a.latest_risk_category} score={a.latest_risk_score} /></td>
-                  <td style={{ padding: "10px 4px", textAlign: "right" }}>
-                    <Link to={`/scientist/athletes/${a.athlete_id}`} style={{ color: "var(--accent)" }}>View →</Link>
+                <tr key={a.athlete_id}>
+                  <td>{a.full_name}</td>
+                  <td>{a.sport}</td>
+                  <td>{a.total_analyses}</td>
+                  <td><RiskPill category={a.latest_risk_category} score={a.latest_risk_score} /></td>
+                  <td style={{ textAlign: "right" }}>
+                    <Link to={`/scientist/athletes/${a.athlete_id}`} style={{ color: "var(--accent)", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                      View <ArrowRight size={13} />
+                    </Link>
                   </td>
                 </tr>
               ))}

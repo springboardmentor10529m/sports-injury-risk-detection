@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { UserCog } from "lucide-react";
 import { getProfile, updateProfile } from "../api/client";
 
 export default function Profile() {
@@ -43,13 +44,15 @@ export default function Profile() {
   if (!profile) return <p style={{ color: "var(--text-dim)" }}>Loading...</p>;
 
   return (
-    <div style={{ maxWidth: 560 }}>
-      <h1 style={{ fontSize: 24, marginBottom: 4 }}>My Profile</h1>
+    <div style={{ maxWidth: 600 }}>
+      <div className="eyebrow" style={{ marginBottom: 6 }}>Account</div>
+      <h1 style={{ fontSize: 26, marginBottom: 4 }}>My Profile</h1>
       <p style={{ color: "var(--text-dim)", marginBottom: 24 }}>
         These fields feed the historical-injury (20%) and training-load (15%) terms of your risk score.
       </p>
 
-      <div className="card">
+      <div className="card animate-in">
+        <div className="card-title"><UserCog size={15} color="var(--accent)" /> Athlete details</div>
         <div className="field-row">
           <div className="field">
             <label>Sport</label>

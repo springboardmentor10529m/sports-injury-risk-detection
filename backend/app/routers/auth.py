@@ -22,6 +22,7 @@ from app.schemas import (
     TokenResponse,
     UserOut,
 )
+from app.services.notifications import notify_admins
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -54,6 +55,7 @@ def register_athlete(payload: RegisterRequest, db: Session = Depends(get_db)):
     db.add(profile)
     db.commit()
     db.refresh(user)
+    notify_admins(db, "New user registered", f"{user.full_name} registered as an athlete.", link="/admin/users")
     return user
 
 
@@ -72,6 +74,7 @@ def register_coach(payload: RegisterCoachRequest, db: Session = Depends(get_db))
     ))
     db.commit()
     db.refresh(user)
+    notify_admins(db, "New user registered", f"{user.full_name} registered as a coach.", link="/admin/users")
     return user
 
 
@@ -90,6 +93,7 @@ def register_physio(payload: RegisterPhysioRequest, db: Session = Depends(get_db
     ))
     db.commit()
     db.refresh(user)
+    notify_admins(db, "New user registered", f"{user.full_name} registered as a physiotherapist.", link="/admin/users")
     return user
 
 
@@ -108,6 +112,7 @@ def register_scientist(payload: RegisterScientistRequest, db: Session = Depends(
     ))
     db.commit()
     db.refresh(user)
+    notify_admins(db, "New user registered", f"{user.full_name} registered as a sports scientist.", link="/admin/users")
     return user
 
 

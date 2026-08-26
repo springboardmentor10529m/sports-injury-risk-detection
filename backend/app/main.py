@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.database import Base, engine
-from app.routers import admin, analysis, athlete, auth, coach, physio, scientist, video
+from app.routers import admin, analysis, athlete, auth, coach, notifications, physio, scientist, video
 
 logging.basicConfig(level=logging.INFO)
 
@@ -33,6 +33,7 @@ app.include_router(coach.router)
 app.include_router(physio.router)
 app.include_router(scientist.router)
 app.include_router(admin.router)
+app.include_router(notifications.router)
 
 
 @app.get("/api/health")

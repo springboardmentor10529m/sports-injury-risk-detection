@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
+import {
+  Activity, AlertTriangle, Bone, CheckCircle2, Gauge, HeartPulse, Loader2, Move, Scale,
+} from "lucide-react";
 import { getVideo } from "../api/client";
 import RiskGauge from "../components/RiskGauge";
 import { RecoList } from "./Dashboard";
@@ -50,61 +53,74 @@ export default function Result() {
 
   return (
     <div>
-      <h1 style={{ fontSize: 24, marginBottom: 4, textTransform: "capitalize" }}>{video.activity_type} Analysis</h1>
+      <div className="eyebrow" style={{ marginBottom: 6 }}>Analysis Report</div>
+      <h1 style={{ fontSize: 26, marginBottom: 4, textTransform: "capitalize" }}>{video.activity_type} Analysis</h1>
       <p style={{ color: "var(--text-dim)", marginBottom: 28 }}>
         {video.original_filename} · {new Date(video.created_at).toLocaleString()}
       </p>
 
-      <div style={{ display: "grid", gridTemplateColumns: "280px 1fr", gap: 20, marginBottom: 20 }}>
-        <div className="card" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 20, marginBottom: 20 }}>
+        <div
+          className="card animate-in"
+          style={{
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+            background: "radial-gradient(circle at 50% 0%, var(--accent-soft), var(--surface) 70%)",
+          }}
+        >
           <RiskGauge score={risk.overall_risk_score} category={risk.risk_category} />
         </div>
 
-        <div className="card">
-          <h3 style={{ fontSize: 14, marginBottom: 14 }}>Why this score - weighted components</h3>
+        <div className="card animate-in">
+          <div className="card-title"><Gauge size={15} color="var(--accent)" /> Why this score — weighted components</div>
           {Object.entries(risk.components).map(([key, value]) => (
             <ComponentBar key={key} label={formatLabel(key)} value={value} weight={risk.weights[toWeightKey(key)]} />
           ))}
         </div>
       </div>
 
-      <div className="card" style={{ marginBottom: 20 }}>
-        <h3 style={{ fontSize: 14, marginBottom: 14 }}>Potential injury-area flags</h3>
+      <div className="card animate-in" style={{ marginBottom: 20 }}>
+        <div className="card-title"><AlertTriangle size={15} color="var(--accent)" /> Potential injury-area flags</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12 }}>
           {Object.entries(risk.injury_area_flags).map(([area, level]) => (
-            <div key={area} className="card" style={{ padding: 14, textAlign: "center" }}>
+            <div
+              key={area}
+              style={{
+                padding: "14px 12px", textAlign: "center", borderRadius: "var(--radius-sm)",
+                border: `1px solid ${flagColor(level)}33`, background: `${flagColor(level)}0d`,
+              }}
+            >
               <div style={{ fontSize: 12, color: "var(--text-dim)", textTransform: "capitalize", marginBottom: 6 }}>
                 {area.replace("_", " ")}
               </div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: flagColor(level) }}>{level}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: flagColor(level) }}>{level}</div>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="card" style={{ marginBottom: 20 }}>
-        <h3 style={{ fontSize: 14, marginBottom: 14 }}>Biomechanics</h3>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 16 }}>
-          <Metric label="Knee angle (L)" value={bio.knee_angle_left_avg_deg} unit="°" />
-          <Metric label="Knee angle (R)" value={bio.knee_angle_right_avg_deg} unit="°" />
-          <Metric label="Knee valgus" value={bio.knee_valgus_avg_pct} unit="%" />
-          <Metric label="Trunk lean" value={bio.trunk_lean_avg_deg} unit="°" />
-          <Metric label="Symmetry" value={bio.symmetry_score} unit="/100" />
-          <Metric label="Hip stability" value={bio.hip_stability_score} unit="/100" />
-          <Metric label="Balance" value={bio.balance_score} unit="/100" />
-          <Metric label="Fatigue signal" value={bio.fatigue_score} unit="/100" />
-          {bio.stride_length_m ? <Metric label="Stride length" value={bio.stride_length_m} unit="m" /> : null}
+      <div className="card animate-in" style={{ marginBottom: 20 }}>
+        <div className="card-title"><Bone size={15} color="var(--accent)" /> Biomechanics</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 18 }}>
+          <Metric icon={Move} label="Knee angle (L)" value={bio.knee_angle_left_avg_deg} unit="°" />
+          <Metric icon={Move} label="Knee angle (R)" value={bio.knee_angle_right_avg_deg} unit="°" />
+          <Metric icon={AlertTriangle} label="Knee valgus" value={bio.knee_valgus_avg_pct} unit="%" />
+          <Metric icon={Activity} label="Trunk lean" value={bio.trunk_lean_avg_deg} unit="°" />
+          <Metric icon={Scale} label="Symmetry" value={bio.symmetry_score} unit="/100" />
+          <Metric icon={Gauge} label="Hip stability" value={bio.hip_stability_score} unit="/100" />
+          <Metric icon={Scale} label="Balance" value={bio.balance_score} unit="/100" />
+          <Metric icon={Activity} label="Fatigue signal" value={bio.fatigue_score} unit="/100" />
+          {bio.stride_length_m ? <Metric icon={Move} label="Stride length" value={bio.stride_length_m} unit="m" /> : null}
         </div>
-        <div style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 14 }}>
+        <div style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 18, paddingTop: 14, borderTop: "1px solid var(--border-soft)" }}>
           Pose detected in {video.frames_with_pose_detected}/{video.frame_count_sampled} sampled frames
           ({Math.round(bio.detection_rate * 100)}% detection rate).
         </div>
       </div>
 
-      <div className="card">
-        <h3 style={{ fontSize: 14, marginBottom: 14 }}>Recommendations</h3>
+      <div className="card animate-in">
+        <div className="card-title"><HeartPulse size={15} color="var(--accent)" /> Recommendations</div>
         <RecoList recommendations={video.recommendations} />
-        <div style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 16, borderTop: "1px solid var(--border)", paddingTop: 12 }}>
+        <div style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 18, borderTop: "1px solid var(--border-soft)", paddingTop: 12 }}>
           {video.recommendations.note}
         </div>
       </div>
@@ -115,25 +131,31 @@ export default function Result() {
 function ProcessingView({ video }) {
   const currentIndex = PIPELINE_STAGES.findIndex(([key]) => key === video.status);
   return (
-    <div style={{ maxWidth: 480 }}>
-      <h1 style={{ fontSize: 22, marginBottom: 20 }}>Processing your video...</h1>
-      <div className="card">
+    <div style={{ maxWidth: 500 }}>
+      <div className="eyebrow" style={{ marginBottom: 6 }}>Analysis Pipeline</div>
+      <h1 style={{ fontSize: 24, marginBottom: 20 }}>Processing your video...</h1>
+      <div className="card animate-in">
         {PIPELINE_STAGES.slice(0, -1).map(([key, label], i) => {
           const done = currentIndex > i || video.status === "completed";
           const active = currentIndex === i;
           return (
-            <div key={key} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0" }}>
+            <div key={key} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0" }}>
               <span
                 style={{
-                  width: 16, height: 16, borderRadius: "50%", flexShrink: 0,
-                  border: `2px solid ${done ? "var(--accent)" : "var(--border)"}`,
+                  width: 22, height: 22, borderRadius: "50%", flexShrink: 0,
+                  border: `2px solid ${done ? "var(--accent)" : active ? "var(--accent-dim)" : "var(--border)"}`,
                   background: done ? "var(--accent)" : "transparent",
                   display: "flex", alignItems: "center", justifyContent: "center",
+                  boxShadow: done ? "0 0 10px var(--accent)" : "none",
                 }}
               >
-                {done && <span style={{ color: "#06110e", fontSize: 10 }}>✓</span>}
+                {done ? (
+                  <CheckCircle2 size={13} color="#06110e" />
+                ) : active ? (
+                  <Loader2 size={12} color="var(--accent)" className="spin" />
+                ) : null}
               </span>
-              <span style={{ fontSize: 13, color: active ? "var(--text)" : done ? "var(--text-dim)" : "var(--text-faint)" }}>
+              <span style={{ fontSize: 13, color: active ? "var(--text)" : done ? "var(--text-dim)" : "var(--text-faint)", fontWeight: active ? 500 : 400 }}>
                 {label}{active ? "..." : ""}
               </span>
             </div>
@@ -151,25 +173,25 @@ function ProcessingView({ video }) {
 
 function ComponentBar({ label, value, weight }) {
   return (
-    <div style={{ marginBottom: 12 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 5 }}>
         <span style={{ color: "var(--text-dim)" }}>{label} <span className="mono" style={{ color: "var(--text-faint)" }}>({Math.round(weight * 100)}%)</span></span>
         <span className="mono">{value}</span>
       </div>
-      <div style={{ height: 5, background: "var(--border)", borderRadius: 4, overflow: "hidden" }}>
-        <div style={{ height: "100%", width: `${value}%`, background: "var(--accent)" }} />
+      <div style={{ height: 6, background: "var(--border-soft)", borderRadius: 4, overflow: "hidden" }}>
+        <div style={{ height: "100%", width: `${value}%`, background: "linear-gradient(90deg, var(--accent-dim), var(--accent))", borderRadius: 4 }} />
       </div>
     </div>
   );
 }
 
-function Metric({ label, value, unit }) {
+function Metric({ icon: Icon, label, value, unit }) {
   return (
     <div>
-      <div style={{ fontSize: 11, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>
-        {label}
+      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>
+        {Icon && <Icon size={12} />} {label}
       </div>
-      <div className="mono" style={{ fontSize: 18 }}>{value ?? "—"}{value != null ? unit : ""}</div>
+      <div className="mono" style={{ fontSize: 19 }}>{value ?? "—"}{value != null ? unit : ""}</div>
     </div>
   );
 }

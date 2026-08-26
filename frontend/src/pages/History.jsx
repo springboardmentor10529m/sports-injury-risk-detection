@@ -51,24 +51,24 @@ export default function History() {
       </div>
 
       <div className="card">
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+        <table className="data-table">
           <thead>
-            <tr style={{ color: "var(--text-dim)", textAlign: "left" }}>
-              <th style={{ padding: "6px 4px", fontWeight: 500 }}>Date</th>
-              <th style={{ padding: "6px 4px", fontWeight: 500 }}>Activity</th>
-              <th style={{ padding: "6px 4px", fontWeight: 500 }}>Score</th>
-              <th style={{ padding: "6px 4px", fontWeight: 500 }}>Category</th>
+            <tr>
+              <th>Date</th>
+              <th>Activity</th>
+              <th>Score</th>
+              <th>Category</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
             {[...data].reverse().map((d) => (
-              <tr key={d.video_id} style={{ borderTop: "1px solid var(--border)" }}>
-                <td style={{ padding: "10px 4px" }}>{new Date(d.date).toLocaleDateString()}</td>
-                <td style={{ padding: "10px 4px", textTransform: "capitalize" }}>{d.activity_type}</td>
-                <td style={{ padding: "10px 4px" }} className="mono">{d.overall_risk_score}</td>
-                <td style={{ padding: "10px 4px" }}>{d.risk_category}</td>
-                <td style={{ padding: "10px 4px", textAlign: "right" }}>
+              <tr key={d.video_id}>
+                <td>{new Date(d.date).toLocaleDateString()}</td>
+                <td style={{ textTransform: "capitalize" }}>{d.activity_type}</td>
+                <td className="mono">{d.overall_risk_score}</td>
+                <td>{d.risk_category}</td>
+                <td style={{ textAlign: "right" }}>
                   <Link to={`/analysis/${d.video_id}`} style={{ color: "var(--accent)" }}>View →</Link>
                 </td>
               </tr>

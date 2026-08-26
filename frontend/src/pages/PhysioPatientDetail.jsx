@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { ClipboardPlus } from "lucide-react";
 import { addPhysioNote, getPhysioNotes, getPhysioPatientProfile, getPhysioPatientVideos } from "../api/client";
 import StaffAthleteDetail from "../components/StaffAthleteDetail";
 
@@ -45,8 +46,8 @@ export default function PhysioPatientDetail() {
       backTo="/physio/patients"
       backLabel="Back to patients"
       extra={
-        <div className="card">
-          <h3 style={{ fontSize: 14, marginBottom: 14 }}>Clinical notes</h3>
+        <div className="card animate-in">
+          <div className="card-title"><ClipboardPlus size={15} color="var(--accent)" /> Clinical notes</div>
 
           <form onSubmit={handleAddNote} style={{ marginBottom: 20 }}>
             <div className="field-row" style={{ marginBottom: 10 }}>

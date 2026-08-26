@@ -32,6 +32,13 @@ uploaded videos, real profile data, or real database queries.
   distribution, avg biomechanics metrics) and a real Pearson correlation
   between training-load risk and overall risk, computed across the
   scientist's linked athlete dataset with numpy.
+- **Notification & Alert System**: every notification is created by a real
+  event — a completed/failed analysis, a risk score crossing into
+  HIGH/CRITICAL (fanned out to the athlete *and* every coach/physio/scientist
+  linked to them), an elevated training-load component, a new athlete being
+  linked, or a new user registering (notifies all admins). Nothing is
+  pre-seeded; the bell shows a live unread count and marks items read on
+  click or via "mark all read" (`backend/app/services/notifications.py`).
 
 ## Architecture
 
@@ -55,14 +62,16 @@ backend/
       physio.py                    Patient roster, athlete detail, clinical notes
       scientist.py                  Dataset roster, aggregate analytics
       admin.py                      Platform stats, user management
+      notifications.py               List / mark-read / mark-all-read
       deps.py                        Role guards + AthleteLink access-control dependency
     services/
       pose_estimation.py     MediaPipe wrapper
       biomechanics.py         Joint-angle / symmetry / fatigue math
       risk_scoring.py          Weighted risk formula
       recommendations.py       Rule engine
-      pipeline.py               Orchestrates the full pipeline + status updates
+      pipeline.py               Orchestrates the full pipeline + status updates + notification fan-out
       roster.py                  Shared roster-building helper (coach/physio/scientist)
+      notifications.py             Event-driven notification creation, called from real event sites
     video_processing/
       frame_extractor.py       OpenCV frame sampling
     ml_models/                 Pose model bundle goes here (downloaded, not committed)

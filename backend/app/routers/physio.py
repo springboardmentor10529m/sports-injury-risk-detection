@@ -12,6 +12,7 @@ from app.schemas import (
     RosterAthleteOut,
     VideoAnalysisListItem,
 )
+from app.services.notifications import notify_athlete_linked
 from app.services.roster import find_athlete_by_email, get_roster
 
 router = APIRouter(prefix="/api/physio", tags=["physiotherapist"])
@@ -39,6 +40,7 @@ def add_patient(payload: AddAthleteRequest, current_user: User = Depends(require
 
     db.add(AthleteLink(professional_user_id=current_user.id, athlete_id=athlete.id, link_type=LinkType.PHYSIOTHERAPIST))
     db.commit()
+    notify_athlete_linked(db, athlete.user_id, current_user.full_name, LinkType.PHYSIOTHERAPIST)
 
     roster = get_roster(db, current_user.id, LinkType.PHYSIOTHERAPIST)
     return next(a for a in roster if a["athlete_id"] == athlete.id)
