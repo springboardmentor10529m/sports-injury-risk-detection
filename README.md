@@ -97,3 +97,20 @@ project's development environment.
 
 Make sure the Django backend is running when using features that
 communicate with the API.
+
+
+
+Frontend & backend: 
+
+              YOUR PROJECT
+                   │
+          ┌────────┴────────┐
+          │                 │
+      FRONTEND           BACKEND
+      HTML/CSS/JS         Django
+          │                 │
+      :5500              :8000
+          │                 │
+          └─────── API ────┘
+                    │
+               PostgreSQL
