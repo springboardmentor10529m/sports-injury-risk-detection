@@ -123,28 +123,20 @@ export default function LandingPage() {
 
           {/* Right Action Buttons */}
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            {user ? (
-              <Link to={dashboardLink} className="btn-emerald" style={{ textDecoration: "none" }}>
-                Launch Dashboard <ArrowRight size={16} />
-              </Link>
-            ) : (
-              <>
-                <Link
-                  to="/login"
-                  className="btn-subtle"
-                  style={{ textDecoration: "none", padding: "8px 16px", fontSize: "0.85rem" }}
-                >
-                  Sign In
-                </Link>
-                <Link
-                  to="/register"
-                  className="btn-primary"
-                  style={{ textDecoration: "none", padding: "8px 18px", fontSize: "0.85rem" }}
-                >
-                  Get Started
-                </Link>
-              </>
-            )}
+            <Link
+              to="/login"
+              className="btn-subtle"
+              style={{ textDecoration: "none", padding: "8px 16px", fontSize: "0.85rem" }}
+            >
+              Sign In
+            </Link>
+            <Link
+              to="/register"
+              className="btn-primary"
+              style={{ textDecoration: "none", padding: "8px 18px", fontSize: "0.85rem" }}
+            >
+              Get Started
+            </Link>
           </div>
         </div>
       </header>

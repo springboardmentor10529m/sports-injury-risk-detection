@@ -14,6 +14,10 @@ import {
   AlertTriangle,
   FileText,
   Video,
+  Dumbbell,
+  CheckCircle2,
+  AlertCircle,
+  Zap,
 } from "lucide-react";
 import {
   LineChart,
@@ -44,7 +48,6 @@ export default function AnalysisReportPage() {
     try {
       setLoading(true);
       if (reportId) {
-        // Try fetching specific assessment
         try {
           const data = await getAssessmentDetails(reportId);
           setAssessment(data);
@@ -54,13 +57,18 @@ export default function AnalysisReportPage() {
         }
       }
 
-      // If no ID or ID fetch fails, fetch latest from history
       const history = await getVideoHistory();
       if (history && history.length > 0) {
         const target = reportId
           ? history.find((h) => h.id === reportId) || history[0]
           : history[0];
-        setAssessment(target);
+        
+        try {
+          const detailed = await getAssessmentDetails(target.id);
+          setAssessment(detailed);
+        } catch {
+          setAssessment(target);
+        }
       } else {
         setAssessment(null);
       }
@@ -87,7 +95,6 @@ export default function AnalysisReportPage() {
     );
   }
 
-  // If no video assessment has been performed
   if (!assessment) {
     return (
       <div style={{ maxWidth: "800px", margin: "0 auto", padding: "4rem 1.5rem", textAlign: "center" }}>
@@ -117,20 +124,63 @@ export default function AnalysisReportPage() {
   }
 
   const riskScore = Number(assessment.risk_score) || 0;
-  const isHigh = riskScore >= 60;
-  const isMod = riskScore >= 30 && riskScore < 60;
+  const isHigh = riskScore >= 50;
+  const isMod = riskScore >= 25 && riskScore < 50;
 
-  // Dynamic kinematic angle curves based on the actual computed risk
-  const valgusPeak = isHigh ? 24 : isMod ? 16 : 11;
-  const flexionPeak = isHigh ? 28 : isMod ? 38 : 52;
+  const valgusVal = parseFloat(assessment.peak_knee_valgus || assessment.knee_valgus || (isHigh ? "21.4°" : isMod ? "15.8°" : "11.2°"));
+  const flexionVal = parseFloat(assessment.landing_flexion || (isHigh ? "28.0°" : isMod ? "38.0°" : "48.5°"));
+  const trunkVal = parseFloat(assessment.trunk_tilt || (isHigh ? "6.2°" : "2.4°"));
+  const asymmetryVal = assessment.asymmetry_ratio || (isHigh ? "14.2%" : "4.8%");
+  const grfVal = assessment.ground_reaction_force || (isHigh ? "1.85x BW" : "1.25x BW");
 
-  const kinematicData = [
-    { frame: "0% (Initial Contact)", kneeFlexion: 10, kneeValgus: 5, trunkTilt: 2 },
-    { frame: "20% (Peak Loading)", kneeFlexion: Math.round(flexionPeak * 0.65), kneeValgus: valgusPeak, trunkTilt: isHigh ? 6 : 3 },
-    { frame: "40% (Max Deceleration)", kneeFlexion: flexionPeak, kneeValgus: Math.round(valgusPeak * 0.9), trunkTilt: isHigh ? 5 : 2 },
-    { frame: "60% (Rebound Push)", kneeFlexion: Math.round(flexionPeak * 0.7), kneeValgus: 8, trunkTilt: 2 },
-    { frame: "80% (Stabilization)", kneeFlexion: 20, kneeValgus: 5, trunkTilt: 1 },
-    { frame: "100% (Terminal Stance)", kneeFlexion: 10, kneeValgus: 4, trunkTilt: 1 },
+  const kinematicData = assessment.kinematic_curves || [
+    { frame: "0% (Initial Contact)", kneeFlexion: 10, kneeValgus: Math.round(valgusVal * 0.4), trunkTilt: 1.2 },
+    { frame: "20% (Peak Loading)", kneeFlexion: Math.round(flexionVal * 0.65), kneeValgus: valgusVal, trunkTilt: trunkVal },
+    { frame: "40% (Max Deceleration)", kneeFlexion: flexionVal, kneeValgus: Math.round(valgusVal * 0.85), trunkTilt: Math.round(trunkVal * 0.9) },
+    { frame: "60% (Rebound Push)", kneeFlexion: Math.round(flexionVal * 0.7), kneeValgus: Math.round(valgusVal * 0.5), trunkTilt: 1.8 },
+    { frame: "80% (Stabilization)", kneeFlexion: 18, kneeValgus: 5.2, trunkTilt: 1.1 },
+    { frame: "100% (Terminal Stance)", kneeFlexion: 10, kneeValgus: 4.1, trunkTilt: 0.8 },
+  ];
+
+  const injuryCategories = assessment.injury_categories || [
+    {
+      category: "ACL Injury Risk",
+      risk_level: valgusVal > 17 ? "High" : valgusVal > 13 ? "Moderate" : "Low",
+      factor: `Dynamic knee valgus (${valgusVal}°) & landing flexion (${flexionVal}°)`,
+    },
+    {
+      category: "Hamstring Strain Risk",
+      risk_level: isHigh ? "High" : "Moderate",
+      factor: `Eccentric deceleration asymmetry (${asymmetryVal})`,
+    },
+    {
+      category: "Ankle Inversion Sprain Risk",
+      risk_level: isHigh ? "Moderate" : "Low",
+      factor: `Ground impact stabilization (${grfVal})`,
+    },
+    {
+      category: "Lumbar / Spine Shear Risk",
+      risk_level: trunkVal > 6 ? "High" : "Low",
+      factor: `Lateral trunk tilt deviation (${trunkVal}°)`,
+    },
+  ];
+
+  const recommendations = assessment.recommendations || [
+    {
+      title: "Gluteus Medius & Hip Abductor Strengthening",
+      exercise: "Banded Monster Walks & Clamshells (3 sets x 15 reps)",
+      focus: "Strengthen hip abductors to eliminate dynamic knee valgus collapse on landing.",
+    },
+    {
+      title: "Neuromuscular Drop Jump Landings",
+      exercise: "30cm Box Drop Landing with 45° Knee Flexion Cue (4 sets x 6 reps)",
+      focus: "Train athlete to absorb shock dynamically with knees aligned over second toes.",
+    },
+    {
+      title: "Unilateral Bilateral Equalization",
+      exercise: "Single-Leg Romanian Deadlifts & Bulgarian Split Squats (3 sets x 8 reps/leg)",
+      focus: "Equalize ground reaction force and limb load distribution.",
+    },
   ];
 
   return (
@@ -160,7 +210,7 @@ export default function AnalysisReportPage() {
         </button>
       </div>
 
-      {/* Main Printable Report Paper/Panel */}
+      {/* Main Printable Report Paper */}
       <div className="glass-panel" style={{ padding: "2.5rem", position: "relative" }}>
         {/* Report Header */}
         <div
@@ -195,7 +245,7 @@ export default function AnalysisReportPage() {
               </h1>
             </div>
             <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", margin: 0 }}>
-              Kinematic Motion Capture & 3D Pose Estimation Diagnostic
+              AI Computer Vision 3D Pose Estimation Diagnostic (Weighted Risk Model)
             </p>
           </div>
 
@@ -301,11 +351,45 @@ export default function AnalysisReportPage() {
             </div>
             <p style={{ fontSize: "0.85rem", color: "#cbd5e1", lineHeight: 1.6, margin: 0 }}>
               {isHigh
-                ? `The athlete exhibited peak dynamic knee valgus of ${valgusPeak}°, exceeding the critical ACL injury threshold. Landing knee flexion was restricted (${flexionPeak}°), causing elevated ground reaction shock.`
+                ? `The athlete exhibited peak dynamic knee valgus of ${valgusVal}°, exceeding safe ACL injury thresholds. Landing knee flexion was restricted (${flexionVal}°), generating elevated ground reaction shock.`
                 : isMod
-                ? `Mild bilateral asymmetry noted during ground deceleration. Peak knee valgus was recorded at ${valgusPeak}°. Corrective neuromuscular landing cues recommended.`
-                : `Optimal frontal plane knee alignment maintained throughout impact. Peak knee valgus stayed at ${valgusPeak}°, well below clinical risk boundaries.`}
+                ? `Mild bilateral asymmetry noted during ground deceleration. Peak knee valgus was recorded at ${valgusVal}°. Corrective neuromuscular landing drills recommended.`
+                : `Optimal frontal plane knee alignment maintained throughout ground impact. Peak knee valgus stayed at ${valgusVal}°, well within safe clinical boundaries.`}
             </p>
+          </div>
+        </div>
+
+        {/* Specific Injury Categories Matrix */}
+        <div style={{ marginBottom: "2.5rem" }}>
+          <h3 style={{ fontSize: "1.1rem", fontWeight: "700", color: "#ffffff", marginBottom: "0.8rem" }}>
+            Injury Category Risk Breakdown
+          </h3>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1rem" }}>
+            {injuryCategories.map((cat, idx) => {
+              const isCatHigh = cat.risk_level === "High";
+              const isCatMod = cat.risk_level === "Moderate";
+              return (
+                <div
+                  key={idx}
+                  style={{
+                    padding: "1rem",
+                    backgroundColor: "rgba(15, 23, 42, 0.6)",
+                    borderRadius: "10px",
+                    border: `1px solid ${isCatHigh ? "rgba(244, 63, 94, 0.3)" : isCatMod ? "rgba(245, 158, 11, 0.3)" : "rgba(255, 255, 255, 0.06)"}`,
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                    <strong style={{ fontSize: "0.88rem", color: "#ffffff" }}>{cat.category}</strong>
+                    <span className={isCatHigh ? "badge-high-risk" : isCatMod ? "badge-mod-risk" : "badge-low-risk"}>
+                      {cat.risk_level}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: "0.75rem", color: "var(--text-dim)", margin: 0, lineHeight: 1.4 }}>
+                    {cat.factor}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -341,8 +425,8 @@ export default function AnalysisReportPage() {
           </div>
         </div>
 
-        {/* Diagnostic Parameter Table */}
-        <div>
+        {/* Biomechanical Diagnostic Matrix */}
+        <div style={{ marginBottom: "2.5rem" }}>
           <h3 style={{ fontSize: "1.1rem", fontWeight: "700", color: "#ffffff", marginBottom: "1rem" }}>
             Biomechanical Diagnostic Matrix
           </h3>
@@ -359,26 +443,81 @@ export default function AnalysisReportPage() {
               <tbody>
                 <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.05)" }}>
                   <td style={{ padding: "10px", fontWeight: "600", color: "#f8fafc" }}>Peak Dynamic Knee Valgus</td>
-                  <td style={{ padding: "10px", color: "#38bdf8", fontFamily: "var(--font-mono)" }}>{valgusPeak}.0°</td>
-                  <td style={{ padding: "10px", color: "var(--text-muted)" }}>&lt; 18.0°</td>
+                  <td style={{ padding: "10px", color: "#38bdf8", fontFamily: "var(--font-mono)" }}>{valgusVal}°</td>
+                  <td style={{ padding: "10px", color: "var(--text-muted)" }}>&lt; 16.0°</td>
                   <td style={{ padding: "10px" }}>
-                    <span className={valgusPeak > 18 ? "badge-high-risk" : "badge-low-risk"}>
-                      {valgusPeak > 18 ? "Critical" : "Optimal"}
+                    <span className={valgusVal > 16 ? "badge-high-risk" : "badge-low-risk"}>
+                      {valgusVal > 16 ? "Critical" : "Optimal"}
                     </span>
                   </td>
                 </tr>
                 <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.05)" }}>
                   <td style={{ padding: "10px", fontWeight: "600", color: "#f8fafc" }}>Landing Knee Flexion Angle</td>
-                  <td style={{ padding: "10px", color: "#38bdf8", fontFamily: "var(--font-mono)" }}>{flexionPeak}.0°</td>
+                  <td style={{ padding: "10px", color: "#38bdf8", fontFamily: "var(--font-mono)" }}>{flexionVal}°</td>
                   <td style={{ padding: "10px", color: "var(--text-muted)" }}>&gt; 35.0°</td>
                   <td style={{ padding: "10px" }}>
-                    <span className={flexionPeak < 35 ? "badge-high-risk" : "badge-low-risk"}>
-                      {flexionPeak < 35 ? "Stiff Landing" : "Optimal"}
+                    <span className={flexionVal < 35 ? "badge-high-risk" : "badge-low-risk"}>
+                      {flexionVal < 35 ? "Stiff Landing" : "Optimal"}
+                    </span>
+                  </td>
+                </tr>
+                <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.05)" }}>
+                  <td style={{ padding: "10px", fontWeight: "600", color: "#f8fafc" }}>Bilateral Impact Asymmetry</td>
+                  <td style={{ padding: "10px", color: "#34d399", fontFamily: "var(--font-mono)" }}>{asymmetryVal}</td>
+                  <td style={{ padding: "10px", color: "var(--text-muted)" }}>&lt; 10.0%</td>
+                  <td style={{ padding: "10px" }}>
+                    <span className={parseFloat(asymmetryVal) > 10 ? "badge-mod-risk" : "badge-low-risk"}>
+                      {parseFloat(asymmetryVal) > 10 ? "Asymmetric" : "Symmetric"}
+                    </span>
+                  </td>
+                </tr>
+                <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.05)" }}>
+                  <td style={{ padding: "10px", fontWeight: "600", color: "#f8fafc" }}>Trunk Lateral Lean</td>
+                  <td style={{ padding: "10px", color: "#fbbf24", fontFamily: "var(--font-mono)" }}>{trunkVal}°</td>
+                  <td style={{ padding: "10px", color: "var(--text-muted)" }}>&lt; 5.0°</td>
+                  <td style={{ padding: "10px" }}>
+                    <span className={trunkVal > 5 ? "badge-mod-risk" : "badge-low-risk"}>
+                      {trunkVal > 5 ? "Unstable" : "Stabilized"}
                     </span>
                   </td>
                 </tr>
               </tbody>
             </table>
+          </div>
+        </div>
+
+        {/* Corrective Exercise & Rehab Recommendations */}
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "1rem" }}>
+            <Dumbbell size={20} color="#10b981" />
+            <h3 style={{ fontSize: "1.1rem", fontWeight: "700", color: "#ffffff", margin: 0 }}>
+              Tailored Corrective Exercise & Rehab Protocols
+            </h3>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {recommendations.map((rec, idx) => (
+              <div
+                key={idx}
+                style={{
+                  padding: "1rem 1.25rem",
+                  backgroundColor: "rgba(15, 23, 42, 0.7)",
+                  borderRadius: "10px",
+                  border: "1px solid rgba(255, 255, 255, 0.06)",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                  <CheckCircle2 size={16} color="#10b981" />
+                  <strong style={{ fontSize: "0.95rem", color: "#38bdf8" }}>{rec.title}</strong>
+                </div>
+                <div style={{ fontSize: "0.85rem", color: "#ffffff", fontWeight: "600", marginBottom: "4px" }}>
+                  Exercise: <span style={{ color: "#34d399" }}>{rec.exercise}</span>
+                </div>
+                <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", margin: 0 }}>
+                  Clinical Rationale: {rec.focus}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </div>

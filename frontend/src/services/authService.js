@@ -34,7 +34,12 @@ export const logoutUser = () => {
 };
 
 export const getCurrentUser = () => {
-  return JSON.parse(localStorage.getItem("user"));
+  try {
+    const item = localStorage.getItem("user");
+    return item ? JSON.parse(item) : null;
+  } catch {
+    return null;
+  }
 };
 
 // Helper to pass JWT token in Authorization header

@@ -15,6 +15,7 @@ import {
   FileText,
   AlertTriangle,
   Sparkles,
+  Zap,
 } from "lucide-react";
 
 export default function VideoUploadPage() {
@@ -78,6 +79,19 @@ export default function VideoUploadPage() {
     }
   };
 
+  const handleLoadDemoVideo = async () => {
+    try {
+      setError(null);
+      const response = await fetch("/demo_jump_landing.mp4");
+      if (!response.ok) throw new Error("Sample video not found");
+      const blob = await response.blob();
+      const file = new File([blob], "demo_jump_landing.mp4", { type: "video/mp4" });
+      handleFile(file);
+    } catch (e) {
+      setError("Sample demo video is being initialized. You can also drop any sports MP4 video from your computer.");
+    }
+  };
+
   const handleDragOver = (e) => {
     e.preventDefault();
     setIsDragging(true);
@@ -117,10 +131,12 @@ export default function VideoUploadPage() {
       });
       fetchHistoryData();
     } catch (err) {
-      setError(
+      const errMsg =
         err.response?.data?.detail ||
-          "Upload failed. Please ensure your athlete profile is filled out before uploading."
-      );
+        (err.response?.status === 413
+          ? "Video file is too large. Please select a video under 200MB."
+          : err.message || "Upload failed. Please ensure the backend server is running.");
+      setError(errMsg);
     } finally {
       setIsUploading(false);
     }
@@ -134,9 +150,10 @@ export default function VideoUploadPage() {
       if (analysisResult?.video_id === videoId || analysisResult?.id === videoId) {
         setAnalysisResult(null);
       }
+      fetchHistoryData();
     } catch (err) {
       console.error("Failed to delete video:", err);
-      setHistory((prev) => prev.filter((item) => item.id !== videoId));
+      alert("Failed to delete video from server. Please verify you are logged in.");
     }
   };
 
@@ -263,7 +280,7 @@ export default function VideoUploadPage() {
               Biomechanical Motion Capture AI
             </h1>
             <span className="badge-low-risk">
-              <Sparkles size={13} /> Pose Estimation Engine
+              <Sparkles size={13} /> MediaPipe Pose Estimation Engine
             </span>
           </div>
           <p style={{ fontSize: "0.9rem", color: "var(--text-muted)", marginTop: "4px" }}>
@@ -292,9 +309,19 @@ export default function VideoUploadPage() {
       >
         {/* Left Column: Dropzone & Video Player with Canvas Overlay */}
         <div className="glass-panel" style={{ padding: "1.75rem" }}>
-          <h3 style={{ fontSize: "1.1rem", fontWeight: "700", color: "#ffffff", marginBottom: "1rem" }}>
-            Motion Video Feed
-          </h3>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+            <h3 style={{ fontSize: "1.1rem", fontWeight: "700", color: "#ffffff", margin: 0 }}>
+              Motion Video Feed
+            </h3>
+            <button
+              type="button"
+              onClick={handleLoadDemoVideo}
+              className="btn-subtle"
+              style={{ padding: "4px 10px", fontSize: "0.75rem", display: "inline-flex", alignItems: "center", gap: "4px" }}
+            >
+              <Zap size={13} color="#38bdf8" /> Try Sample Video
+            </button>
+          </div>
 
           {/* Video Preview Canvas Player */}
           <div
@@ -326,7 +353,7 @@ export default function VideoUploadPage() {
               <div style={{ textAlign: "center", padding: "1rem" }}>
                 <Film size={44} color="#334155" style={{ margin: "0 auto 8px" }} />
                 <p style={{ fontSize: "0.85rem", color: "var(--text-dim)" }}>
-                  No video selected yet. Select or drop a motion capture file below.
+                  No video selected yet. Select or drop a motion capture file below, or click "Try Sample Video".
                 </p>
               </div>
             )}
@@ -512,7 +539,7 @@ export default function VideoUploadPage() {
                 cursor: isUploading || !selectedFile ? "not-allowed" : "pointer",
               }}
             >
-              {isUploading ? "Running AI Pose Analysis..." : "Execute Biomechanical Analysis"}
+              {isUploading ? "Running MediaPipe Pose AI Analysis..." : "Execute Biomechanical Analysis"}
             </button>
           </form>
         </div>
@@ -624,8 +651,8 @@ export default function VideoUploadPage() {
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
             {history.map((item) => {
-              const isHigh = Number(item.risk_score) >= 60;
-              const isMod = Number(item.risk_score) >= 30 && Number(item.risk_score) < 60;
+              const isHigh = Number(item.risk_score) >= 50;
+              const isMod = Number(item.risk_score) >= 25 && Number(item.risk_score) < 50;
               return (
                 <div
                   key={item.id}
