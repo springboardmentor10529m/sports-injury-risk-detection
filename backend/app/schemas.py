@@ -93,6 +93,43 @@ class AthleteDetailedResponse(BaseModel):
     class Config:
         from_attributes = True
 
+# --- Biomechanics Analysis Schemas ---
+class BiomechanicsAnalysisResponse(BaseModel):
+    analysis_id: str
+    video_id: str
+    joint_angles: Optional[str] = None
+    range_of_motion: Optional[str] = None
+    symmetry_score: Optional[float] = None
+    trunk_lean: Optional[float] = None
+    knee_valgus_detected: Optional[str] = None
+    balance_score: Optional[float] = None
+    movement_quality_score: Optional[float] = None
+    risk_level: Optional[str] = None
+    feedback: Optional[str] = None
+    annotated_video_url: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+# --- Injury Prediction Schemas ---
+class InjuryPredictionResponse(BaseModel):
+    prediction_id: str
+    athlete_id: str
+    video_id: str
+    acl_risk_prob: float
+    hamstring_risk_prob: float
+    ankle_risk_prob: float
+    shoulder_risk_prob: float
+    back_risk_prob: float
+    overall_risk_score: float
+    risk_category: str
+    anomaly_score: float
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
 # --- Video Schemas ---
 class VideoResponse(BaseModel):
     video_id: str
@@ -105,6 +142,9 @@ class VideoResponse(BaseModel):
     quality_score: Optional[float] = None
     processing_status: str
     uploaded_at: datetime
+    analysis: Optional[BiomechanicsAnalysisResponse] = None
+    injury_prediction: Optional[InjuryPredictionResponse] = None
 
     class Config:
         from_attributes = True
+

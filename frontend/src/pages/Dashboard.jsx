@@ -21,6 +21,7 @@ const Dashboard = () => {
   const [savingNotes, setSavingNotes] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [activeVideo, setActiveVideo] = useState(null);
+  const [viewAnnotated, setViewAnnotated] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   
   const navigate = useNavigate();
@@ -92,6 +93,28 @@ const Dashboard = () => {
       fetchSelectedAthleteData();
     }
   }, [selectedAthlete, userRole]);
+
+  // Poll active videos for status changes (athlete flow)
+  useEffect(() => {
+    if (userRole !== 'athlete' || videos.length === 0) return;
+    
+    const hasActiveProcessing = videos.some(
+      vid => vid.processing_status === 'Uploaded' || vid.processing_status === 'Processing'
+    );
+    
+    if (!hasActiveProcessing) return;
+    
+    const interval = setInterval(async () => {
+      try {
+        const res = await api.get('/video/list');
+        setVideos(res.data);
+      } catch (err) {
+        console.error("Failed to poll video list:", err);
+      }
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, [videos, userRole]);
 
   const handleSaveNotes = async (e) => {
     e.preventDefault();
@@ -322,8 +345,8 @@ const Dashboard = () => {
                         <tr className="border-b border-white/5 bg-[#0e1726] text-gray-400 text-xs font-semibold uppercase tracking-wider">
                           <th className="py-4 px-6">Activity Type</th>
                           <th className="py-4 px-6">Date Uploaded</th>
-                          <th className="py-4 px-6">File Path / URL</th>
                           <th className="py-4 px-6">Analysis Status</th>
+                          <th className="py-4 px-6 text-right">Action</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/5 text-sm">
@@ -341,14 +364,46 @@ const Dashboard = () => {
                                 minute: '2-digit'
                               })}
                             </td>
-                            <td className="py-4 px-6 font-mono text-xs text-brand-400 truncate max-w-[200px]">
-                              {vid.video_url}
-                            </td>
                             <td className="py-4 px-6">
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                <CheckCircle2 className="h-3.5 w-3.5" />
-                                {vid.processing_status}
-                              </span>
+                              {vid.processing_status === 'Completed' ? (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                  <CheckCircle2 className="h-3.5 w-3.5" />
+                                  Completed
+                                </span>
+                              ) : vid.processing_status === 'Processing' ? (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 animate-pulse">
+                                  <Activity className="h-3.5 w-3.5 animate-spin" />
+                                  Analyzing...
+                                </span>
+                              ) : vid.processing_status === 'Failed' ? (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
+                                  <ShieldAlert className="h-3.5 w-3.5" />
+                                  Failed
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse">
+                                  <ChevronRight className="h-3.5 w-3.5" />
+                                  Queued
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-4 px-6 text-right">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveVideo(vid);
+                                  setViewAnnotated(true);
+                                }}
+                                disabled={vid.processing_status !== 'Completed'}
+                                className={`inline-flex items-center gap-1 font-semibold py-1.5 px-3.5 rounded-lg text-xs transition-all ${
+                                  vid.processing_status === 'Completed'
+                                    ? 'bg-brand-500/10 hover:bg-brand-500/25 border border-brand-500/20 text-brand-400 hover:text-brand-300 cursor-pointer'
+                                    : 'bg-gray-800/40 border border-white/5 text-gray-500 cursor-not-allowed'
+                                }`}
+                              >
+                                <Play className="h-3 w-3 fill-current" />
+                                Review Form & Report
+                              </button>
                             </td>
                           </tr>
                         ))}
@@ -591,6 +646,7 @@ const Dashboard = () => {
                               <tr className="border-b border-white/5 bg-[#0e1726]/80 text-gray-400 text-xs font-semibold uppercase tracking-wider">
                                 <th className="py-3 px-4">Movement Activity</th>
                                 <th className="py-3 px-4">Submitted On</th>
+                                <th className="py-3 px-4">Analysis Status</th>
                                 <th className="py-3 px-4 text-right">Action</th>
                               </tr>
                             </thead>
@@ -605,14 +661,41 @@ const Dashboard = () => {
                                       day: 'numeric'
                                     })}
                                   </td>
+                                  <td className="py-3.5 px-4">
+                                    {vid.processing_status === 'Completed' ? (
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                        Completed
+                                      </span>
+                                    ) : vid.processing_status === 'Processing' ? (
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 animate-pulse">
+                                        Analyzing...
+                                      </span>
+                                    ) : vid.processing_status === 'Failed' ? (
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
+                                        Failed
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                        Queued
+                                      </span>
+                                    )}
+                                  </td>
                                   <td className="py-3.5 px-4 text-right">
                                     <button
                                       type="button"
-                                      onClick={() => setActiveVideo(vid)}
-                                      className="inline-flex items-center gap-1 bg-brand-500/10 hover:bg-brand-500/25 border border-brand-500/20 text-brand-400 hover:text-brand-300 font-semibold py-1.5 px-3 rounded-lg text-xs transition-all"
+                                      onClick={() => {
+                                        setActiveVideo(vid);
+                                        setViewAnnotated(true);
+                                      }}
+                                      disabled={vid.processing_status !== 'Completed'}
+                                      className={`inline-flex items-center gap-1 font-semibold py-1.5 px-3 rounded-lg text-xs transition-all ${
+                                        vid.processing_status === 'Completed'
+                                          ? 'bg-brand-500/10 hover:bg-brand-500/25 border border-brand-500/20 text-brand-400 hover:text-brand-300 cursor-pointer'
+                                          : 'bg-gray-800/40 border border-white/5 text-gray-500 cursor-not-allowed'
+                                      }`}
                                     >
-                                      <Play className="h-3 w-3 fill-current animate-pulse" />
-                                      Review Motion
+                                      <Play className="h-3 w-3 fill-current" />
+                                      Review Form & Report
                                     </button>
                                   </td>
                                 </tr>
@@ -631,37 +714,378 @@ const Dashboard = () => {
       </main>
 
       {/* Video Playback Modal Overlay */}
-      {activeVideo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="bg-[#0e1726] border border-white/10 rounded-2xl w-full max-w-4xl overflow-hidden shadow-2xl relative">
-            <div className="flex items-center justify-between p-4 border-b border-white/5 bg-[#152033]/50">
-              <div className="flex items-center gap-2">
-                <Film className="h-5 w-5 text-brand-400 animate-pulse" />
-                <h3 className="font-bold text-white text-base">Motion Review: {activeVideo.activity}</h3>
+      {activeVideo && (() => {
+        // Resolve target video source URL
+        const videoSrc = viewAnnotated && activeVideo.analysis?.annotated_video_url
+          ? activeVideo.analysis.annotated_video_url
+          : activeVideo.video_url;
+        const host = api.defaults.baseURL ? api.defaults.baseURL.replace('/api', '') : 'http://localhost:8000';
+        const absoluteVideoUrl = `${host}${videoSrc}`;
+        
+        let jointAngles = null;
+        let rom = null;
+        try {
+          if (activeVideo.analysis?.joint_angles) jointAngles = JSON.parse(activeVideo.analysis.joint_angles);
+          if (activeVideo.analysis?.range_of_motion) rom = JSON.parse(activeVideo.analysis.range_of_motion);
+        } catch (e) {
+          console.error("Failed to parse analysis metadata", e);
+        }
+
+        const report = activeVideo.analysis;
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
+            <div className="bg-[#0e1726] border border-white/10 rounded-2xl w-full max-w-6xl overflow-hidden shadow-2xl relative my-8">
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 border-b border-white/5 bg-[#152033]/50">
+                <div className="flex items-center gap-3">
+                  <Film className="h-5 w-5 text-brand-400 animate-pulse" />
+                  <div>
+                    <h3 className="font-bold text-white text-base">Form Review: {activeVideo.activity}</h3>
+                    <p className="text-xs text-gray-400 mt-0.5">Uploaded: {new Date(activeVideo.uploaded_at).toLocaleString()}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  {/* Skeleton toggle */}
+                  {report?.annotated_video_url && (
+                    <div className="flex bg-[#070b13] p-1 rounded-xl border border-white/5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setViewAnnotated(true)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                          viewAnnotated
+                            ? 'bg-brand-600 text-white shadow-md'
+                            : 'text-gray-400 hover:text-white'
+                        }`}
+                      >
+                        Skeleton Overlay
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setViewAnnotated(false)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                          !viewAnnotated
+                            ? 'bg-brand-600 text-white shadow-md'
+                            : 'text-gray-400 hover:text-white'
+                        }`}
+                      >
+                        Raw Video
+                      </button>
+                    </div>
+                  )}
+                  
+                  <button
+                    type="button"
+                    onClick={() => setActiveVideo(null)}
+                    className="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-all"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setActiveVideo(null)}
-                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-all"
-              >
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-            <div className="p-6 bg-[#070b13] flex justify-center items-center">
-              <video
-                src={`${api.defaults.baseURL ? api.defaults.baseURL.replace('/api', '') : 'http://localhost:8000'}${activeVideo.video_url}`}
-                controls
-                autoPlay
-                className="w-full max-h-[60vh] rounded-xl shadow-inner border border-white/5 object-contain"
-              />
-            </div>
-            <div className="p-4 border-t border-white/5 bg-[#152033]/50 flex justify-between text-xs text-gray-400">
-              <span>Status: <span className="text-emerald-400 font-semibold">{activeVideo.processing_status}</span></span>
-              <span>Uploaded: {new Date(activeVideo.uploaded_at).toLocaleString()}</span>
+
+              {/* Main Content Pane Split */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-white/5 bg-[#070b13]">
+                {/* Left Side: Video Player */}
+                <div className="lg:col-span-6 p-6 flex flex-col justify-center items-center bg-black/40">
+                  <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-white/5 bg-black">
+                    <video
+                      key={absoluteVideoUrl}
+                      src={absoluteVideoUrl}
+                      controls
+                      autoPlay
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <div className="w-full flex items-center justify-between text-xs text-gray-400 mt-4 px-1">
+                    <span>Resolution: <span className="text-white font-medium">{activeVideo.resolution || 'N/A'}</span></span>
+                    <span>FPS: <span className="text-white font-medium">{activeVideo.fps || 'N/A'}</span></span>
+                    <span>Duration: <span className="text-white font-medium">{activeVideo.duration ? `${activeVideo.duration}s` : 'N/A'}</span></span>
+                  </div>
+                </div>
+
+                {/* Right Side: Quantitative Biomechanics Report */}
+                <div className="lg:col-span-6 p-6 flex flex-col max-h-[75vh] overflow-y-auto custom-scrollbar">
+                  {!report ? (
+                    <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
+                      <Activity className="h-10 w-10 text-brand-400 animate-spin mb-4" />
+                      <h4 className="font-bold text-white">Biomechanical analysis in progress</h4>
+                      <p className="text-xs text-gray-400 mt-1 max-w-sm">We are extracting joint coordinates and mapping stability. Please stand by...</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {/* Overall score and risk level banner */}
+                      <div className="flex items-center justify-between p-4 rounded-xl border border-white/5 bg-[#0e1726]/50">
+                        <div>
+                          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Movement Form Quality</p>
+                          <div className="flex items-baseline gap-2 mt-1">
+                            <span className="text-3xl font-black text-white">{report.movement_quality_score}</span>
+                            <span className="text-sm text-gray-500 font-semibold">/ 10</span>
+                          </div>
+                        </div>
+                        
+                        <div className="text-right">
+                          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Injury Risk Assessment</p>
+                          <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold border uppercase tracking-wider ${
+                            report.risk_level === 'Low'
+                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                              : report.risk_level === 'Moderate'
+                              ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                              : report.risk_level === 'High'
+                              ? 'bg-orange-500/10 text-orange-400 border-orange-500/20'
+                              : 'bg-red-500/10 text-red-400 border-red-500/20 animate-pulse'
+                          }`}>
+                            {report.risk_level} Risk
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Main finding alerts */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Knee Valgus */}
+                        <div className={`p-4 rounded-xl border ${
+                          report.knee_valgus_detected === 'Yes'
+                            ? 'bg-red-950/20 border-red-500/30 text-red-200'
+                            : report.knee_valgus_detected === 'Borderline'
+                            ? 'bg-amber-950/20 border-amber-500/30 text-amber-200'
+                            : 'bg-emerald-950/20 border-emerald-500/30 text-emerald-200'
+                        }`}>
+                          <span className="text-[10px] uppercase font-bold tracking-wider opacity-60">Knee Alignment</span>
+                          <h4 className="font-bold text-sm mt-1">
+                            {report.knee_valgus_detected === 'Yes' ? 'Medial Knee Collapse' : report.knee_valgus_detected === 'Borderline' ? 'Borderline Instability' : 'Stable Knee Track'}
+                          </h4>
+                          <p className="text-xs mt-1 opacity-80">
+                            {report.knee_valgus_detected === 'Yes' ? 'Significant knee valgus detected.' : report.knee_valgus_detected === 'Borderline' ? 'Slight knee cave inward during load.' : 'Excellent leg tracking alignment.'}
+                          </p>
+                        </div>
+
+                        {/* Balance stability */}
+                        <div className={`p-4 rounded-xl border ${
+                          report.balance_score >= 8.0
+                            ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-200'
+                            : report.balance_score >= 6.0
+                            ? 'bg-amber-950/20 border-amber-500/30 text-amber-200'
+                            : 'bg-red-950/20 border-red-500/30 text-red-200'
+                        }`}>
+                          <span className="text-[10px] uppercase font-bold tracking-wider opacity-60">Lateral Hip Balance</span>
+                          <h4 className="font-bold text-sm mt-1">
+                            Stability Index: {report.balance_score} / 10
+                          </h4>
+                          <p className="text-xs mt-1 opacity-80">
+                            {report.balance_score >= 8.0 ? 'Minimal lateral hip sway.' : report.balance_score >= 6.0 ? 'Moderate stability sway.' : 'High lateral sway detected.'}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Symmetry & Trunk Lean */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-[#0e1726]/40 p-4 rounded-xl border border-white/5 text-center">
+                          <span className="text-[10px] uppercase font-semibold text-gray-500 tracking-wider">Joint Symmetry</span>
+                          <h4 className="text-xl font-extrabold text-white mt-1">{report.symmetry_score}%</h4>
+                          <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden mt-2.5">
+                            <div className="bg-brand-500 h-full" style={{ width: `${report.symmetry_score}%` }}></div>
+                          </div>
+                        </div>
+
+                        <div className="bg-[#0e1726]/40 p-4 rounded-xl border border-white/5 text-center">
+                          <span className="text-[10px] uppercase font-semibold text-gray-500 tracking-wider">Max Trunk Lean</span>
+                          <h4 className="text-xl font-extrabold text-white mt-1">{report.trunk_lean}°</h4>
+                          <p className="text-[11px] text-gray-400 mt-2 font-medium">
+                            {report.trunk_lean > 22.0 ? 'Excessive forward tilt' : 'Optimal tilt alignment'}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Joint Angle and ROM Details */}
+                      {rom && jointAngles && (
+                        <div className="space-y-3">
+                          <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-white/5 pb-1">Range of Motion Analysis</h4>
+                          <div className="bg-[#0e1726]/30 border border-white/5 rounded-xl overflow-hidden text-xs">
+                            <table className="w-full text-left border-collapse">
+                              <thead>
+                                <tr className="bg-[#0e1726]/60 border-b border-white/5 text-gray-400 font-semibold">
+                                  <th className="py-2 px-3">Joint / Side</th>
+                                  <th className="py-2 px-3 text-center">Max Ext</th>
+                                  <th className="py-2 px-3 text-center">Max Flex</th>
+                                  <th className="py-2 px-3 text-right">ROM</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-white/5 text-gray-300">
+                                <tr>
+                                  <td className="py-2 px-3 font-semibold text-white">Left Knee</td>
+                                  <td className="py-2 px-3 text-center">{jointAngles.left_knee_max_extension}°</td>
+                                  <td className="py-2 px-3 text-center">{jointAngles.left_knee_max_flexion}°</td>
+                                  <td className="py-2 px-3 text-right font-medium text-brand-400">{rom.left_knee_rom}°</td>
+                                </tr>
+                                <tr>
+                                  <td className="py-2 px-3 font-semibold text-white">Right Knee</td>
+                                  <td className="py-2 px-3 text-center">{jointAngles.right_knee_max_extension}°</td>
+                                  <td className="py-2 px-3 text-center">{jointAngles.right_knee_max_flexion}°</td>
+                                  <td className="py-2 px-3 text-right font-medium text-brand-400">{rom.right_knee_rom}°</td>
+                                </tr>
+                                <tr>
+                                  <td className="py-2 px-3 font-semibold text-white">Left Hip</td>
+                                  <td className="py-2 px-3 text-center">{jointAngles.left_hip_max_extension}°</td>
+                                  <td className="py-2 px-3 text-center">{jointAngles.left_hip_max_flexion}°</td>
+                                  <td className="py-2 px-3 text-right font-medium text-brand-400">{rom.left_hip_rom}°</td>
+                                </tr>
+                                <tr>
+                                  <td className="py-2 px-3 font-semibold text-white">Right Hip</td>
+                                  <td className="py-2 px-3 text-center">{jointAngles.right_hip_max_extension}°</td>
+                                  <td className="py-2 px-3 text-center">{jointAngles.right_hip_max_flexion}°</td>
+                                  <td className="py-2 px-3 text-right font-medium text-brand-400">{rom.right_hip_rom}°</td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Injury Risk Forecast (Milestone 3) */}
+                      {activeVideo.injury_prediction && (
+                        <div className="space-y-3">
+                          <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-white/5 pb-1">Predictive Injury Risk Forecast</h4>
+                          <div className="bg-[#0e1726]/30 border border-white/5 rounded-xl p-4 space-y-4">
+                            {/* Overall Score */}
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Overall Risk Score</span>
+                                <div className="flex items-baseline gap-1 mt-0.5">
+                                  <span className="text-2xl font-black text-white">{activeVideo.injury_prediction.overall_risk_score}</span>
+                                  <span className="text-xs text-gray-500 font-semibold">/ 10</span>
+                                </div>
+                              </div>
+                              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${
+                                activeVideo.injury_prediction.risk_category === 'Low'
+                                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                  : activeVideo.injury_prediction.risk_category === 'Moderate'
+                                  ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                  : activeVideo.injury_prediction.risk_category === 'High'
+                                  ? 'bg-orange-500/10 text-orange-400 border-orange-500/20'
+                                  : 'bg-red-500/10 text-red-400 border-red-500/20 animate-pulse'
+                              }`}>
+                                {activeVideo.injury_prediction.risk_category} Risk
+                              </span>
+                            </div>
+
+                            {/* Probabilities Sliders */}
+                            <div className="space-y-2.5 text-xs">
+                              {/* ACL */}
+                              <div>
+                                <div className="flex justify-between text-gray-300 font-medium mb-1">
+                                  <span>ACL Injury Probability</span>
+                                  <span className={activeVideo.injury_prediction.acl_risk_prob > 50 ? 'text-red-400 font-bold' : activeVideo.injury_prediction.acl_risk_prob > 25 ? 'text-amber-400' : 'text-emerald-400'}>
+                                    {activeVideo.injury_prediction.acl_risk_prob}%
+                                  </span>
+                                </div>
+                                <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
+                                  <div 
+                                    className={`h-full transition-all duration-500 ${
+                                      activeVideo.injury_prediction.acl_risk_prob > 50 ? 'bg-red-500' : activeVideo.injury_prediction.acl_risk_prob > 25 ? 'bg-amber-500' : 'bg-emerald-500'
+                                    }`} 
+                                    style={{ width: `${activeVideo.injury_prediction.acl_risk_prob}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+
+                              {/* Hamstring */}
+                              <div>
+                                <div className="flex justify-between text-gray-300 font-medium mb-1">
+                                  <span>Hamstring Strain Probability</span>
+                                  <span className={activeVideo.injury_prediction.hamstring_risk_prob > 50 ? 'text-red-400 font-bold' : activeVideo.injury_prediction.hamstring_risk_prob > 25 ? 'text-amber-400' : 'text-emerald-400'}>
+                                    {activeVideo.injury_prediction.hamstring_risk_prob}%
+                                  </span>
+                                </div>
+                                <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
+                                  <div 
+                                    className={`h-full transition-all duration-500 ${
+                                      activeVideo.injury_prediction.hamstring_risk_prob > 50 ? 'bg-red-500' : activeVideo.injury_prediction.hamstring_risk_prob > 25 ? 'bg-amber-500' : 'bg-emerald-500'
+                                    }`} 
+                                    style={{ width: `${activeVideo.injury_prediction.hamstring_risk_prob}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+
+                              {/* Ankle */}
+                              <div>
+                                <div className="flex justify-between text-gray-300 font-medium mb-1">
+                                  <span>Ankle Sprain Probability</span>
+                                  <span className={activeVideo.injury_prediction.ankle_risk_prob > 50 ? 'text-red-400 font-bold' : activeVideo.injury_prediction.ankle_risk_prob > 25 ? 'text-amber-400' : 'text-emerald-400'}>
+                                    {activeVideo.injury_prediction.ankle_risk_prob}%
+                                  </span>
+                                </div>
+                                <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
+                                  <div 
+                                    className={`h-full transition-all duration-500 ${
+                                      activeVideo.injury_prediction.ankle_risk_prob > 50 ? 'bg-red-500' : activeVideo.injury_prediction.ankle_risk_prob > 25 ? 'bg-amber-500' : 'bg-emerald-500'
+                                    }`} 
+                                    style={{ width: `${activeVideo.injury_prediction.ankle_risk_prob}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+
+                              {/* Shoulder */}
+                              <div>
+                                <div className="flex justify-between text-gray-300 font-medium mb-1">
+                                  <span>Shoulder Impingement Probability</span>
+                                  <span className={activeVideo.injury_prediction.shoulder_risk_prob > 50 ? 'text-red-400 font-bold' : activeVideo.injury_prediction.shoulder_risk_prob > 25 ? 'text-amber-400' : 'text-emerald-400'}>
+                                    {activeVideo.injury_prediction.shoulder_risk_prob}%
+                                  </span>
+                                </div>
+                                <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
+                                  <div 
+                                    className={`h-full transition-all duration-500 ${
+                                      activeVideo.injury_prediction.shoulder_risk_prob > 50 ? 'bg-red-500' : activeVideo.injury_prediction.shoulder_risk_prob > 25 ? 'bg-amber-500' : 'bg-emerald-500'
+                                    }`} 
+                                    style={{ width: `${activeVideo.injury_prediction.shoulder_risk_prob}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+
+                              {/* Lower Back */}
+                              <div>
+                                <div className="flex justify-between text-gray-300 font-medium mb-1">
+                                  <span>Lower Back Strain Probability</span>
+                                  <span className={activeVideo.injury_prediction.back_risk_prob > 50 ? 'text-red-400 font-bold' : activeVideo.injury_prediction.back_risk_prob > 25 ? 'text-amber-400' : 'text-emerald-400'}>
+                                    {activeVideo.injury_prediction.back_risk_prob}%
+                                  </span>
+                                </div>
+                                <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
+                                  <div 
+                                    className={`h-full transition-all duration-500 ${
+                                      activeVideo.injury_prediction.back_risk_prob > 50 ? 'bg-red-500' : activeVideo.injury_prediction.back_risk_prob > 25 ? 'bg-amber-500' : 'bg-emerald-500'
+                                    }`} 
+                                    style={{ width: `${activeVideo.injury_prediction.back_risk_prob}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Anomaly deviation baseline note */}
+                            <div className="bg-[#152033]/40 border border-white/5 rounded-xl p-3 text-[11px] text-gray-400">
+                              <span className="font-bold text-gray-300">Biomechanical Anomaly Index: </span>
+                              {activeVideo.injury_prediction.anomaly_score} (calculated relative to SportsPose and Human3.6M standard references).
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Corrective Exercise Feedback */}
+                      <div className="space-y-2">
+                        <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-white/5 pb-1">Automated Biomechanical Insights</h4>
+                        <div className="bg-[#152033]/30 border border-white/5 p-4 rounded-xl text-xs text-gray-300 leading-relaxed whitespace-pre-line">
+                          {report.feedback}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 };
