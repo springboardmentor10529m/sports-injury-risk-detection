@@ -11,6 +11,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
+# pyrefly: ignore [missing-import]
 from pydantic import BaseModel, ConfigDict
 
 

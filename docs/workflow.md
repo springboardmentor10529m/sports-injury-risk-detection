@@ -15,12 +15,17 @@ flowchart TD
     D -- Incomplete Profile --> E[Fill Athlete Details Form]
     E -- Save Profile --> D
     D -- Complete Profile --> F[Upload Movement Video]
-    F --> G[Binary Storage in PostgreSQL BYTEA]
+    F --> G[File stored on uploads volume + Video row in PostgreSQL]
 
     C -- Coach / Physio / Scientist / Admin --> H[View Athlete Roster & Profiles]
 
-    G --> I[Computer Vision Pose Extraction - PLANNED]
-    I --> J[Biomechanical Assessment & Kinematic Metrics - PLANNED]
+    G --> I["POST /videos/{id}/analyze — FastAPI BackgroundTask"]
+    I --> I1["OpenCV: validate + extract every 5th frame"]
+    I1 --> I2["MediaPipe BlazePose: 33 landmarks per frame"]
+    I2 --> I3["Bulk-insert pose_landmarks rows into PostgreSQL"]
+    I3 --> I4["AnalysisResult status → COMPLETED"]
+
+    I4 --> J[Biomechanical Feature Engineering - NEXT]
     J --> K[ML Injury Prediction Model - PLANNED]
     K --> L[Automated Recommendations Engine - PLANNED]
     L --> M[PDF Reports & Analytics Dashboards - PLANNED]
@@ -48,10 +53,15 @@ flowchart LR
     E --> C
     C -- Yes --> F[Access Video Analysis /analysis]
     F --> G[Select Video File max 500MB]
-    G --> H[POST /videos Upload]
-    H --> I[(PostgreSQL BYTEA Storage)]
-    I --> J[View Pose Overlay & Risk Score - PLANNED]
-    J --> K[View Recommendations & Drills - PLANNED]
+    G --> H[POST /videos — Upload to filesystem]
+    H --> I[Analyze Button appears in UI]
+    I --> J[POST /videos/{id}/analyze]
+    J --> K["BackgroundTask: OpenCV + MediaPipe"]
+    K --> L["pose_landmarks rows stored in DB"]
+    L --> M[Frontend polls status — PENDING→PROCESSING→COMPLETED]
+    M --> N[View Metadata: FPS, Duration, Frames Analysed]
+    N --> O[Injury Risk Scoring - NEXT PHASE]
+    O --> P[View Recommendations & Drills - PLANNED]
 ```
 
 #### Step-by-Step Breakdown:
@@ -66,14 +76,22 @@ flowchart LR
 3. **Profile-Gated Video Upload** (`IMPLEMENTED`)
    * Navigate to `/analysis`. If the profile is incomplete, a warning banner redirects the user to `/profile`.
    * If complete, the athlete's physical details header is rendered, unlocking the upload interface.
-   * Select a video file (MP4, MOV, AVI, WebM — max 500 MB) and click **Upload & Analyse**.
-   * The binary is uploaded via `POST /api/v1/videos` (`multipart/form-data`) with progress bar tracking (0–100%).
-   * The raw file is stored directly in PostgreSQL (`file_data` `BYTEA`), and a metadata confirmation card is displayed.
-4. **Biomechanical Analysis & Risk Score View** (`PLANNED`)
-   * View processed MediaPipe 3D joint landmark overlays and joint angle velocity charts.
-   * Review calculated risk scores (e.g., Dynamic Knee Valgus, Stride Asymmetry).
-5. **Targeted Recommendations & Corrective Drills** (`PLANNED`)
-   * View automated exercise routines, mobility drills, and recovery recommendations generated from the risk prediction model.
+   * Select a video file (MP4, MOV, AVI, WebM — max 500 MB) and click **Upload Video**.
+   * The file is uploaded via `POST /api/v1/videos` (`multipart/form-data`) with progress bar tracking (0–100%).
+   * The file is stored on the Docker `uploads_data` volume and a metadata row is written to PostgreSQL.
+4. **Pose Estimation Analysis** (`IMPLEMENTED`)
+   * After successful upload, click **Analyze Pose**.
+   * `POST /api/v1/videos/{video_id}/analyze` creates an `AnalysisResult` row (status=`PENDING`) and enqueues a FastAPI `BackgroundTask`.
+   * The frontend polls `GET /api/v1/videos/{video_id}/analysis` every 2 seconds, showing a live status badge (`PENDING → PROCESSING → COMPLETED`).
+   * The background worker uses **OpenCV** to extract every 5th frame (configurable via `FRAME_SAMPLE_RATE`, max 300 frames via `MAX_PROCESSED_FRAMES`).
+   * **MediaPipe BlazePose** extracts all 33 body landmarks (x, y, z, visibility) per frame.
+   * Raw landmark data is bulk-inserted into the `pose_landmarks` table.
+   * On completion, the UI shows video metadata: FPS, duration, resolution, frames analysed, and total landmark count.
+5. **Injury Risk Scoring** (`NEXT PHASE`)
+   * Feature engineering (knee/hip/ankle angles, symmetry, velocity) from `pose_landmarks`.
+   * ML model inference → `AnalysisResult.overall_risk_score`.
+6. **Targeted Recommendations & Corrective Drills** (`PLANNED`)
+   * Automated exercise routines generated from the risk prediction model.
 
 ---
 

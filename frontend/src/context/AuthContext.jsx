@@ -52,6 +52,9 @@ export function AuthProvider({ children }) {
     }, []);
 
     async function login(email, password) {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("user");
+
         const data = await loginUser(email, password);
 
         const token = data.access_token;

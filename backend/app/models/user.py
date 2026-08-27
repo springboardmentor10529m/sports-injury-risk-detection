@@ -2,11 +2,16 @@ import uuid
 from datetime import datetime
 from enum import Enum
 
+# pyrefly: ignore [missing-import]
 from sqlalchemy import Column, String, Text, DateTime, Boolean, Enum as SQLEnum
+# pyrefly: ignore [missing-import]
 from sqlalchemy.dialects.postgresql import UUID
+# pyrefly: ignore [missing-import]
 from sqlalchemy.orm import Mapped, mapped_column
+# pyrefly: ignore [missing-import]
 from sqlalchemy import String, Text, DateTime, Boolean, Enum as SQLEnum, func
 
+# pyrefly: ignore [missing-import]
 from sqlalchemy import Boolean
 
 from app.database import Base
@@ -23,8 +28,7 @@ class RoleEnum(str, Enum):
 class User(Base):
     __tablename__ = "users"
 
-    is_active = Column(Boolean, nullable=False, default=True)
-    is_verified = Column(Boolean, nullable=False, default=False)
+
 
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),

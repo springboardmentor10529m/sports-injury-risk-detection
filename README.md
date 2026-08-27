@@ -214,11 +214,14 @@ Access application UI: [http://localhost:5173](http://localhost:5173)
 | User Auth (Argon2id + JWT + OAuth2 Bearer)        | ✅ Implemented                |
 | Role-Based Access Control (5 Roles)               | ✅ Implemented                |
 | Athlete Profile Management (CRUD / Upsert)        | ✅ Implemented                |
-| Video Binary Storage (PostgreSQL BYTEA + 500MB)   | ✅ Implemented                |
+| Video Upload (filesystem + metadata in PostgreSQL)| ✅ Implemented                |
 | Profile-Gated Video Analysis UI                   | ✅ Implemented                |
-| Database Schema for Analysis & Predictions        | ✅ Implemented (Schema ready) |
-| MediaPipe / CV Joint Keypoint Extraction          | 🔮 Planned (Phase 3)          |
-| Kinematic Biomechanical Risk Assessment           | 🔮 Planned (Phase 3)          |
+| OpenCV Frame Extraction (configurable sampling)   | ✅ Implemented (Phase 3)      |
+| MediaPipe Pose Estimation (33 landmarks/frame)    | ✅ Implemented (Phase 3)      |
+| Analysis Status Lifecycle (PENDING→COMPLETED)     | ✅ Implemented (Phase 3)      |
+| pose_landmarks DB table + Alembic migration       | ✅ Implemented (Phase 3)      |
+| Frontend Analyze Button + Live Status Polling     | ✅ Implemented (Phase 3)      |
+| Kinematic Feature Engineering (angles, velocity)  | 🔮 Next Phase                 |
 | ML Injury Prediction Model (ACL, Hamstring, etc.) | 🔮 Planned (Phase 4)          |
 | Automated Recommendation Engine                   | 🔮 Planned (Phase 4)          |
 | Downloadable PDF Report Exporter                  | 🔮 Planned (Phase 5)          |

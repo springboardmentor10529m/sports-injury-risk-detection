@@ -13,3 +13,9 @@ python-jose[cryptography]>=3.3.0
 python-multipart>=0.0.9
 pytest>=8.0.0
 pytest-asyncio>=0.23.0
+# Video processing
+opencv-python-headless>=4.9.0
+numpy>=1.26.0
+# Pose estimation — pin to 0.10.x which retains the solutions.pose API
+# mediapipe 1.x dropped mp.solutions and requires separate model downloads
+mediapipe>=0.10.14,<1.0.0

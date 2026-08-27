@@ -1,5 +1,7 @@
 from typing import List, Optional
+# pyrefly: ignore [missing-import]
 from pydantic import computed_field
+# pyrefly: ignore [missing-import]
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -65,6 +67,12 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: Optional[str] = None
     GOOGLE_CLIENT_SECRET: Optional[str] = None
     GOOGLE_REDIRECT_URI: str = "http://localhost:8000/api/v1/auth/google/callback"
+
+    # ── Video Analysis ────────────────────────────────────────────────────────
+    # Process every Nth frame (1 = every frame, 5 = every 5th frame)
+    FRAME_SAMPLE_RATE: int = 5
+    # Hard cap on frames sent to pose estimator per analysis run
+    MAX_PROCESSED_FRAMES: int = 300
 
 
 settings = Settings()

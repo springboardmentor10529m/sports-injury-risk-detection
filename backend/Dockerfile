@@ -6,11 +6,19 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Install system dependencies needed for runtime
+# Install system dependencies needed for runtime + OpenCV/MediaPipe
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     curl \
+    # OpenCV headless runtime
+    libgl1 \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    # MediaPipe requires these
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install Python dependencies

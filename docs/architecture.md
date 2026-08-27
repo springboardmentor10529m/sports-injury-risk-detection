@@ -25,13 +25,19 @@ graph TD
     subgraph Service & ORM Layer
         G --> H[SQLAlchemy 2.0 ORM]
         H --> I[Session Management / Connection Pool]
+        D --> SVC[Services Layer]
+        SVC --> VP[VideoProcessingService - OpenCV]
+        SVC --> PE[PoseEstimationService - MediaPipe]
+        SVC --> AP[AnalysisPipeline - BackgroundTask]
     end
 
     subgraph Data Layer [Database - PostgreSQL]
         I --> J[(PostgreSQL Database)]
         J --> K[users table & user_role_enum]
         J --> L[athletes table]
-        J --> M[videos table BYTEA]
+        J --> M[videos table - filesystem path]
+        J --> N[analysis_results table - PENDING/PROCESSING/COMPLETED/FAILED]
+        J --> O[pose_landmarks table - 33 landmarks per frame]
     end
 
     B -->|REST Calls| D
@@ -148,7 +154,71 @@ sequenceDiagram
 |---|---|
 | **Frontend UI** | React 18, Vite, Lucide React Icons, Vanilla CSS Design System |
 | **State & HTTP** | React Context API (`AuthContext`), Axios + Interceptors, React Router v6 |
-| **Backend Framework** | Python 3.14+, FastAPI, Pydantic v2, Pydantic Settings |
-| **Database & ORM** | PostgreSQL 14+, SQLAlchemy 2.0 (ORM & Mapped Types), Alembic Migrations |
+| **Backend Framework** | Python 3.11+, FastAPI, Pydantic v2, Pydantic Settings |
+| **Database & ORM** | PostgreSQL 16, SQLAlchemy 2.0 (ORM & Mapped Types), Alembic Migrations |
 | **Security & Auth** | Argon2id (`argon2-cffi`), PyJWT (`python-jose`), FastAPI OAuth2 Bearer |
 | **File Processing** | `python-multipart` for streaming multipart binary parsing |
+| **Video Processing** | OpenCV (`opencv-python-headless`) — frame validation, FPS/metadata, frame sampling |
+| **Pose Estimation** | MediaPipe BlazePose — 33 landmarks (x, y, z, visibility) per frame |
+| **Async Processing** | FastAPI `BackgroundTasks` — no external queue/broker required |
+| **Containerisation** | Docker Compose (postgres, backend, frontend) with named volumes |
+
+---
+
+## 🎯 Video Analysis Pipeline
+
+The analysis pipeline runs as a `BackgroundTask` after `POST /videos/{id}/analyze` returns 202:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Athlete
+    participant FE as Frontend (React)
+    participant BE as Backend (FastAPI)
+    participant BG as BackgroundTask
+    participant DB as PostgreSQL
+
+    Athlete->>FE: Click "Analyze Pose"
+    FE->>BE: POST /videos/{id}/analyze (JWT)
+    BE->>DB: INSERT analysis_results (status=PENDING)
+    BE-->>FE: 202 {analysis_id, status: PENDING}
+    BE->>BG: Enqueue _background_analyze()
+
+    loop Poll every 2s
+        FE->>BE: GET /videos/{id}/analysis
+        BE-->>FE: {status: PENDING|PROCESSING}
+    end
+
+    BG->>DB: UPDATE analysis_results (status=PROCESSING)
+    BG->>BG: VideoProcessingService (OpenCV)
+    BG->>BG: PoseEstimationService (MediaPipe)
+    BG->>DB: INSERT pose_landmarks (bulk, up to 9900 rows)
+    BG->>DB: UPDATE analysis_results (status=COMPLETED, metadata)
+
+    FE->>BE: GET /videos/{id}/analysis
+    BE-->>FE: {status: COMPLETED, fps, frames_processed, ...}
+    FE->>Athlete: Show completion card with metadata
+```
+
+### Status Lifecycle
+
+```
+PENDING → PROCESSING → COMPLETED
+                     ↘ FAILED (error_message saved)
+```
+
+### Landmark Storage Schema
+
+For each sampled frame, 33 `pose_landmarks` rows are written:
+
+| Column | Type | Description |
+|---|---|---|
+| `analysis_id` | UUID FK | Links to `analysis_results` |
+| `frame_number` | int | 0-indexed frame in original video |
+| `timestamp_ms` | float | ms from video start |
+| `landmark_index` | int | 0–32 (MediaPipe topology) |
+| `landmark_name` | str | e.g. `LEFT_KNEE`, `RIGHT_HIP` |
+| `x`, `y`, `z` | float | Normalised spatial coordinates |
+| `visibility` | float | Detection confidence [0,1] |
+
+A composite index on `(analysis_id, frame_number)` enables efficient feature engineering queries for angles, velocities, and symmetry in the next phase.

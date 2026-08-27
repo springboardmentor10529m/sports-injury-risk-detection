@@ -1,6 +1,7 @@
 from typing import Optional
 from datetime import datetime
 from uuid import UUID
+# pyrefly: ignore [missing-import]
 from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
 from app.models.user import RoleEnum
 

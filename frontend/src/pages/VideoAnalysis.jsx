@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 
 import {
@@ -10,12 +10,25 @@ import {
     AlertTriangle,
     CheckCircle,
     FileVideo,
+    Play,
+    Clock,
+    Loader,
+    XCircle,
+    BarChart3,
+    Sliders,
+    Compass,
+    Zap,
 } from "lucide-react";
 
 import Sidebar from "../components/Sidebar";
 import RiskBadge from "../components/RiskBadge";
 
-import { uploadVideoFile } from "../api/videos";
+import {
+    uploadVideoFile,
+    triggerAnalysis,
+    getAnalysisStatus,
+    getAnalysisFeatures,
+} from "../api/videos";
 import { getMyAthleteProfile } from "../api/athletes";
 
 // All five fields must be non-null for the profile to be considered complete.
@@ -41,6 +54,23 @@ function formatBytes(bytes) {
     return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 }
 
+/** Format seconds into "Mm Ss" or "Xs" */
+function formatDuration(seconds) {
+    if (!seconds) return "—";
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.round(seconds % 60);
+    if (mins === 0) return `${secs}s`;
+    return `${mins}m ${secs}s`;
+}
+
+// Analysis status constants (must match backend)
+const STATUS_PENDING    = "PENDING";
+const STATUS_PROCESSING = "PROCESSING";
+const STATUS_COMPLETED  = "COMPLETED";
+const STATUS_FAILED     = "FAILED";
+
+const POLL_INTERVAL_MS = 2000;  // poll every 2 seconds
+
 function VideoAnalysis() {
     // ── Profile state ─────────────────────────────────────────
     const [profile, setProfile]               = useState(null);
@@ -50,12 +80,19 @@ function VideoAnalysis() {
     // ── Upload state ──────────────────────────────────────────
     const [file, setFile]           = useState(null);
     const [uploading, setUploading] = useState(false);
-    const [uploadPct, setUploadPct] = useState(0);   // 0-100
+    const [uploadPct, setUploadPct] = useState(0);
     const [uploadedVideo, setUploadedVideo] = useState(null); // server metadata
-    const [error, setError]         = useState("");
+    const [uploadError, setUploadError]     = useState("");
 
-    // ── Legacy analysis-result state (kept for future AI integration) ──
-    const [result, setResult] = useState(null);
+    // ── Analysis state ────────────────────────────────────────
+    const [analysisId, setAnalysisId]         = useState(null);
+    const [analysisStatus, setAnalysisStatus] = useState(null);  // full status obj
+    const [analysisFeatures, setAnalysisFeatures] = useState(null); // features obj
+    const [analyzing, setAnalyzing]           = useState(false);
+    const [analyzeError, setAnalyzeError]     = useState("");
+
+    // Polling ref — holds the interval ID so we can clear it
+    const pollRef = useRef(null);
 
     // ── Fetch athlete profile on mount ────────────────────────
     useEffect(() => {
@@ -85,23 +122,36 @@ function VideoAnalysis() {
         fetchProfile();
     }, []);
 
+    // ── Cleanup polling on unmount ────────────────────────────
+    useEffect(() => {
+        return () => {
+            if (pollRef.current) clearInterval(pollRef.current);
+        };
+    }, []);
+
+    // ── Handlers ──────────────────────────────────────────────
     function handleFileChange(event) {
         const selectedFile = event.target.files?.[0];
         if (!selectedFile) return;
         setFile(selectedFile);
-        setError("");
+        setUploadError("");
         setUploadedVideo(null);  // clear previous result
         setUploadPct(0);
+        setAnalysisId(null);
+        setAnalysisStatus(null);
+        setAnalysisFeatures(null);
+        setAnalyzeError("");
+        if (pollRef.current) clearInterval(pollRef.current);
     }
 
     const handleUpload = useCallback(async () => {
         if (!file) {
-            setError("Please select a video first.");
+            setUploadError("Please select a video first.");
             return;
         }
 
         setUploading(true);
-        setError("");
+        setUploadError("");
         setUploadPct(0);
         setUploadedVideo(null);
 
@@ -116,18 +166,72 @@ function VideoAnalysis() {
             });
 
             setUploadedVideo(data);
-            setResult(data);          // forward to analysis panel
-            setFile(null);            // clear file picker after success
+            setFile(null);  // clear file picker after success
         } catch (err) {
             const detail =
                 err.response?.data?.detail ||
                 "Video upload failed. Please try again.";
-            setError(detail);
+            setUploadError(detail);
         } finally {
             setUploading(false);
             setUploadPct(0);
         }
     }, [file]);
+
+    const handleAnalyze = useCallback(async () => {
+        if (!uploadedVideo?.video_id) return;
+        if (analyzing) return;  // prevent duplicate requests
+
+        setAnalyzing(true);
+        setAnalyzeError("");
+        setAnalysisId(null);
+        setAnalysisStatus(null);
+        setAnalysisFeatures(null);
+        if (pollRef.current) clearInterval(pollRef.current);
+
+        try {
+            // Trigger analysis — returns {analysis_id, status: "PENDING", ...}
+            const trigger = await triggerAnalysis(uploadedVideo.video_id);
+            setAnalysisId(trigger.analysis_id);
+            setAnalysisStatus({ status: trigger.status });
+
+            // Start polling
+            pollRef.current = setInterval(async () => {
+                try {
+                    const statusData = await getAnalysisStatus(uploadedVideo.video_id);
+                    setAnalysisStatus(statusData);
+
+                    if (statusData.status === STATUS_COMPLETED) {
+                        clearInterval(pollRef.current);
+                        pollRef.current = null;
+                        setAnalyzing(false);
+
+                        // Fetch extracted features
+                        try {
+                            const featData = await getAnalysisFeatures(uploadedVideo.video_id);
+                            setAnalysisFeatures(featData);
+                        } catch (featErr) {
+                            console.warn("Could not load features:", featErr);
+                        }
+                    } else if (statusData.status === STATUS_FAILED) {
+                        clearInterval(pollRef.current);
+                        pollRef.current = null;
+                        setAnalyzing(false);
+                    }
+                } catch (pollErr) {
+                    // Non-fatal polling error — keep trying
+                    console.warn("Polling error:", pollErr);
+                }
+            }, POLL_INTERVAL_MS);
+
+        } catch (err) {
+            const detail =
+                err.response?.data?.detail ||
+                "Failed to start analysis. Please try again.";
+            setAnalyzeError(detail);
+            setAnalyzing(false);
+        }
+    }, [uploadedVideo, analyzing]);
 
     const complete = isProfileComplete(profile);
 
@@ -266,10 +370,10 @@ function VideoAnalysis() {
                                 <button
                                     className="primary-button"
                                     onClick={handleUpload}
-                                    id="start-analysis-btn"
+                                    id="start-upload-btn"
                                 >
                                     <Upload size={15} />
-                                    Upload &amp; Analyse
+                                    Upload Video
                                 </button>
                             )}
 
@@ -287,8 +391,8 @@ function VideoAnalysis() {
                                 </div>
                             )}
 
-                            {error && (
-                                <div className="error-box">{error}</div>
+                            {uploadError && (
+                                <div className="error-box">{uploadError}</div>
                             )}
                         </section>
 
@@ -345,48 +449,259 @@ function VideoAnalysis() {
                                             ).toLocaleString()}
                                         />
                                     </div>
+
+                                    {/* ── Analyze button ─────────────────── */}
+                                    {!analysisStatus && !analyzing && (
+                                        <button
+                                            className="primary-button"
+                                            style={{ marginTop: 16 }}
+                                            onClick={handleAnalyze}
+                                            id="analyze-btn"
+                                            disabled={analyzing}
+                                        >
+                                            <Play size={15} />
+                                            Analyze Pose
+                                        </button>
+                                    )}
+
+                                    {analyzeError && (
+                                        <div className="error-box" style={{ marginTop: 12 }}>
+                                            {analyzeError}
+                                        </div>
+                                    )}
                                 </div>
                             </section>
                         )}
 
-                        {/* ── Analysis result (future AI integration) ──── */}
-                        {result && result.risk_score !== undefined && (
-                            <section className="analysis-result-panel">
+                        {/* ── Analysis status panel ─────────────────────── */}
+                        {analysisStatus && (
+                            <section className="panel" style={{ marginTop: 20 }}>
                                 <div className="panel-header">
                                     <div>
-                                        <h2>Analysis Results</h2>
-                                        <p>AI-generated movement assessment</p>
+                                        <h2>Pose Estimation & Feature Extraction</h2>
+                                        <p>MediaPipe BlazePose — 33 body landmarks & kinematic metrics</p>
                                     </div>
-
-                                    <Activity />
+                                    <Activity size={22} />
                                 </div>
 
-                                <div className="result-grid">
-                                    <ResultCard
-                                        title="Risk Score"
-                                        value={`${result.risk_score ?? 0}%`}
-                                        icon={ShieldAlert}
-                                    />
+                                {/* Status badge */}
+                                <div style={{ margin: "16px 0" }}>
+                                    <AnalysisStatusBadge status={analysisStatus.status} />
+                                </div>
 
-                                    <ResultCard
-                                        title="Risk Level"
-                                        value={
-                                            <RiskBadge
-                                                level={
-                                                    result.risk_level || "Low"
+                                {/* Processing indicator */}
+                                {(analysisStatus.status === STATUS_PENDING ||
+                                    analysisStatus.status === STATUS_PROCESSING) && (
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 10,
+                                            color: "#7b8494",
+                                            fontSize: 14,
+                                        }}
+                                    >
+                                        <Loader
+                                            size={16}
+                                            style={{
+                                                animation: "spin 1s linear infinite",
+                                            }}
+                                        />
+                                        <span>
+                                            {analysisStatus.status === STATUS_PENDING
+                                                ? "Queued — waiting for processing to start…"
+                                                : "Extracting frames, detecting landmarks, and calculating features…"}
+                                        </span>
+                                    </div>
+                                )}
+
+                                {/* Failure message */}
+                                {analysisStatus.status === STATUS_FAILED && (
+                                    <div className="error-box" style={{ marginTop: 8 }}>
+                                        <XCircle
+                                            size={15}
+                                            style={{ marginRight: 8, verticalAlign: "middle" }}
+                                        />
+                                        {analysisStatus.error_message ||
+                                            "Analysis failed. Please try again."}
+                                    </div>
+                                )}
+
+                                {/* Completed — show metadata */}
+                                {analysisStatus.status === STATUS_COMPLETED && (
+                                    <div style={{ marginTop: 12 }}>
+                                        <div className="video-meta-grid">
+                                            <MetaItem
+                                                label="FPS"
+                                                value={
+                                                    analysisStatus.fps != null
+                                                        ? analysisStatus.fps.toFixed(2)
+                                                        : "—"
                                                 }
                                             />
-                                        }
-                                        icon={Activity}
-                                    />
+                                            <MetaItem
+                                                label="Duration"
+                                                value={formatDuration(
+                                                    analysisStatus.duration_seconds
+                                                )}
+                                            />
+                                            <MetaItem
+                                                label="Resolution"
+                                                value={
+                                                    analysisStatus.width && analysisStatus.height
+                                                        ? `${analysisStatus.width}×${analysisStatus.height}`
+                                                        : "—"
+                                                }
+                                            />
+                                            <MetaItem
+                                                label="Total Frames"
+                                                value={
+                                                    analysisStatus.frame_count ?? "—"
+                                                }
+                                            />
+                                            <MetaItem
+                                                label="Frames Analysed"
+                                                value={
+                                                    analysisStatus.frames_processed ?? "—"
+                                                }
+                                            />
+                                            <MetaItem
+                                                label="Landmarks/frame"
+                                                value="33 (MediaPipe)"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Re-analyze button on failure */}
+                                {analysisStatus.status === STATUS_FAILED && !analyzing && (
+                                    <button
+                                        className="primary-button"
+                                        style={{ marginTop: 16 }}
+                                        onClick={handleAnalyze}
+                                        id="retry-analyze-btn"
+                                    >
+                                        <Play size={15} />
+                                        Retry Analysis
+                                    </button>
+                                )}
+                            </section>
+                        )}
+
+                        {/* ── Biomechanical Features Section ────────────────── */}
+                        {analysisFeatures?.features && (
+                            <section className="panel" style={{ marginTop: 20 }}>
+                                <div className="panel-header">
+                                    <div>
+                                        <h2>Biomechanical Features</h2>
+                                        <p>
+                                            Extracted kinematic metrics & joint angles &nbsp;·&nbsp;
+                                            <span style={{ fontWeight: 600, color: "#3b82f6" }}>
+                                                Schema: {analysisFeatures.feature_version}
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <Sliders size={22} />
                                 </div>
 
-                                <div className="findings">
-                                    <h3>Movement Findings</h3>
-                                    <p>
-                                        {result.findings ||
-                                            "No detailed findings available yet."}
-                                    </p>
+                                {/* Joint Angles Grid */}
+                                <div style={{ marginTop: 16 }}>
+                                    <h3 style={{ fontSize: 14, fontWeight: 600, color: "#374151", marginBottom: 10 }}>
+                                        Joint Angles (Flexion / Extension)
+                                    </h3>
+                                    <div className="athlete-details-grid">
+                                        <FeatureItem
+                                            label="Knee Angle (L)"
+                                            value={fmtDeg(analysisFeatures.features.knee_angle_left_mean)}
+                                            sub={`ROM: ${fmtDeg(analysisFeatures.features.knee_angle_left_rom)}`}
+                                        />
+                                        <FeatureItem
+                                            label="Knee Angle (R)"
+                                            value={fmtDeg(analysisFeatures.features.knee_angle_right_mean)}
+                                            sub={`ROM: ${fmtDeg(analysisFeatures.features.knee_angle_right_rom)}`}
+                                        />
+                                        <FeatureItem
+                                            label="Hip Angle (L)"
+                                            value={fmtDeg(analysisFeatures.features.hip_angle_left_mean)}
+                                            sub={`ROM: ${fmtDeg(analysisFeatures.features.hip_angle_left_rom)}`}
+                                        />
+                                        <FeatureItem
+                                            label="Hip Angle (R)"
+                                            value={fmtDeg(analysisFeatures.features.hip_angle_right_mean)}
+                                            sub={`ROM: ${fmtDeg(analysisFeatures.features.hip_angle_right_rom)}`}
+                                        />
+                                        <FeatureItem
+                                            label="Ankle Angle (L)"
+                                            value={fmtDeg(analysisFeatures.features.ankle_angle_left_mean)}
+                                            sub={`ROM: ${fmtDeg(analysisFeatures.features.ankle_angle_left_rom)}`}
+                                        />
+                                        <FeatureItem
+                                            label="Ankle Angle (R)"
+                                            value={fmtDeg(analysisFeatures.features.ankle_angle_right_mean)}
+                                            sub={`ROM: ${fmtDeg(analysisFeatures.features.ankle_angle_right_rom)}`}
+                                        />
+                                        <FeatureItem
+                                            label="Trunk Inclination"
+                                            value={fmtDeg(analysisFeatures.features.trunk_angle_mean)}
+                                            sub={`Max: ${fmtDeg(analysisFeatures.features.trunk_angle_max)}`}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Symmetry & Kinematics Grid */}
+                                <div style={{ marginTop: 20 }}>
+                                    <h3 style={{ fontSize: 14, fontWeight: 600, color: "#374151", marginBottom: 10 }}>
+                                        L/R Symmetry & Kinematics
+                                    </h3>
+                                    <div className="athlete-details-grid">
+                                        <FeatureItem
+                                            label="Knee Symmetry"
+                                            value={fmtPct(analysisFeatures.features.knee_symmetry_score)}
+                                            sub="Left vs Right ROM"
+                                        />
+                                        <FeatureItem
+                                            label="Hip Symmetry"
+                                            value={fmtPct(analysisFeatures.features.hip_symmetry_score)}
+                                            sub="Left vs Right ROM"
+                                        />
+                                        <FeatureItem
+                                            label="Ankle Symmetry"
+                                            value={fmtPct(analysisFeatures.features.ankle_symmetry_score)}
+                                            sub="Left vs Right ROM"
+                                        />
+                                        <FeatureItem
+                                            label="3D Displacement"
+                                            value={fmtVal(analysisFeatures.features.total_joint_displacement, "norm. units")}
+                                            sub="Mid-hip travel"
+                                        />
+                                        <FeatureItem
+                                            label="Max Velocity"
+                                            value={fmtVal(analysisFeatures.features.max_joint_velocity, "units/s")}
+                                            sub="Peak mid-hip speed"
+                                        />
+                                        <FeatureItem
+                                            label="Mean Velocity"
+                                            value={fmtVal(analysisFeatures.features.mean_joint_velocity, "units/s")}
+                                            sub="Avg mid-hip speed"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Information Banner */}
+                                <div
+                                    className="video-success-panel"
+                                    style={{ marginTop: 20, padding: "14px 16px" }}
+                                >
+                                    <div className="video-success-icon">
+                                        <BarChart3 size={18} />
+                                    </div>
+                                    <div className="video-success-body">
+                                        <h3>Biomechanical Feature Vector Saved</h3>
+                                        <p style={{ fontSize: 13, color: "#7b8494", margin: "4px 0 0" }}>
+                                            Features persist in database as schema <strong>{analysisFeatures.feature_version}</strong>.
+                                            Injury-risk prediction model inference will take place in the next phase.
+                                        </p>
+                                    </div>
                                 </div>
                             </section>
                         )}
@@ -417,17 +732,79 @@ function MetaItem({ label, value }) {
     );
 }
 
-function ResultCard({ title, value, icon: Icon }) {
+function FeatureItem({ label, value, sub }) {
     return (
-        <div className="result-card">
-            <div className="result-card-icon">
-                <Icon size={21} />
-            </div>
-
-            <span>{title}</span>
-
-            <strong>{value}</strong>
+        <div className="detail-item" style={{ background: "#f8fafc", padding: "10px 14px", borderRadius: 8 }}>
+            <span className="detail-label" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.03em" }}>
+                {label}
+            </span>
+            <strong className="detail-value" style={{ fontSize: 16, color: "#1e293b", marginTop: 2 }}>
+                {value}
+            </strong>
+            {sub && (
+                <small style={{ display: "block", color: "#64748b", fontSize: 11, marginTop: 2 }}>
+                    {sub}
+                </small>
+            )}
         </div>
+    );
+}
+
+function fmtDeg(val) {
+    if (val == null) return "—";
+    return `${val.toFixed(1)}°`;
+}
+
+function fmtPct(val) {
+    if (val == null) return "—";
+    return `${val.toFixed(1)}%`;
+}
+
+function fmtVal(val, unit) {
+    if (val == null) return "—";
+    return `${val} ${unit}`;
+}
+
+function AnalysisStatusBadge({ status }) {
+    const config = {
+        [STATUS_PENDING]:    { label: "Pending",    color: "#f59e0b", icon: Clock },
+        [STATUS_PROCESSING]: { label: "Processing", color: "#3b82f6", icon: Loader },
+        [STATUS_COMPLETED]:  { label: "Completed",  color: "#10b981", icon: CheckCircle },
+        [STATUS_FAILED]:     { label: "Failed",     color: "#ef4444", icon: XCircle },
+    };
+
+    const { label, color, icon: Icon } =
+        config[status] ?? { label: status, color: "#7b8494", icon: Activity };
+
+    const isSpinning =
+        status === STATUS_PENDING || status === STATUS_PROCESSING;
+
+    return (
+        <span
+            style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                background: `${color}22`,
+                color,
+                border: `1px solid ${color}55`,
+                borderRadius: 20,
+                padding: "4px 12px",
+                fontSize: 13,
+                fontWeight: 600,
+                letterSpacing: "0.02em",
+            }}
+        >
+            <Icon
+                size={13}
+                style={
+                    isSpinning
+                        ? { animation: "spin 1s linear infinite" }
+                        : {}
+                }
+            />
+            {label}
+        </span>
     );
 }
 

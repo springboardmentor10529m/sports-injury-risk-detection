@@ -217,14 +217,25 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
+# Environments & Secret Keys
+.env
+.env.*
+!.env.example
+.envrc
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
-# Node.js
+# Node.js & dependencies
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 pnpm-debug.log*
 
-# ML models
+# ML models & weights
 *.pt
 *.pth
 *.onnx
@@ -232,7 +243,19 @@ pnpm-debug.log*
 *.keras
 *.pkl
 *.joblib
-
-# ML model directories
+*.task
+*.tflite
+*.pb
+*.safetensors
 checkpoints/
 weights/
+models/
+
+# Uploaded videos & user media
+uploads/
+**/uploads/
+*.mp4
+*.mov
+*.avi
+*.webm
+*.mkv

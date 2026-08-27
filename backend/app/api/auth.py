@@ -7,6 +7,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 # pyrefly: ignore [missing-import]
 from fastapi.security import OAuth2PasswordRequestForm
 # pyrefly: ignore [missing-import]
+from sqlalchemy import func
+# pyrefly: ignore [missing-import]
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -37,8 +39,9 @@ def register_user(
     - Hashes password using Argon2id algorithm.
     - Persists new user and returns a sanitized user profile.
     """
-    # 1. Check for duplicate email
-    existing_user = db.query(User).filter(User.email == user_in.email).first()
+    # 1. Check for duplicate email (case-insensitive to handle any legacy mixed-case rows)
+    normalized_email = user_in.email.strip().lower()
+    existing_user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -59,7 +62,7 @@ def register_user(
     new_user = User(
         user_id=uuid.uuid4(),
         name=user_in.name,
-        email=user_in.email,
+        email=normalized_email,  # always store the normalized (strip().lower()) form
         password=hashed_password,
         role=user_in.role,
         phone=user_in.phone,
@@ -108,8 +111,9 @@ def login(
     # 1. Normalize the submitted email (same rule as registration)
     email = form_data.username.strip().lower()
 
-    # 2. Retrieve user by email — use constant-time path regardless of result
-    user = db.query(User).filter(User.email == email).first()
+    # 2. Retrieve user by email — case-insensitive to handle any legacy mixed-case rows;
+    #    constant-time path is preserved regardless of whether the user exists.
+    user = db.query(User).filter(func.lower(User.email) == email).first()
 
     # 3. Verify password — always call verify_password even when user is None
     #    to prevent timing-based user enumeration.
