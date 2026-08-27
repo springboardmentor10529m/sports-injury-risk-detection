@@ -32,6 +32,46 @@ A modern web application built to assess, monitor, and manage sports injury risk
 
 ---
 
+## Machine Learning Architecture (Datasets, Models, & Features)
+
+The injury prediction and anomaly detection services utilize models trained on sports-specific profiles and biomechanics reference datasets.
+
+### 1. Training & Baseline Datasets
+* **FIFA Injury Dataset:** Used as the historical reference profile to model correlations between demographic features (age, weight, sport), training volumes, injury history, fatigue levels, and injury classifications.
+* **SportsPose Dataset:** Contains standard Joint Range of Motion (ROM) references for athletic tasks (e.g. squatting, landing, jumping) to detect form deviations.
+* **Human3.6M Dataset:** Provides baseline skeletal dimensions and keypoint configurations for body proportion tracking.
+
+### 2. Feature Schema & Inputs
+The Machine Learning models receive a structured feature vector extracted from the athlete profile and the pose analysis metrics:
+
+| Feature Name | Type | Source | Description |
+| :--- | :--- | :--- | :--- |
+| `left_knee_rom` | Float | Pose Engine | Left knee Range of Motion in degrees |
+| `right_knee_rom` | Float | Pose Engine | Right knee Range of Motion in degrees |
+| `left_hip_rom` | Float | Pose Engine | Left hip Range of Motion in degrees |
+| `right_hip_rom` | Float | Pose Engine | Right hip Range of Motion in degrees |
+| `knee_valgus_detected` | String | Pose Engine | Medial knee caving status (`Yes`, `No`, `Borderline`) |
+| `symmetry_score` | Float | Pose Engine | Left-to-Right ROM symmetry percentage (0% - 100%) |
+| `balance_score` | Float | Pose Engine | Lateral hip sway stability index (0.0 - 10.0) |
+| `trunk_lean` | Float | Pose Engine | Maximum forward trunk lean angle in degrees |
+| `age` | Integer | Athlete Profile | Athlete age in years |
+| `weight` | Float | Athlete Profile | Athlete weight in kg |
+| `sport` | String | Athlete Profile | Category of sport played (e.g. Football, Basketball, Soccer, Volleyball) |
+| `position` | String | Athlete Profile | Athlete's role/player position |
+| `training_load` | Float | Athlete Profile | Hours of training logged per week |
+| `coach_notes` | Text | Athlete Profile | Text parsed for historical injury keywords (e.g. `acl`, `knee`, `sprain`, `tear`, `injury`) |
+
+### 3. ML/Deep Learning Models Used
+* **Biomechanical Anomaly Detection:** An **Isolation Forest** model (via `scikit-learn`) trained on standard ranges from the **SportsPose** and **Human3.6M** datasets. It processes ROM features to output an `anomaly_score` ($0.0 - 1.0$) indicating the severity of joint tracking deviations.
+* **Injury Risk Classifiers:** Supervised **Random Forest and XGBoost** decision models trained on the combined feature schema. They compute separate probability scores ($0.0\% - 100.0\%$) for:
+  * **ACL Injury**
+  * **Hamstring Strain**
+  * **Ankle Sprain**
+  * **Shoulder Impingement**
+  * **Lower Back Strain**
+
+---
+
 ## Technical Stack
 * **Frontend:** React 19, Vite, Tailwind CSS v4, Lucide React, Axios.
 * **Backend:** FastAPI, Python 3.11, SQLAlchemy, Uvicorn, PostgreSQL (production/Docker) & SQLite (local development fallback).
