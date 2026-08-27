@@ -4,10 +4,38 @@ A modern web application built to assess, monitor, and manage sports injury risk
 
 ---
 
+## Key Features
+
+### 1. Pose Estimation Engine
+* Real-time skeletal landmark tracking using **MediaPipe Pose (BlazePose)**.
+* Frame-by-frame joint extraction (shoulders, hips, knees, ankles) to compute ranges of motion.
+* Fully containerized OpenCV pipeline with **FFMPEG re-encoding** (standardizing output to H.264 / `yuv420p` pixel format) to ensure immediate browser playback compatibility.
+* Physics-based kinematic simulation fallback for local development environments lacking C++ solver libraries.
+
+### 2. Biomechanical Metrics & Analysis
+* **Knee Valgus Detection:** Medial knee collapse tracking relative to ankles and hips during deep movement phases.
+* **Trunk Lean:** Forward-tilt measurements from mid-hip to mid-shoulder lines.
+* **Lateral Hip Sway:** Stability index calculation using mid-hip lateral standard deviation.
+* **Joint Symmetry:** Left-to-right Range of Motion (ROM) assessment for knee and hip flexion/extension.
+
+### 3. Injury Risk Prediction & Weighted Scoring (Milestone 3)
+* **Specific Injury Probabilities:** Supervised estimators mapping athlete history, training loads, and biomechanical deviations to forecast probability percentages for:
+  * ACL Injury Risk
+  * Hamstring Strain
+  * Ankle Sprain
+  * Shoulder Impingement
+  * Lower Back Strain
+* **Biomechanical Anomaly Index:** Anomaly deviation index calculated by comparing Joint ROM tables against standard baseline configurations from the **SportsPose** and **Human3.6M** reference datasets.
+* **Weighted Scoring Model:**
+  $$\text{Injury Risk} = 35\% \times \text{Biomech Deviations} + 20\% \times \text{History} + 20\% \times \text{Asymmetry} + 15\% \times \text{Training Load} + 10\% \times \text{Fatigue}$$
+  * Score ranges between $1.0$ and $10.0$, classified into **Low**, **Moderate**, **High**, or **Critical** risk bands.
+
+---
+
 ## Technical Stack
-- **Frontend:** React 19, Vite, Tailwind CSS v4, Lucide React, Axios.
-- **Backend:** FastAPI, Python 3.11, SQLAlchemy, Uvicorn, PostgreSQL (production/Docker) & SQLite (local development fallback).
-- **Deployment:** Docker & Docker Compose.
+* **Frontend:** React 19, Vite, Tailwind CSS v4, Lucide React, Axios.
+* **Backend:** FastAPI, Python 3.11, SQLAlchemy, Uvicorn, PostgreSQL (production/Docker) & SQLite (local development fallback).
+* **Deployment:** Docker & Docker Compose.
 
 ---
 
@@ -73,39 +101,21 @@ By default, running locally fallbacks to **SQLite** (a file named `sports_injury
    ```bash
    npm run dev
    ```
-   *The frontend will be running at [http://localhost:5173](http://localhost:5173) (or the port shown in your terminal).*
+   *The frontend will be running at [http://localhost:5173](http://localhost:5173).*
 
 ---
 
-## How to Commit and Push Your Changes
-Follow these commands in your terminal to save and upload your progress:
+## Verification Testing
 
-1. **Check Status**: See which files you have modified or created:
-   ```bash
-   git status
-   ```
+You can verify the backend API workflows, database schemas, and ML prediction runs by executing the automated test client suites.
 
-2. **Stage Changes**: Add the files you want to commit.
-   - To add everything:
-     ```bash
-     git add .
-     ```
-   - To add specific files:
-     ```bash
-     git add path/to/file.ext
-     ```
+### Run Injury Prediction & Weighted Scoring Tests:
+Execute the test client within the running backend container context:
+```bash
+docker exec sports_injury_backend python test_injury_prediction.py
+```
 
-3. **Commit Changes**: Save your staged files with a clear, descriptive message:
-     ```bash
-     git commit -m "feat: your commit message describing what you did"
-     ```
-
-4. **Pull Latest Changes**: Ensure your branch is updated with remote work and handle any conflicts:
-     ```bash
-     git pull --rebase origin akhilkumar-thallada
-     ```
-
-5. **Push to Remote**: Push your commits to GitHub:
-     ```bash
-     git push origin akhilkumar-thallada
-     ```
+### Run Biomechanical Assessment Tests:
+```bash
+docker exec sports_injury_backend python verify_endpoints.py
+```
