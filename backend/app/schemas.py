@@ -156,6 +156,7 @@ class VideoAnalysisOut(BaseModel):
     frames_with_pose_detected: int | None
     created_at: datetime
     completed_at: datetime | None
+    pose_frames: dict | None
     biomechanics: dict | None
     risk_assessment: dict | None
     recommendations: dict | None

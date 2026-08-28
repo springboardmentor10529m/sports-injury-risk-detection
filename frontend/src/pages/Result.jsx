@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import {
   Activity, AlertTriangle, Bone, CheckCircle2, Gauge, HeartPulse, Loader2, Move, Scale,
 } from "lucide-react";
-import { getPoseFrames, getVideo } from "../api/client";
+import { getVideo } from "../api/client";
 import RiskGauge from "../components/RiskGauge";
 import Pose3DViewer from "../components/Pose3DViewer";
 import { RecoList } from "./Dashboard";
@@ -44,9 +44,8 @@ export default function Result() {
   }, [id]);
 
   useEffect(() => {
-    if (video?.status !== "completed") return;
-    getPoseFrames(id).then((res) => setPoseFrames(res.data)).catch(() => setPoseFrames(null));
-  }, [id, video?.status]);
+    if (video?.status === "completed") setPoseFrames(video.pose_frames || null);
+  }, [video]);
 
   if (error) return <div className="error-banner">{error}</div>;
   if (!video) return <p style={{ color: "var(--text-dim)" }}>Loading...</p>;
