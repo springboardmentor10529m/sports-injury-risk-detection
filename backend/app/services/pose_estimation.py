@@ -85,15 +85,15 @@ class PoseEstimator:
             min_tracking_confidence=0.5,
         )
         self._landmarker = mp_vision.PoseLandmarker.create_from_options(options)
+        self._last_timestamp_ms = -1
 
     def process(self, frames: list[ExtractedFrame]) -> list[FramePose]:
         results: list[FramePose] = []
-        last_ts = -1
         for ef in frames:
             ts = ef.timestamp_ms
-            if ts <= last_ts:
-                ts = last_ts + 1  # VIDEO mode requires strictly increasing timestamps
-            last_ts = ts
+            if ts <= self._last_timestamp_ms:
+                ts = self._last_timestamp_ms + 1  # The landmarker is reused across uploads.
+            self._last_timestamp_ms = ts
 
             rgb = cv2.cvtColor(ef.frame, cv2.COLOR_BGR2RGB)
             mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=np.ascontiguousarray(rgb))
