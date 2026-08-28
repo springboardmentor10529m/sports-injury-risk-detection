@@ -1,11 +1,25 @@
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models import User, VideoAnalysis, VideoStatus
 from app.routers.deps import require_athlete
+from app.services.injury_ml_model import predict_injury_risk, train_model
 
 router = APIRouter(prefix="/api/analysis", tags=["analysis"])
+
+
+class InjuryRiskFeatures(BaseModel):
+    weekly_training_hours: float = Field(..., ge=0)
+    acute_chronic_ratio: float | None = Field(default=None)
+    previous_injury_count: int = Field(default=0, ge=0)
+    days_since_last_injury: int | None = Field(default=None, ge=0)
+    current_pain_flag: bool = Field(default=False)
+    fatigue_score: float = Field(default=0.0, ge=0, le=100)
+    symmetry_score: float = Field(default=100.0, ge=0, le=100)
+    knee_valgus_avg_pct: float = Field(default=0.0, ge=0, le=100)
+    trunk_lean_avg_deg: float = Field(default=0.0, ge=0, le=100)
 
 
 @router.get("/dashboard-summary")
@@ -70,3 +84,19 @@ def risk_history(current_user: User = Depends(require_athlete), db: Session = De
         }
         for v in videos
     ]
+
+
+@router.post("/ml/train")
+def train_ml_model():
+    metrics = train_model()
+    return {
+        "message": "ML training complete",
+        "metrics": metrics,
+        "model_path": "/app/app/ml_models/injury_risk_model.joblib",
+    }
+
+
+@router.post("/ml/predict")
+def predict_ml_risk(payload: InjuryRiskFeatures):
+    features = payload.model_dump()
+    return predict_injury_risk(features)

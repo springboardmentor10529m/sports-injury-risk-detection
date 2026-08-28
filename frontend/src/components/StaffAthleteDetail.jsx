@@ -1,11 +1,22 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, FileClock } from "lucide-react";
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import RiskPill from "./RiskPill";
 
 export default function StaffAthleteDetail({ athleteId, fetchProfile, fetchVideos, backTo, backLabel, extra }) {
   const [profile, setProfile] = useState(null);
   const [videos, setVideos] = useState(null);
+
+  const trendData = (videos ?? [])
+    .filter((v) => v.status === "completed")
+    .slice()
+    .reverse()
+    .map((v) => ({
+      id: v.id,
+      date: new Date(v.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+      score: v.overall_risk_score,
+    }));
 
   useEffect(() => {
     fetchProfile(athleteId).then((res) => setProfile(res.data));
@@ -32,6 +43,30 @@ export default function StaffAthleteDetail({ athleteId, fetchProfile, fetchVideo
         <StatBox label="Previous injuries" value={profile.previous_injury_count} />
         <StatBox label="In pain now" value={profile.current_pain_flag ? "Yes" : "No"} warn={profile.current_pain_flag} />
       </div>
+
+      {trendData.length > 0 && (
+        <div className="card animate-in" style={{ marginBottom: 20 }}>
+          <div className="card-title">Risk trend</div>
+          <div style={{ height: 180 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={trendData} margin={{ top: 10, right: 8, left: -18, bottom: 0 }}>
+                <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+                <XAxis dataKey="date" stroke="var(--text-faint)" fontSize={12} />
+                <YAxis domain={[0, 100]} stroke="var(--text-faint)" fontSize={12} />
+                <Tooltip
+                  contentStyle={{
+                    background: "var(--surface-raised)",
+                    border: "1px solid var(--border)",
+                    borderRadius: 8,
+                    fontSize: 12,
+                  }}
+                />
+                <Line type="monotone" dataKey="score" stroke="var(--accent)" strokeWidth={2.5} dot={{ r: 4 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
 
       {videos && (
         <div className="card animate-in" style={{ marginBottom: 20 }}>

@@ -1,16 +1,97 @@
-# React + Vite
+# Sports Injury Risk Detection App
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+This frontend powers a sports injury monitoring platform for athletes, coaches, physiotherapists, sports scientists, and administrators. It connects to the FastAPI backend to show athlete profiles, risk scores, analysis history, recommendations, and role-based dashboards.
 
-Currently, two official plugins are available:
+## About the project
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+The application helps teams monitor athlete movement and detect injury risk using uploaded video analysis, biomechanics data, and role-specific reporting. Users can:
 
-## React Compiler
+- register and log in with different roles
+- upload athlete videos for analysis
+- review injury-risk results and recommendations
+- track athlete history and health trends
+- manage team and patient access by role
+- view platform-level insights as an admin
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Key features
 
-## Expanding the Oxlint configuration
+- Role-based dashboards for athlete, coach, physiotherapist, scientist, and admin
+- Video upload and analysis workflow linked to the backend pipeline
+- Injury-risk summary cards and trend visualization
+- Athlete detail pages with biomechanics and recommendation insights
+- Access control for linked athletes and staff assignments
+- Clean React + Vite interface for fast local development
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## Tech stack
+
+- React 19
+- Vite
+- React Router
+- Axios for API calls
+- Recharts for graphs and trend views
+- Lucide icons for UI elements
+
+## Project structure
+
+```bash
+frontend/
+  src/
+    components/
+    context/
+    pages/
+    api/
+    App.jsx
+    main.jsx
+  package.json
+  vite.config.js
+```
+
+## Local setup
+
+1. Install dependencies:
+
+```bash
+cd frontend
+npm install
+```
+
+2. Create your environment file if needed:
+
+```bash
+cp .env.example .env
+```
+
+3. Start the development server:
+
+```bash
+npm run dev
+```
+
+4. Open the app in the browser:
+
+```text
+http://localhost:5173
+```
+
+## Backend connection
+
+This frontend expects the backend API to be running, typically at:
+
+```text
+http://localhost:8000
+```
+
+Make sure the backend is started before testing the login, upload, and analysis flows.
+
+## Useful scripts
+
+```bash
+npm run dev      # start Vite dev server
+npm run build    # create production build
+npm run preview  # preview the production build
+npm run lint     # run project linting
+```
+
+## Notes
+
+This repo is designed as a full-stack product. The frontend is only one part of the system; the backend handles authentication, role-based authorization, video processing, risk calculations, and analytics.
