@@ -7,6 +7,10 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     DATABASE_URL: str = "sqlite:///./injury_guard.db"
+    DATABASE_HOST: str = ""
+    DATABASE_USER: str = "postgres"
+    DATABASE_PASSWORD: str = ""
+    DATABASE_NAME: str = "injury_guard"
 
     JWT_SECRET_KEY: str = "dev-secret-change-me"
     JWT_ALGORITHM: str = "HS256"

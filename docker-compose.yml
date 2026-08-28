@@ -19,7 +19,10 @@ services:
   backend:
     build: ./backend
     environment:
-      DATABASE_URL: postgresql+psycopg2://postgres:${POSTGRES_PASSWORD}@postgres:5432/injury_guard
+      DATABASE_HOST: postgres
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_NAME: injury_guard
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
       CORS_ORIGINS: http://localhost:5173
     ports:
