@@ -3,10 +3,13 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, FileClock } from "lucide-react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import RiskPill from "./RiskPill";
+import Pose3DViewer from "./Pose3DViewer";
 
-export default function StaffAthleteDetail({ athleteId, fetchProfile, fetchVideos, backTo, backLabel, extra }) {
+export default function StaffAthleteDetail({ athleteId, fetchProfile, fetchVideos, fetchPoseFrames, backTo, backLabel, extra }) {
   const [profile, setProfile] = useState(null);
   const [videos, setVideos] = useState(null);
+  const [selectedVideo, setSelectedVideo] = useState(null);
+  const [poseFrames, setPoseFrames] = useState(null);
 
   const trendData = (videos ?? [])
     .filter((v) => v.status === "completed")
@@ -21,7 +24,14 @@ export default function StaffAthleteDetail({ athleteId, fetchProfile, fetchVideo
   useEffect(() => {
     fetchProfile(athleteId).then((res) => setProfile(res.data));
     if (fetchVideos) fetchVideos(athleteId).then((res) => setVideos(res.data));
+    setSelectedVideo(null);
+    setPoseFrames(null);
   }, [athleteId]);
+
+  useEffect(() => {
+    if (!selectedVideo?.id || !selectedVideo.fetchPoseFrames) return;
+    selectedVideo.fetchPoseFrames(athleteId, selectedVideo.id).then((res) => setPoseFrames(res.data)).catch(() => setPoseFrames(null));
+  }, [athleteId, selectedVideo]);
 
   if (!profile) return <p style={{ color: "var(--text-dim)" }}>Loading...</p>;
 
@@ -68,6 +78,8 @@ export default function StaffAthleteDetail({ athleteId, fetchProfile, fetchVideo
         </div>
       )}
 
+      {poseFrames && <Pose3DViewer poseFrames={poseFrames} compact />}
+
       {videos && (
         <div className="card animate-in" style={{ marginBottom: 20 }}>
           <div className="card-title"><FileClock size={15} color="var(--accent)" /> Analysis history</div>
@@ -83,6 +95,13 @@ export default function StaffAthleteDetail({ athleteId, fetchProfile, fetchVideo
                     <td style={{ textTransform: "capitalize" }}>{v.status.replace(/_/g, " ")}</td>
                     <td>
                       {v.status === "completed" ? <RiskPill category={v.risk_category} score={v.overall_risk_score} /> : null}
+                    </td>
+                    <td style={{ textAlign: "right" }}>
+                      {v.status === "completed" && fetchPoseFrames ? (
+                        <button className="btn" type="button" style={{ fontSize: 12, padding: "6px 10px" }} onClick={() => setSelectedVideo({ ...v, fetchPoseFrames })}>
+                          {selectedVideo?.id === v.id ? "Selected" : "View 3D"}
+                        </button>
+                      ) : null}
                     </td>
                   </tr>
                 ))}

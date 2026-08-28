@@ -86,6 +86,18 @@ def get_patient_videos(
     return out
 
 
+@router.get("/patients/{athlete_id}/videos/{video_id}/pose-frames")
+def get_patient_pose_frames(
+    video_id: str,
+    athlete: AthleteProfile = Depends(require_linked_athlete(LinkType.PHYSIOTHERAPIST)),
+    db: Session = Depends(get_db),
+):
+    video = db.get(VideoAnalysis, video_id)
+    if video is None or video.athlete_id != athlete.id:
+        raise HTTPException(status_code=404, detail="Video not found")
+    return video.pose_frames or {"frames": []}
+
+
 @router.get("/patients/{athlete_id}/notes", response_model=list[ClinicalNoteOut])
 def list_notes(
     athlete: AthleteProfile = Depends(require_linked_athlete(LinkType.PHYSIOTHERAPIST)),

@@ -47,6 +47,7 @@ export const uploadVideo = (file, activityType, onUploadProgress) => {
 };
 export const listVideos = () => api.get("/api/videos");
 export const getVideo = (id) => api.get(`/api/videos/${id}`);
+export const getPoseFrames = (id) => api.get(`/api/videos/${id}/pose-frames`);
 
 // ---- Analysis / dashboard ----
 export const getDashboardSummary = () => api.get("/api/analysis/dashboard-summary");
@@ -59,6 +60,7 @@ export const addCoachAthlete = (athlete_email) => api.post("/api/coach/team/add"
 export const removeCoachAthlete = (athleteId) => api.delete(`/api/coach/team/${athleteId}`);
 export const getCoachAthleteProfile = (athleteId) => api.get(`/api/coach/athletes/${athleteId}`);
 export const getCoachAthleteVideos = (athleteId) => api.get(`/api/coach/athletes/${athleteId}/videos`);
+export const getCoachAthletePoseFrames = (athleteId, videoId) => api.get(`/api/coach/athletes/${athleteId}/videos/${videoId}/pose-frames`);
 
 // ---- Physiotherapist ----
 export const getPhysioPatients = () => api.get("/api/physio/patients");
@@ -66,6 +68,7 @@ export const addPhysioPatient = (athlete_email) => api.post("/api/physio/patient
 export const removePhysioPatient = (athleteId) => api.delete(`/api/physio/patients/${athleteId}`);
 export const getPhysioPatientProfile = (athleteId) => api.get(`/api/physio/patients/${athleteId}`);
 export const getPhysioPatientVideos = (athleteId) => api.get(`/api/physio/patients/${athleteId}/videos`);
+export const getPhysioPatientPoseFrames = (athleteId, videoId) => api.get(`/api/physio/patients/${athleteId}/videos/${videoId}/pose-frames`);
 export const getPhysioNotes = (athleteId) => api.get(`/api/physio/patients/${athleteId}/notes`);
 export const addPhysioNote = (athleteId, phase, note) =>
   api.post(`/api/physio/patients/${athleteId}/notes`, { phase, note });
@@ -75,6 +78,7 @@ export const getScientistAthletes = () => api.get("/api/scientist/athletes");
 export const addScientistAthlete = (athlete_email) => api.post("/api/scientist/athletes/add", { athlete_email });
 export const getScientistAthleteProfile = (athleteId) => api.get(`/api/scientist/athletes/${athleteId}`);
 export const getScientistAthleteVideos = (athleteId) => api.get(`/api/scientist/athletes/${athleteId}/videos`);
+export const getScientistAthletePoseFrames = (athleteId, videoId) => api.get(`/api/scientist/athletes/${athleteId}/videos/${videoId}/pose-frames`);
 
 // ---- Notifications ----
 export const getNotifications = () => api.get("/api/notifications");

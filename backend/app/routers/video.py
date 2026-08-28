@@ -71,3 +71,11 @@ def get_video(video_id: str, current_user: User = Depends(require_athlete), db: 
     if video is None or video.athlete_id != current_user.athlete_profile.id:
         raise HTTPException(status_code=404, detail="Video not found")
     return video
+
+
+@router.get("/{video_id}/pose-frames")
+def get_pose_frames(video_id: str, current_user: User = Depends(require_athlete), db: Session = Depends(get_db)):
+    video = db.get(VideoAnalysis, video_id)
+    if video is None or video.athlete_id != current_user.athlete_profile.id:
+        raise HTTPException(status_code=404, detail="Video not found")
+    return video.pose_frames or {"frames": []}

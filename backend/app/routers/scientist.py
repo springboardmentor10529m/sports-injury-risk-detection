@@ -65,6 +65,18 @@ def get_athlete_videos(
     return out
 
 
+@router.get("/athletes/{athlete_id}/videos/{video_id}/pose-frames")
+def get_athlete_pose_frames(
+    video_id: str,
+    athlete=Depends(require_linked_athlete(LinkType.SPORTS_SCIENTIST)),
+    db: Session = Depends(get_db),
+):
+    video = db.get(VideoAnalysis, video_id)
+    if video is None or video.athlete_id != athlete.id:
+        raise HTTPException(status_code=404, detail="Video not found")
+    return video.pose_frames or {"frames": []}
+
+
 @router.get("/analytics")
 def get_analytics(current_user: User = Depends(require_scientist), db: Session = Depends(get_db)):
     """All figures below are computed directly from this scientist's linked

@@ -87,3 +87,15 @@ def get_athlete_videos(
             item.risk_category = v.risk_assessment["risk_category"]
         out.append(item)
     return out
+
+
+@router.get("/athletes/{athlete_id}/videos/{video_id}/pose-frames")
+def get_athlete_pose_frames(
+    video_id: str,
+    athlete: AthleteProfile = Depends(require_linked_athlete(LinkType.COACH)),
+    db: Session = Depends(get_db),
+):
+    video = db.get(VideoAnalysis, video_id)
+    if video is None or video.athlete_id != athlete.id:
+        raise HTTPException(status_code=404, detail="Video not found")
+    return video.pose_frames or {"frames": []}

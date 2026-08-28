@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { ClipboardPlus } from "lucide-react";
-import { addPhysioNote, getPhysioNotes, getPhysioPatientProfile, getPhysioPatientVideos } from "../api/client";
+import { addPhysioNote, getPhysioNotes, getPhysioPatientPoseFrames, getPhysioPatientProfile, getPhysioPatientVideos } from "../api/client";
 import StaffAthleteDetail from "../components/StaffAthleteDetail";
 
 const PHASES = [
@@ -43,6 +43,7 @@ export default function PhysioPatientDetail() {
       athleteId={id}
       fetchProfile={getPhysioPatientProfile}
       fetchVideos={getPhysioPatientVideos}
+      fetchPoseFrames={getPhysioPatientPoseFrames}
       backTo="/physio/patients"
       backLabel="Back to patients"
       extra={
