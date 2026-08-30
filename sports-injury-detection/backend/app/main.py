@@ -1,27 +1,39 @@
 import os
 import uuid
 import shutil
+import json
 import cv2
 import numpy as np
 from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks, File, UploadFile, Form, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import OAuth2PasswordBearer
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, Response, HTMLResponse
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from typing import List, Dict, Any
 
+try:
+    from app.database import engine, Base, SessionLocal
+    from app import models
+    from app import schemas
+    from app.auth import hash_password, verify_password, create_access_token, decode_access_token
+    from app.video_processor import process_video_pose
+    from app.risk_engine import calculate_injury_risk
+    from app.recommender import generate_recommendations
+    from app.anomaly_engine import detect_movement_anomalies
+    from app.report_exporter import generate_pdf_report, generate_excel_report
+except ImportError:
+    from database import engine, Base, SessionLocal
+    import models
+    import schemas
+    from auth import hash_password, verify_password, create_access_token, decode_access_token
+    from video_processor import process_video_pose
+    from risk_engine import calculate_injury_risk
+    from recommender import generate_recommendations
+    from anomaly_engine import detect_movement_anomalies
+    from report_exporter import generate_pdf_report, generate_excel_report
 
-from app.database import engine, Base, SessionLocal
-from app import models
-from app import schemas
-from app.auth import hash_password, verify_password, create_access_token, decode_access_token
-from app.video_processor import process_video_pose
-from app.risk_engine import calculate_injury_risk
-from app.recommender import generate_recommendations
-from app.anomaly_engine import detect_movement_anomalies
-from app.report_exporter import generate_pdf_report, generate_excel_report
 
 
 # Initialize folders
@@ -473,145 +485,48 @@ def delete_injury_record(
 
 # Background Task for Video Processing
 def background_process_video(video_id: uuid.UUID, raw_path: str, processed_path: str, athlete_id: uuid.UUID):
+    try:
+        from app.services.video_service import video_service as _video_service
+    except ImportError:
+        from services.video_service import video_service as _video_service
+
     db = SessionLocal()
     try:
-        # 1. Run pose analysis
-        assessment_data = process_video_pose(raw_path, processed_path)
-        
-        if not assessment_data.get("processed", False):
-            raise ValueError(assessment_data.get("error", "Pose detection failed"))
-
-        # Fetch athlete details for training load
-        athlete = db.query(models.Athlete).filter(models.Athlete.athlete_id == athlete_id).first()
-        profile_dict = None
-        if athlete:
-            profile_dict = {
-                "sport_type": athlete.sport,
-                "training_load": athlete.training_load,
-                "injury_history": []
-            }
-            # Fetch past injuries from history
-            injuries = db.query(models.InjuryHistory).filter(models.InjuryHistory.athlete_id == athlete_id).all()
-            if injuries:
-                profile_dict["injury_history"] = [
-                    {"injury_type": i.injury_type, "severity": i.severity}
-                    for i in injuries
-                ]
-
-        # 2. Run risk engine
-        risk_data = calculate_injury_risk(assessment_data, profile_dict)
-
-        # 3. Generate recommendations
-        rec_data = generate_recommendations(risk_data)
-
-        # 4. Write results to database
-        db_analysis = models.AnalysisResult(
-            video_id=video_id,
-            athlete_id=athlete_id,
-            knee_valgus=assessment_data["joint_angles"]["min_knee_valgus_ratio"],
-            hip_stability=assessment_data["joint_angles"]["hip_tilt_max"],
-            trunk_lean=assessment_data["joint_angles"]["trunk_lean_avg"],
-            stride_length=1.2,  # default placeholder metric
-            joint_alignment=assessment_data["joint_angles"]["left_knee_avg"],
-            symmetry_score=assessment_data["symmetry_score"],
-            fatigue_score=float(risk_data["risk_score"] * 0.1),
-            movement_quality=100.0 - risk_data["risk_score"],
-            overall_risk_score=risk_data["risk_score"],
-            risk_level=risk_data["risk_category"]
-        )
-        db.add(db_analysis)
-        db.flush()
-
-        db_prediction = models.InjuryPrediction(
-            analysis_id=db_analysis.analysis_id,
-            acl_risk=risk_data["acl_risk"],
-            hamstring_risk=risk_data["hamstring_risk"],
-            ankle_risk=risk_data["ankle_risk"],
-            shoulder_risk=risk_data["shoulder_risk"],
-            lower_back_risk=risk_data["lower_back_risk"],
-            overuse_risk=risk_data["overuse_risk"]
-        )
-        db.add(db_prediction)
-        db.flush()
-
-        db_rec = models.Recommendation(
-            prediction_id=db_prediction.prediction_id,
-            exercise=rec_data["exercise"],
-            mobility=rec_data["mobility"],
-            strengthening=rec_data["strengthening"],
-            recovery=rec_data["recovery"],
-            training_modification=rec_data["training_modification"]
-        )
-        db.add(db_rec)
-
-        db_pose = models.PoseData(
-            video_id=video_id,
-            athlete_id=athlete_id,
-            frames=assessment_data.get("frames_timeline", []),
-            keypoints=assessment_data.get("joint_angles", {}),
-            skeleton=assessment_data.get("range_of_motion", {})
-        )
-        db.add(db_pose)
-
-        db_ailog = models.AiLog(
-            video_id=video_id,
-            model_name="MediaPipe Pose Tasks API",
-            inference_time=0.015,
-            confidence=0.88,
-            output="Success"
-        )
-        db.add(db_ailog)
-
-        # 5. Detect and save movement anomalies
-        anomalies_list = detect_movement_anomalies(assessment_data)
-        for a in anomalies_list:
-            db_anomaly = models.MovementAnomaly(
-                analysis_id=db_analysis.analysis_id,
+        # Ensure processing job exists
+        job = db.query(models.ProcessingJob).filter(models.ProcessingJob.video_id == video_id).first()
+        if not job:
+            job = models.ProcessingJob(
                 video_id=video_id,
-                timestamp_start=a["timestamp_start"],
-                timestamp_end=a["timestamp_end"],
-                issue_type=a["issue_type"],
-                severity=a["severity"],
-                confidence=a["confidence"],
-                affected_joints=a.get("affected_joints", ""),
-                description=a.get("description", "")
+                status="PROCESSING",
+                progress=10.0,
+                current_step="VALIDATING"
             )
-            db.add(db_anomaly)
-
-        # Update Video details and state
-        video = db.query(models.Video).filter(models.Video.video_id == video_id).first()
-        if video:
-            cap = cv2.VideoCapture(raw_path)
-            if cap.isOpened():
-                width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-                height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-                fps = int(cap.get(cv2.CAP_PROP_FPS)) or 30
-                frames_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-                video.resolution = f"{width}x{height}"
-                video.fps = fps
-                video.duration = float(frames_count) / fps if fps > 0 else 0.0
-                video.quality_score = 0.92
-                cap.release()
-            video.processing_status = "completed"
-
-        # Create high risk alert notification
-        if risk_data["risk_score"] >= 60.0:
-            db_notification = models.Notification(
-                user_id=db.query(models.Athlete).filter(models.Athlete.athlete_id == athlete_id).first().user_id,
-                title="High Injury Risk Alert",
-                message=f"Your latest video analysis showed an overall risk score of {risk_data['risk_score']}% ({risk_data['risk_category']}). Review recommendations immediately.",
-                notification_type="Alert"
-            )
-            db.add(db_notification)
-
-        db.commit()
-    except Exception as e:
-        db.rollback()
-        video = db.query(models.Video).filter(models.Video.video_id == video_id).first()
-        if video:
-            video.processing_status = f"failed: {str(e)}"
+            db.add(job)
             db.commit()
-        print(f"Error in background task for video {video_id}: {str(e)}")
+            db.refresh(job)
+
+        # Update the video_url to point at raw file so video_service can read it
+        db_video = db.query(models.Video).filter(models.Video.video_id == video_id).first()
+        if db_video and raw_path:
+            db_video.video_url = raw_path
+            db.commit()
+
+        _video_service.process_video_pipeline(
+            db=db,
+            video_id=video_id,
+            job_id=job.job_id
+        )
+    except Exception as e:
+        print(f"Error in background video processing: {e}")
+        # Mark job as failed if possible
+        try:
+            job = db.query(models.ProcessingJob).filter(models.ProcessingJob.video_id == video_id).first()
+            if job:
+                job.status = "FAILED"
+                job.error_message = str(e)
+                db.commit()
+        except Exception:
+            pass
     finally:
         db.close()
 
@@ -624,12 +539,26 @@ def upload_video(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    if current_user.role != models.UserRole.ATHLETE:
-        raise HTTPException(status_code=403, detail="Only athletes can upload videos for assessment")
-
     athlete = db.query(models.Athlete).filter(models.Athlete.user_id == current_user.user_id).first()
     if not athlete:
-        raise HTTPException(status_code=400, detail="Please create your athlete profile first before uploading videos.")
+        athlete = models.Athlete(
+            athlete_id=uuid.uuid4(),
+            user_id=current_user.user_id,
+            sport=activity or "General",
+            position="General",
+            age=22,
+            height=175.0,
+            weight=70.0,
+            training_load=10.0,
+            flexibility=75.0,
+            strength=75.0,
+            balance=75.0,
+            endurance=75.0,
+            coach_notes="Auto-created profile on video upload."
+        )
+        db.add(athlete)
+        db.commit()
+        db.refresh(athlete)
 
     video_id = uuid.uuid4()
     file_extension = os.path.splitext(file.filename)[1] or ".mp4"
@@ -650,6 +579,16 @@ def upload_video(
         processing_status="processing"
     )
     db.add(db_video)
+    
+    # Create processing job record
+    job = models.ProcessingJob(
+        video_id=video_id,
+        status="QUEUED",
+        progress=5.0,
+        current_step="UPLOADED"
+    )
+    db.add(job)
+
     db.commit()
     db.refresh(db_video)
 
@@ -662,6 +601,170 @@ def upload_video(
     )
 
     return db_video
+
+
+@app.get("/videos/{video_id}/status")
+def get_video_status(
+    video_id: str,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Real-time progress and status tracking for video pose processing job."""
+    v_uuid = uuid.UUID(video_id)
+    video = db.query(models.Video).filter(models.Video.video_id == v_uuid).first()
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+
+    job = db.query(models.ProcessingJob).filter(models.ProcessingJob.video_id == v_uuid).order_by(models.ProcessingJob.started_at.desc()).first()
+
+    return {
+        "video_id": str(video.video_id),
+        "status": video.processing_status.upper(),
+        "stage": job.current_step if job else video.processing_status.upper(),
+        "progress": job.progress if job else (100.0 if video.processing_status == "completed" else 50.0),
+        "error_message": job.error_message if job else None,
+        "activity": video.activity
+    }
+
+
+@app.get("/videos/{video_id}/pose")
+def get_video_pose_keypoints(
+    video_id: str,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Retrieve raw 33 MediaPipe keypoint landmark telemetry across all video frames."""
+    v_uuid = uuid.UUID(video_id)
+    pose_rec = db.query(models.PoseData).filter(models.PoseData.video_id == v_uuid).first()
+    if not pose_rec:
+        raise HTTPException(status_code=404, detail="Pose landmark telemetry not found for this video.")
+
+    try:
+        frames_keypoints = json.loads(pose_rec.keypoints_data) if isinstance(pose_rec.keypoints_data, str) else pose_rec.keypoints_data
+    except Exception:
+        frames_keypoints = []
+
+    return {
+        "video_id": str(video_id),
+        "total_frames": pose_rec.total_frames,
+        "fps": pose_rec.fps,
+        "keypoints_structure": "MediaPipe 33 Landmarks",
+        "frames": frames_keypoints
+    }
+
+
+@app.get("/videos/{video_id}/processed-video")
+def get_processed_video_file(
+    video_id: str,
+    db: Session = Depends(get_db)
+):
+    """Stream annotated skeleton overlay MP4 video."""
+    v_uuid = uuid.UUID(video_id)
+    video = db.query(models.Video).filter(models.Video.video_id == v_uuid).first()
+    if not video or not video.processed_filepath:
+        raise HTTPException(status_code=404, detail="Processed video file not available.")
+
+    rel_path = video.processed_filepath.lstrip("/\\")
+    if not os.path.exists(rel_path):
+        rel_path = video.filepath
+
+    if not os.path.exists(rel_path):
+        raise HTTPException(status_code=404, detail="Video file missing on server.")
+
+    return FileResponse(rel_path, media_type="video/mp4")
+
+
+@app.get("/athletes/{athlete_id}/analyses")
+def get_athlete_analyses_history(
+    athlete_id: str,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Retrieves all past movement analyses for a specified athlete ID."""
+    ath_uuid = uuid.UUID(athlete_id)
+    videos = db.query(models.Video).filter(models.Video.athlete_id == ath_uuid).order_by(models.Video.uploaded_at.desc()).all()
+    
+    video_ids = [v.video_id for v in videos]
+    analyses = db.query(models.AnalysisResult).filter(models.AnalysisResult.video_id.in_(video_ids)).all() if video_ids else []
+
+    results = []
+    for v in videos:
+        an = next((a for a in analyses if a.video_id == v.video_id), None)
+        results.append({
+            "video_id": str(v.video_id),
+            "activity": v.activity or "Assessment",
+            "uploaded_at": v.uploaded_at,
+            "status": v.processing_status,
+            "quality_score": an.quality_score if an else None,
+            "risk_level": an.risk_level if an else None
+        })
+
+    return results
+
+
+@app.get("/reports/{video_id}/biomechanics", response_class=HTMLResponse)
+def get_biomechanics_html_report(
+    video_id: str,
+    db: Session = Depends(get_db)
+):
+    """Returns an interactive HTML Biomechanical Assessment Report with research prototype disclaimers."""
+    v_uuid = uuid.UUID(video_id)
+    video = db.query(models.Video).filter(models.Video.video_id == v_uuid).first()
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+
+    analysis = db.query(models.AnalysisResult).filter(models.AnalysisResult.video_id == v_uuid).first()
+    athlete = db.query(models.Athlete).filter(models.Athlete.athlete_id == video.athlete_id).first()
+    user = db.query(models.User).filter(models.User.user_id == athlete.user_id).first() if athlete else None
+
+    athlete_name = user.name if user else "Athlete"
+    sport = athlete.sport if athlete else "General Sport"
+    metrics = json.loads(analysis.assessment_metrics) if (analysis and analysis.assessment_metrics) else {}
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Biomechanical Movement Assessment Report</title>
+        <style>
+            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 40px; }}
+            .container {{ max-width: 800px; margin: 0 auto; background: #1e293b; padding: 30px; border-radius: 20px; border: 1px solid #334155; }}
+            h1 {{ color: #38bdf8; font-size: 24px; margin-bottom: 5px; }}
+            .sub {{ color: #94a3b8; font-size: 14px; margin-bottom: 25px; }}
+            .grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }}
+            .card {{ background: #0f172a; padding: 15px; border-radius: 12px; border: 1px solid #334155; }}
+            .label {{ color: #94a3b8; font-size: 11px; text-transform: uppercase; font-weight: bold; }}
+            .value {{ color: #38bdf8; font-size: 20px; font-weight: bold; margin-top: 5px; }}
+            .disclaimer {{ background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); padding: 15px; border-radius: 12px; font-size: 12px; color: #fef08a; margin-top: 30px; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Biomechanical Assessment Report</h1>
+            <div class="sub">Athlete: <strong>{athlete_name}</strong> | Activity: <strong>{video.activity or 'Movement'}</strong> | Sport: <strong>{sport}</strong></div>
+
+            <div class="grid">
+                <div class="card"><div class="label">Movement Quality Score</div><div class="value">{analysis.quality_score if analysis else 85.0}%</div></div>
+                <div class="card"><div class="label">Knee Valgus Ratio</div><div class="value">{metrics.get('knee_valgus', 0.88)}</div></div>
+                <div class="card"><div class="label">Trunk Lean Angle</div><div class="value">{metrics.get('trunk_lean', 12.0)}°</div></div>
+                <div class="card"><div class="label">Bilateral Limb Symmetry</div><div class="value">{metrics.get('symmetry_score', 92.0)}%</div></div>
+                <div class="card"><div class="label">Stride Length Indicator</div><div class="value">{metrics.get('stride_length', 1.25)}m</div></div>
+                <div class="card"><div class="label">Balance / Stability Score</div><div class="value">{metrics.get('stability_score', 90.0)}%</div></div>
+            </div>
+
+            <div class="card">
+                <div class="label">Technique & Posture Assessment</div>
+                <p style="font-size: 13px; color: #cbd5e1; margin-top: 8px;">{metrics.get('posture_assessment', 'Consistent joint tracking and balanced body posture observed.')}</p>
+            </div>
+
+            <div class="disclaimer">
+                <strong>Research & Educational Disclaimer:</strong> This document is generated by an automated AI computer-vision prototype. All metrics serve strictly as movement screening indicators and do NOT provide medical diagnosis or replace evaluation by a licensed sports healthcare professional.
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)
 
 
 @app.get("/videos/list", response_model=List[schemas.VideoResponse])
@@ -757,6 +860,29 @@ def get_video_analysis(
             } for a in anomalies
         ]
     }
+
+
+@app.get("/analyses/{analysis_id}")
+def get_analysis_by_id(
+    analysis_id: str,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Retrieve analysis result by analysis_id or video_id (alias endpoint)."""
+    try:
+        a_uuid = uuid.UUID(analysis_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid UUID format")
+
+    analysis = db.query(models.AnalysisResult).filter(models.AnalysisResult.analysis_id == a_uuid).first()
+    if not analysis:
+        analysis = db.query(models.AnalysisResult).filter(models.AnalysisResult.video_id == a_uuid).first()
+
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analysis result not found")
+
+    return get_video_analysis(video_id=str(analysis.video_id), current_user=current_user, db=db)
+
 
 
 @app.get("/reports/{video_id}/pdf")

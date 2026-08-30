@@ -599,10 +599,11 @@
                     setUploading(false);
                     setUploadFile(null);
                     fetchVideos();
+                    fetchProfile();
                     setActiveTab('dashboard');
                 } catch (err) {
                     setUploading(false);
-                    setUploadError(err.response?.data?.detail || 'Video upload failed. Make sure your athlete profile is set up.');
+                    setUploadError(err.response?.data?.detail || err.message || 'Video upload failed. Please try again.');
                 }
             };
 
