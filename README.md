@@ -114,3 +114,34 @@ Frontend & backend:
           └─────── API ────┘
                     │
                PostgreSQL
+
+
+Dashboard
+│
+├── Athlete Profile
+│
+├── My Videos
+│     ├── Video #4
+│     │     ├── View Video
+│     │     └── Delete
+│     │
+│     └── Upload New Video
+│
+└── Statistics
+
+
+Dashboard
+      ↓
+Click Delete
+      ↓
+Confirmation
+      ↓
+DELETE /api/athlete/videos/4/
+      ↓
+Django
+ ├── Original video deleted
+ ├── Processed frames deleted
+ ├── Pose results deleted
+ └── Database record deleted
+      ↓
+Dashboard refreshes               
