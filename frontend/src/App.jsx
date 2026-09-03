@@ -15,6 +15,7 @@ import Unauthorized from './pages/common/Unauthorized'
 import RoleDashboard from './pages/common/RoleDashboard'
 import WorkspacePage from './pages/common/WorkspacePage'
 import OrganizationOverview from './pages/common/OrganizationOverview'
+import InviteMember from './pages/InviteMember'
 
 function RoleDashboardRedirect() {
   const { userRole } = useAuth()
@@ -102,7 +103,9 @@ function AppRoutes() {
           <Route path="/admin/athletes/add" element={<AddAthlete />} />
           <Route path="/admin/athletes/:id/edit" element={<EditAthlete />} />
           <Route path="/admin/coaches" element={<WorkspacePage type="coaches" />} />
+          <Route path="/admin/coaches/invite" element={<InviteMember role={ROLES.COACH} />} />
           <Route path="/admin/physiotherapists" element={<WorkspacePage type="physiotherapists" />} />
+          <Route path="/admin/physiotherapists/invite" element={<InviteMember role={ROLES.PHYSIOTHERAPIST} />} />
           <Route path="/admin/teams" element={<WorkspacePage type="teams" />} />
           <Route path="/admin/reports" element={<WorkspacePage type="reports" />} />
           <Route path="/admin/access-permissions" element={<WorkspacePage type="access" />} />

@@ -37,4 +37,10 @@ export const authApi = {
   getAthletes: () => request('/admin/athletes', { method: 'GET' }),
   assignAthlete: (userId, data = {}) => request(`/admin/athletes/${userId}/assign`, { method: 'POST', body: JSON.stringify(data) }),
   unassignAthlete: (userId) => request(`/admin/athletes/${userId}/unassign`, { method: 'POST' }),
+  getCoaches: () => request('/admin/coaches', { method: 'GET' }),
+  inviteCoach: (data) => request('/admin/coaches/invite', { method: 'POST', body: JSON.stringify(data) }),
+  unassignCoach: (userId) => request(`/admin/coaches/${userId}/unassign`, { method: 'POST' }),
+  getPhysiotherapists: () => request('/admin/physiotherapists', { method: 'GET' }),
+  invitePhysiotherapist: (data) => request('/admin/physiotherapists/invite', { method: 'POST', body: JSON.stringify(data) }),
+  unassignPhysiotherapist: (userId) => request(`/admin/physiotherapists/${userId}/unassign`, { method: 'POST' }),
 };

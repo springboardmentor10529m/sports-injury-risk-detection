@@ -7,8 +7,8 @@ import { authApi } from '../../services/authApi'
 
 const pageConfig = {
   athletes: { title: 'Athletes', breadcrumb: 'Organization / Athletes', description: 'View and manage athlete organization profiles within your administrator scope.', action: 'Add Athlete', actionTo: '/admin/athletes/add', empty: 'No organization athletes have been added yet.' },
-  coaches: { title: 'Coaches', breadcrumb: 'Organization / Coaches', description: 'Invite coaches, manage membership, and review assigned athlete scope.', action: 'Invite Coach', empty: 'No coach membership records are available.' },
-  physiotherapists: { title: 'Physiotherapists', breadcrumb: 'Organization / Physiotherapists', description: 'Invite physiotherapists and manage their organization assignments.', action: 'Invite Physiotherapist', empty: 'No physiotherapist membership records are available.' },
+  coaches: { title: 'Coaches', breadcrumb: 'Organization / Coaches', description: 'Invite coaches, manage membership, and review assigned athlete scope.', action: 'Invite Coach', actionTo: '/admin/coaches/invite', empty: 'No coach membership records are available.' },
+  physiotherapists: { title: 'Physiotherapists', breadcrumb: 'Organization / Physiotherapists', description: 'Invite physiotherapists and manage their organization assignments.', action: 'Invite Physiotherapist', actionTo: '/admin/physiotherapists/invite', empty: 'No physiotherapist membership records are available.' },
   teams: { title: 'Teams / Groups', breadcrumb: 'Organization / Teams', description: 'Create teams and coordinate athlete, coach, and physiotherapist assignments.', action: 'Create Team', empty: 'No teams or groups have been created.' },
   access: { title: 'Access & Permissions', breadcrumb: 'Organization / Access', description: 'Review organization members, roles, status, assignments, and access scope.', empty: 'No organization membership records are available.' },
   analytics: { title: 'Organization Analytics', breadcrumb: 'Organization / Analytics', description: 'Review the structure for population, assessment activity, injury trends, and team activity.', empty: 'Analytics will appear when organization records and assessments are available.' },
@@ -32,16 +32,21 @@ function WorkspacePage({ type, role = ROLES.ADMIN }) {
 
   const [search, setSearch] = useState('')
   const [dbAthletes, setDbAthletes] = useState([])
+  const [dbCoaches, setDbCoaches] = useState([])
+  const [dbPhysios, setDbPhysios] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [successBanner, setSuccessBanner] = useState('')
 
-  const [athleteToRemove, setAthleteToRemove] = useState(null)
+  const [memberToRemove, setMemberToRemove] = useState(null)
+  const [removeRole, setRemoveRole] = useState('athlete')
   const [isRemoving, setIsRemoving] = useState(false)
 
   const isAthleteScope = type === 'athletes' || type === 'athleteProfile'
+  const isCoachScope = type === 'coaches'
+  const isPhysioScope = type === 'physiotherapists'
 
-  const fetchAthletes = useCallback(() => {
+  const fetchData = useCallback(() => {
     if (isAthleteScope) {
       setLoading(true)
       setError('')
@@ -61,12 +66,50 @@ function WorkspacePage({ type, role = ROLES.ADMIN }) {
         .finally(() => {
           setLoading(false)
         })
+    } else if (isCoachScope) {
+      setLoading(true)
+      setError('')
+      authApi
+        .getCoaches()
+        .then((res) => {
+          if (Array.isArray(res?.coaches)) {
+            setDbCoaches(res.coaches)
+          } else {
+            setDbCoaches([])
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to fetch organization coaches:', err)
+          setError(err.message || 'Failed to fetch organization coaches.')
+        })
+        .finally(() => {
+          setLoading(false)
+        })
+    } else if (isPhysioScope) {
+      setLoading(true)
+      setError('')
+      authApi
+        .getPhysiotherapists()
+        .then((res) => {
+          if (Array.isArray(res?.physiotherapists)) {
+            setDbPhysios(res.physiotherapists)
+          } else {
+            setDbPhysios([])
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to fetch organization physiotherapists:', err)
+          setError(err.message || 'Failed to fetch organization physiotherapists.')
+        })
+        .finally(() => {
+          setLoading(false)
+        })
     }
-  }, [isAthleteScope])
+  }, [isAthleteScope, isCoachScope, isPhysioScope])
 
   useEffect(() => {
-    fetchAthletes()
-  }, [fetchAthletes])
+    fetchData()
+  }, [fetchData])
 
   useEffect(() => {
     if (location.state?.message) {
@@ -76,21 +119,29 @@ function WorkspacePage({ type, role = ROLES.ADMIN }) {
   }, [location])
 
   const handleConfirmRemove = async () => {
-    if (!athleteToRemove) return
-    const targetId = athleteToRemove.id || athleteToRemove.userId
+    if (!memberToRemove) return
+    const targetId = memberToRemove.id || memberToRemove.userId
     setIsRemoving(true)
     setSuccessBanner('')
     try {
-      await authApi.unassignAthlete(targetId)
-      setSuccessBanner('Athlete removed from the organization successfully.')
-      setAthleteToRemove(null)
-      fetchAthletes()
+      if (removeRole === 'coach') {
+        await authApi.unassignCoach(targetId)
+        setSuccessBanner('Coach removed from the organization successfully.')
+      } else if (removeRole === 'physiotherapist') {
+        await authApi.unassignPhysiotherapist(targetId)
+        setSuccessBanner('Physiotherapist removed from the organization successfully.')
+      } else {
+        await authApi.unassignAthlete(targetId)
+        setSuccessBanner('Athlete removed from the organization successfully.')
+      }
+      setMemberToRemove(null)
+      fetchData()
       if (type === 'athleteProfile') {
         navigate('/admin/athletes', { replace: true })
       }
     } catch (err) {
-      console.error('Failed to remove athlete:', err)
-      alert(err.message || 'Failed to remove athlete from organization.')
+      console.error(`Failed to remove ${removeRole}:`, err)
+      alert(err.message || `Failed to remove ${removeRole} from organization.`)
     } finally {
       setIsRemoving(false)
     }
@@ -135,6 +186,122 @@ function WorkspacePage({ type, role = ROLES.ADMIN }) {
         <ActionButton to={role === ROLES.ADMIN ? `/admin/athletes/${row.id || row.userId}` : `/coach/athletes/${row.id || row.userId}`} secondary>
           View Profile
         </ActionButton>
+      ),
+    },
+  ]
+
+  const coachRows = dbCoaches.filter((c) =>
+    `${c.name} ${c.email} ${c.organizationMemberId || ''} ${c.organizationName || ''} ${c.phone || ''}`
+      .toLowerCase()
+      .includes(search.toLowerCase())
+  )
+
+  const coachColumns = [
+    {
+      key: 'name',
+      label: 'Coach Name',
+      render: (row) => (
+        <div>
+          <strong>{row.name}</strong>
+          <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{row.email}</div>
+        </div>
+      ),
+    },
+    { key: 'phone', label: 'Phone', render: (row) => row.phone || 'N/A' },
+    { key: 'organizationMemberId', label: 'Member ID', render: (row) => <strong>{row.organizationMemberId || 'ORG-DEV'}</strong> },
+    { key: 'organizationName', label: 'Organization', render: (row) => row.organizationName || 'Development Organization' },
+    {
+      key: 'status',
+      label: 'Status',
+      render: (row) => (
+        <StatusBadge tone={row.membershipStatus === 'active' ? 'active' : 'neutral'}>
+          {row.membershipStatus === 'active' ? 'Active' : row.membershipStatus || 'Independent'}
+        </StatusBadge>
+      ),
+    },
+    {
+      key: 'action',
+      label: 'Action',
+      render: (row) => (
+        role === ROLES.ADMIN ? (
+          <button
+            type="button"
+            style={{
+              background: '#fef2f2',
+              color: '#dc2626',
+              border: '1px solid #fecaca',
+              borderRadius: '6px',
+              padding: '6px 12px',
+              fontSize: '0.8rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+            }}
+            onClick={() => {
+              setMemberToRemove(row)
+              setRemoveRole('coach')
+            }}
+          >
+            Remove
+          </button>
+        ) : null
+      ),
+    },
+  ]
+
+  const physioRows = dbPhysios.filter((p) =>
+    `${p.name} ${p.email} ${p.organizationMemberId || ''} ${p.organizationName || ''} ${p.phone || ''}`
+      .toLowerCase()
+      .includes(search.toLowerCase())
+  )
+
+  const physioColumns = [
+    {
+      key: 'name',
+      label: 'Physiotherapist Name',
+      render: (row) => (
+        <div>
+          <strong>{row.name}</strong>
+          <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{row.email}</div>
+        </div>
+      ),
+    },
+    { key: 'phone', label: 'Phone', render: (row) => row.phone || 'N/A' },
+    { key: 'organizationMemberId', label: 'Member ID', render: (row) => <strong>{row.organizationMemberId || 'ORG-DEV'}</strong> },
+    { key: 'organizationName', label: 'Organization', render: (row) => row.organizationName || 'Development Organization' },
+    {
+      key: 'status',
+      label: 'Status',
+      render: (row) => (
+        <StatusBadge tone={row.membershipStatus === 'active' ? 'active' : 'neutral'}>
+          {row.membershipStatus === 'active' ? 'Active' : row.membershipStatus || 'Independent'}
+        </StatusBadge>
+      ),
+    },
+    {
+      key: 'action',
+      label: 'Action',
+      render: (row) => (
+        role === ROLES.ADMIN ? (
+          <button
+            type="button"
+            style={{
+              background: '#fef2f2',
+              color: '#dc2626',
+              border: '1px solid #fecaca',
+              borderRadius: '6px',
+              padding: '6px 12px',
+              fontSize: '0.8rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+            }}
+            onClick={() => {
+              setMemberToRemove(row)
+              setRemoveRole('physiotherapist')
+            }}
+          >
+            Remove
+          </button>
+        ) : null
       ),
     },
   ]
@@ -230,7 +397,10 @@ function WorkspacePage({ type, role = ROLES.ADMIN }) {
                         cursor: 'pointer',
                         transition: 'all 0.2s ease',
                       }}
-                      onClick={() => setAthleteToRemove(athlete)}
+                      onClick={() => {
+                        setMemberToRemove(athlete)
+                        setRemoveRole('athlete')
+                      }}
                     >
                       Remove Athlete from Organization
                     </button>
@@ -250,6 +420,17 @@ function WorkspacePage({ type, role = ROLES.ADMIN }) {
               <select aria-label="Filter sports"><option>All sports</option></select>
             </SearchFilterBar>
           )}
+          {type === 'coaches' && (
+            <SearchFilterBar placeholder="Search coaches by name, email, or Member ID" value={search} onChange={(e) => setSearch(e.target.value)}>
+              <select aria-label="Filter status"><option>All statuses</option><option>Active</option></select>
+            </SearchFilterBar>
+          )}
+          {type === 'physiotherapists' && (
+            <SearchFilterBar placeholder="Search physiotherapists by name, email, or Member ID" value={search} onChange={(e) => setSearch(e.target.value)}>
+              <select aria-label="Filter status"><option>All statuses</option><option>Active</option></select>
+            </SearchFilterBar>
+          )}
+
           {type === 'athletes' ? (
             loading ? (
               <div style={{ padding: '24px', textAlign: 'center', color: '#64748b' }}>Loading organization athletes...</div>
@@ -258,13 +439,29 @@ function WorkspacePage({ type, role = ROLES.ADMIN }) {
             ) : (
               <DataTable columns={columns} rows={rows} emptyTitle={config.empty} emptyDescription="Use Add Athlete to assign a registered athlete to your organization." />
             )
+          ) : type === 'coaches' ? (
+            loading ? (
+              <div style={{ padding: '24px', textAlign: 'center', color: '#64748b' }}>Loading organization coaches...</div>
+            ) : error ? (
+              <div style={{ padding: '16px', color: '#dc2626', background: '#fef2f2', borderRadius: '8px' }}>{error}</div>
+            ) : (
+              <DataTable columns={coachColumns} rows={coachRows} emptyTitle={config.empty} emptyDescription="Click Invite Coach above to invite a coach to your organization." />
+            )
+          ) : type === 'physiotherapists' ? (
+            loading ? (
+              <div style={{ padding: '24px', textAlign: 'center', color: '#64748b' }}>Loading organization physiotherapists...</div>
+            ) : error ? (
+              <div style={{ padding: '16px', color: '#dc2626', background: '#fef2f2', borderRadius: '8px' }}>{error}</div>
+            ) : (
+              <DataTable columns={physioColumns} rows={physioRows} emptyTitle={config.empty} emptyDescription="Click Invite Physiotherapist above to invite a physiotherapist to your organization." />
+            )
           ) : (
-            <EmptyState title={config.empty} description="This production UI is ready for connected records. No business data has been fabricated." action={config.action && <ActionButton>{config.action}</ActionButton>} />
+            <EmptyState title={config.empty} description="This production UI is ready for connected records. No business data has been fabricated." action={config.action && <ActionButton to={config.actionTo}>{config.action}</ActionButton>} />
           )}
         </Panel>
       )}
 
-      {athleteToRemove && (
+      {memberToRemove && (
         <div
           style={{
             position: 'fixed',
@@ -287,11 +484,11 @@ function WorkspacePage({ type, role = ROLES.ADMIN }) {
               boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
             }}
           >
-            <h3 style={{ margin: '0 0 8px', fontSize: '1.15rem', color: '#0f172a' }}>
-              Remove Athlete from Organization?
+            <h3 style={{ margin: '0 0 8px', fontSize: '1.15rem', color: '#0f172a', textTransform: 'capitalize' }}>
+              Remove {removeRole} from Organization?
             </h3>
             <p style={{ margin: '0 0 16px', fontSize: '0.875rem', color: '#64748b', lineHeight: '1.5' }}>
-              This will remove the athlete from your organization, but their account and athlete profile will not be deleted.
+              This will remove the {removeRole} from your organization, but their user account will not be deleted.
             </p>
 
             <div
@@ -303,15 +500,15 @@ function WorkspacePage({ type, role = ROLES.ADMIN }) {
                 marginBottom: '20px',
               }}
             >
-              <strong style={{ display: 'block', color: '#1e293b' }}>{athleteToRemove.name}</strong>
-              <small style={{ color: '#64748b' }}>{athleteToRemove.email} · Member ID: {athleteToRemove.organizationMemberId || 'N/A'}</small>
+              <strong style={{ display: 'block', color: '#1e293b' }}>{memberToRemove.name}</strong>
+              <small style={{ color: '#64748b' }}>{memberToRemove.email} · Member ID: {memberToRemove.organizationMemberId || 'N/A'}</small>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
               <button
                 type="button"
                 disabled={isRemoving}
-                onClick={() => setAthleteToRemove(null)}
+                onClick={() => setMemberToRemove(null)}
                 style={{
                   background: '#f1f5f9',
                   color: '#475569',
@@ -340,7 +537,7 @@ function WorkspacePage({ type, role = ROLES.ADMIN }) {
                   cursor: 'pointer',
                 }}
               >
-                {isRemoving ? 'Removing...' : 'Remove Athlete'}
+                {isRemoving ? 'Removing...' : `Remove ${removeRole.charAt(0).toUpperCase() + removeRole.slice(1)}`}
               </button>
             </div>
           </div>

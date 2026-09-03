@@ -19,6 +19,13 @@ async function runMigrations() {
     await db.query(migration2);
     console.log('✓ Applied 002_auth_schema.sql');
 
+    const migration3 = fs.readFileSync(
+      path.join(__dirname, '../../../database/migrations/003_org_member_id.sql'),
+      'utf8'
+    );
+    await db.query(migration3);
+    console.log('✓ Applied 003_org_member_id.sql');
+
     console.log('\nMigrations completed successfully!');
     process.exit(0);
   } catch (err) {
