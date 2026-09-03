@@ -22,3 +22,14 @@ def test_train_and_predict_baseline_model():
 
     assert 0.0 <= prediction["probability"] <= 1.0
     assert prediction["risk_level"] in {"LOW", "MODERATE", "HIGH", "CRITICAL"}
+
+
+def test_real_dataset_training_when_available():
+    try:
+        metrics = train_model(use_real_dataset=True)
+    except FileNotFoundError:
+        return
+
+    assert "rows" in metrics
+    assert "roc_auc" in metrics
+    assert 0.0 <= metrics["roc_auc"] <= 1.0

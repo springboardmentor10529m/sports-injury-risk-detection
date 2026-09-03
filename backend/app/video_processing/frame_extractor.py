@@ -6,6 +6,8 @@ from dataclasses import dataclass
 import cv2
 import numpy as np
 
+MAX_WORKING_FRAME_DIMENSION = 1280
+
 
 class VideoReadError(Exception):
     pass
@@ -52,6 +54,15 @@ def extract_frames(video_path: str, sample_fps: float) -> tuple[list[ExtractedFr
         if not ret:
             break
         if idx % step == 0:
+            height, width = frame_bgr.shape[:2]
+            longest_dimension = max(height, width)
+            if longest_dimension > MAX_WORKING_FRAME_DIMENSION:
+                scale = MAX_WORKING_FRAME_DIMENSION / longest_dimension
+                frame_bgr = cv2.resize(
+                    frame_bgr,
+                    (round(width * scale), round(height * scale)),
+                    interpolation=cv2.INTER_AREA,
+                )
             timestamp_ms = int((idx / source_fps) * 1000)
             frames.append(ExtractedFrame(frame=frame_bgr, timestamp_ms=timestamp_ms, frame_index=idx))
         idx += 1

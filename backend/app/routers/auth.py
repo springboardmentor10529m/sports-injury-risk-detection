@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -28,7 +29,8 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
 def _check_email_free(db: Session, email: str) -> None:
-    if db.query(User).filter(User.email == email).first():
+    normalized_email = email.strip().lower()
+    if db.query(User).filter(func.lower(User.email) == normalized_email).first():
         raise HTTPException(status_code=400, detail="An account with this email already exists.")
 
 
@@ -37,7 +39,7 @@ def register_athlete(payload: RegisterRequest, db: Session = Depends(get_db)):
     _check_email_free(db, payload.email)
 
     user = User(
-        email=payload.email, hashed_password=hash_password(payload.password),
+        email=payload.email.strip().lower(), hashed_password=hash_password(payload.password),
         full_name=payload.full_name, role=UserRole.ATHLETE,
     )
     db.add(user)
@@ -63,7 +65,7 @@ def register_athlete(payload: RegisterRequest, db: Session = Depends(get_db)):
 def register_coach(payload: RegisterCoachRequest, db: Session = Depends(get_db)):
     _check_email_free(db, payload.email)
     user = User(
-        email=payload.email, hashed_password=hash_password(payload.password),
+        email=payload.email.strip().lower(), hashed_password=hash_password(payload.password),
         full_name=payload.full_name, role=UserRole.COACH,
     )
     db.add(user)
@@ -82,7 +84,7 @@ def register_coach(payload: RegisterCoachRequest, db: Session = Depends(get_db))
 def register_physio(payload: RegisterPhysioRequest, db: Session = Depends(get_db)):
     _check_email_free(db, payload.email)
     user = User(
-        email=payload.email, hashed_password=hash_password(payload.password),
+        email=payload.email.strip().lower(), hashed_password=hash_password(payload.password),
         full_name=payload.full_name, role=UserRole.PHYSIOTHERAPIST,
     )
     db.add(user)
@@ -101,7 +103,7 @@ def register_physio(payload: RegisterPhysioRequest, db: Session = Depends(get_db
 def register_scientist(payload: RegisterScientistRequest, db: Session = Depends(get_db)):
     _check_email_free(db, payload.email)
     user = User(
-        email=payload.email, hashed_password=hash_password(payload.password),
+        email=payload.email.strip().lower(), hashed_password=hash_password(payload.password),
         full_name=payload.full_name, role=UserRole.SPORTS_SCIENTIST,
     )
     db.add(user)
@@ -118,7 +120,8 @@ def register_scientist(payload: RegisterScientistRequest, db: Session = Depends(
 
 @router.post("/login", response_model=TokenResponse)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == form_data.username).first()
+    normalized_email = form_data.username.strip().lower()
+    user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Incorrect email or password")
     if not user.is_active:
@@ -129,7 +132,8 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 
 @router.post("/login-json", response_model=TokenResponse)
 def login_json(payload: LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == payload.email).first()
+    normalized_email = payload.email.strip().lower()
+    user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
     if not user or not verify_password(payload.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Incorrect email or password")
     if not user.is_active:

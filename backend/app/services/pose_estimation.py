@@ -9,6 +9,8 @@ results.
 
 from dataclasses import dataclass
 from pathlib import Path
+import threading
+from typing import Callable
 
 import cv2
 import mediapipe as mp
@@ -63,6 +65,12 @@ def _landmark_dict(landmark_list, world: bool) -> dict[str, tuple[float, float, 
     return out
 
 
+def _enforce_monotonic_timestamp(last_timestamp_ms: int, proposed_timestamp_ms: int) -> int:
+    if proposed_timestamp_ms <= last_timestamp_ms:
+        return last_timestamp_ms + 1
+    return proposed_timestamp_ms
+
+
 class PoseEstimator:
     """Wraps a MediaPipe PoseLandmarker running in VIDEO mode so that
     timestamps must be strictly increasing across calls - matching how we
@@ -80,19 +88,34 @@ class PoseEstimator:
             base_options=base_options,
             running_mode=mp_vision.RunningMode.VIDEO,
             num_poses=1,
-            min_pose_detection_confidence=0.5,
-            min_pose_presence_confidence=0.5,
-            min_tracking_confidence=0.5,
+            min_pose_detection_confidence=0.3,
+            min_pose_presence_confidence=0.3,
+            min_tracking_confidence=0.3,
         )
         self._landmarker = mp_vision.PoseLandmarker.create_from_options(options)
         self._last_timestamp_ms = -1
+        self._lock = threading.Lock()
 
-    def process(self, frames: list[ExtractedFrame]) -> list[FramePose]:
+    def process(
+        self,
+        frames: list[ExtractedFrame],
+        on_progress: Callable[[list[FramePose]], None] | None = None,
+        progress_every: int = 5,
+    ) -> list[FramePose]:
+        # A landmarker in VIDEO mode owns one timestamp sequence. Serialize
+        # calls so concurrent uploads cannot interleave frames.
+        with self._lock:
+            return self._process(frames, on_progress, progress_every)
+
+    def _process(
+        self,
+        frames: list[ExtractedFrame],
+        on_progress: Callable[[list[FramePose]], None] | None,
+        progress_every: int,
+    ) -> list[FramePose]:
         results: list[FramePose] = []
-        for ef in frames:
-            ts = ef.timestamp_ms
-            if ts <= self._last_timestamp_ms:
-                ts = self._last_timestamp_ms + 1  # The landmarker is reused across uploads.
+        for frame_index, ef in enumerate(frames):
+            ts = _enforce_monotonic_timestamp(self._last_timestamp_ms, ef.timestamp_ms)
             self._last_timestamp_ms = ts
 
             rgb = cv2.cvtColor(ef.frame, cv2.COLOR_BGR2RGB)
@@ -125,6 +148,9 @@ class PoseEstimator:
                         world_landmarks=None,
                     )
                 )
+
+            if on_progress and (len(results) % progress_every == 0 or frame_index == len(frames) - 1):
+                on_progress(list(results))
         return results
 
     def close(self):
@@ -137,4 +163,5 @@ def frame_pose_to_json(fp: FramePose) -> dict:
         "frame_index": fp.frame_index,
         "detected": fp.detected,
         "world_landmarks": fp.world_landmarks,
+        "image_landmarks": fp.image_landmarks,
     }

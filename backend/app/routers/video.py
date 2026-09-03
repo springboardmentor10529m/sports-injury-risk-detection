@@ -1,7 +1,8 @@
 import uuid
+import threading
 from pathlib import Path
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -18,7 +19,6 @@ ALLOWED_EXTENSIONS = {".mp4", ".mov", ".avi", ".mkv"}
 
 @router.post("/upload", response_model=VideoAnalysisOut, status_code=201)
 async def upload_video(
-    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     activity_type: ActivityType = Form(...),
     current_user: User = Depends(require_athlete),
@@ -50,7 +50,12 @@ async def upload_video(
     db.commit()
     db.refresh(video)
 
-    background_tasks.add_task(run_pipeline, video.id, SessionLocal)
+    threading.Thread(
+        target=run_pipeline,
+        args=(video.id, SessionLocal),
+        daemon=True,
+        name=f"video-pipeline-{video.id}",
+    ).start()
 
     return video
 
@@ -78,4 +83,6 @@ def get_pose_frames(video_id: str, current_user: User = Depends(require_athlete)
     video = db.get(VideoAnalysis, video_id)
     if video is None or video.athlete_id != current_user.athlete_profile.id:
         raise HTTPException(status_code=404, detail="Video not found")
-    return video.pose_frames or {"frames": []}
+    if video.pose_frames is None:
+        raise HTTPException(status_code=404, detail="Pose frames not available yet")
+    return video.pose_frames

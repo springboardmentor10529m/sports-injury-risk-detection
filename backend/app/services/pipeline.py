@@ -47,7 +47,13 @@ def run_pipeline(video_id: str, db_session_factory) -> None:
 
             _set_status(db, video, VideoStatus.RUNNING_POSE)
             estimator = get_pose_estimator()
-            frame_poses = estimator.process(frames)
+
+            def _persist_pose_progress(current_batch):
+                video.pose_frames = {"frames": [frame_pose_to_json(fp) for fp in current_batch]}
+                video.frames_with_pose_detected = sum(1 for fp in current_batch if fp.detected)
+                db.commit()
+
+            frame_poses = estimator.process(frames, on_progress=_persist_pose_progress, progress_every=5)
             video.frames_with_pose_detected = sum(1 for fp in frame_poses if fp.detected)
             video.pose_frames = {"frames": [frame_pose_to_json(fp) for fp in frame_poses]}
             db.commit()

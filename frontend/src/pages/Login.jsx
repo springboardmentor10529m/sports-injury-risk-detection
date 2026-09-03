@@ -16,10 +16,12 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
-      await login(email, password);
+      await login(email.trim(), password);
       navigate("/home");
     } catch (err) {
-      setError(err.response?.data?.detail || "Login failed. Check your credentials.");
+      setError(err.code === "ECONNABORTED"
+        ? "The API did not respond. Confirm Docker is running and try again."
+        : err.response?.data?.detail || "Login failed. Check your credentials.");
     } finally {
       setLoading(false);
     }
@@ -27,29 +29,30 @@ export default function Login() {
 
   return (
     <AuthShell>
-      <h1 style={{ fontSize: 26, marginBottom: 4 }}>Welcome back</h1>
-      <p style={{ color: "var(--text-dim)", fontSize: 14, marginBottom: 28 }}>
-        Sign in to view your movement risk profile.
+      <div className="login-eyebrow">Movement intelligence / 01</div>
+      <h1 className="login-title">Welcome<br /><em>back.</em></h1>
+      <p className="login-intro">
+        Sign in to continue building a clearer picture of how you move, train, and recover.
       </p>
 
       {error && <div className="error-banner">{error}</div>}
 
       <form onSubmit={handleSubmit}>
-        <div className="field">
+        <div className="field login-field">
           <label>Email</label>
           <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
-        <div className="field">
+        <div className="field login-field">
           <label>Password</label>
           <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
-        <button className="btn btn-primary btn-block" disabled={loading} type="submit">
+        <button className="btn btn-primary btn-block login-submit" disabled={loading} type="submit">
           {loading ? "Signing in..." : "Log in"}
         </button>
       </form>
 
-      <p style={{ marginTop: 20, fontSize: 13, color: "var(--text-dim)" }}>
-        No account yet? <Link to="/select-role" style={{ color: "var(--accent)" }}>Sign up</Link>
+      <p className="login-signup">
+        New to InjuryGuard? <Link to="/select-role">Create an account <span>↗</span></Link>
       </p>
     </AuthShell>
   );
@@ -57,22 +60,24 @@ export default function Login() {
 
 export function AuthShell({ children }) {
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 24,
-      }}
-    >
-      <div style={{ width: "100%", maxWidth: 420 }}>
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
-          <SkeletonMotif style={{ width: 44, height: 50 }} opacity={0.85} />
-        </div>
-        <div className="card" style={{ padding: 32 }}>
-          {children}
-        </div>
+    <div className="auth-shell">
+      <div className="auth-orbit auth-orbit-one" />
+      <div className="auth-orbit auth-orbit-two" />
+      <div className="auth-frame">
+        <section className="auth-brand-panel">
+          <div className="auth-brand-top">
+            <SkeletonMotif className="auth-motif" opacity={0.9} />
+            <span>INJURYGUARD <b>AI</b></span>
+          </div>
+          <div className="auth-brand-copy">
+            <div className="auth-kicker">The athlete's<br />second set of eyes.</div>
+            <p>Real movement data.<br />Sharper decisions.</p>
+          </div>
+          <div className="auth-brand-foot">EST. 2026 <span>●</span> PERFORMANCE LAB</div>
+        </section>
+        <section className="auth-form-panel">
+          <div className="auth-form-inner">{children}</div>
+        </section>
       </div>
     </div>
   );
