@@ -251,3 +251,29 @@ Your current feature set is:
 | Average left knee alignment      | -0.0074 |
 | Average right knee alignment     |  0.0002 |
 
+
+Current pipeline
+Video
+  ↓
+Video Processing
+  ↓
+Pose Estimation
+  ↓
+33 Landmarks
+  ↓
+Visibility Filtering
+  ↓
+Biomechanical Analysis
+  ├── Knee Angles
+  ├── Hip Angles
+  ├── Knee ROM
+  ├── Hip ROM
+  ├── Knee Symmetry
+  ├── Knee Alignment
+  └── Trunk Lean
+  ↓
+Movement-Level Feature Vector
+  ↓
+ML Classifier       ← later
+  ↓
+Injury Risk
