@@ -43,10 +43,12 @@ from app.models.analysis_result import (
     ANALYSIS_STATUS_PENDING,
 )
 from app.models.analysis_feature import AnalysisFeature
+from app.models.analysis_less import AnalysisLESS
 from app.models.user import RoleEnum, User
 from app.schemas.video import VideoUploadResponse
 from app.schemas.analysis import AnalysisTriggerResponse, AnalysisStatusResponse
 from app.schemas.feature import AnalysisFeatureResponse
+from app.schemas.less import AnalysisLESSResponse
 from app.core.dependencies import get_current_user
 from app.services.analysis_pipeline import run_analysis_pipeline
 
@@ -511,3 +513,58 @@ def get_analysis_features(
         )
 
     return feature_record
+
+
+@router.get(
+    "/{video_id}/less",
+    response_model=AnalysisLESSResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get LESS assessment results for a video",
+    description=(
+        "Returns the Landing Error Scoring System (LESS) approximation result for the given video_id. "
+        "Enforces video ownership and returns 404 if LESS assessment has not been completed yet."
+    ),
+)
+def get_analysis_less(
+    video_id: uuid_module.UUID,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Session = Depends(get_db),
+) -> AnalysisLESSResponse:
+    """
+    Return the LESS approximation assessment for the video.
+    """
+    if current_user.role != RoleEnum.ATHLETE:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only Athlete users can view LESS results.",
+        )
+
+    athlete = _get_athlete_for_user(current_user, db)
+    _get_video_for_athlete(video_id, athlete, db)  # ownership check
+
+    analysis = (
+        db.query(AnalysisResult)
+        .filter(AnalysisResult.video_id == video_id)
+        .order_by(AnalysisResult.created_at.desc())
+        .first()
+    )
+    if analysis is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No analysis found for this video.",
+        )
+
+    less_record = (
+        db.query(AnalysisLESS)
+        .filter(AnalysisLESS.analysis_id == analysis.analysis_id)
+        .first()
+    )
+
+    if less_record is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="LESS assessment results not found for this analysis. Processing may still be in progress or failed.",
+        )
+
+    return less_record
+

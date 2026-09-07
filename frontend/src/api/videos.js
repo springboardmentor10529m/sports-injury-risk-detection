@@ -66,3 +66,17 @@ export async function getAnalysisFeatures(videoId) {
     const response = await api.get(`/videos/${videoId}/features`);
     return response.data;
 }
+
+/**
+ * Fetch the Landing Error Scoring System (LESS) approximation result for an analysis.
+ *
+ * GET /videos/{videoId}/less
+ *
+ * @param {string} videoId - UUID of the video.
+ * @returns {Promise<Object>} AnalysisLESSResponse from the server.
+ */
+export async function getLessResult(videoId) {
+    const response = await api.get(`/videos/${videoId}/less`);
+    return response.data;
+}
+

@@ -28,6 +28,7 @@ import {
     triggerAnalysis,
     getAnalysisStatus,
     getAnalysisFeatures,
+    getLessResult,
 } from "../api/videos";
 import { getMyAthleteProfile } from "../api/athletes";
 
@@ -88,6 +89,7 @@ function VideoAnalysis() {
     const [analysisId, setAnalysisId]         = useState(null);
     const [analysisStatus, setAnalysisStatus] = useState(null);  // full status obj
     const [analysisFeatures, setAnalysisFeatures] = useState(null); // features obj
+    const [analysisLess, setAnalysisLess]     = useState(null);     // LESS result obj
     const [analyzing, setAnalyzing]           = useState(false);
     const [analyzeError, setAnalyzeError]     = useState("");
 
@@ -140,6 +142,7 @@ function VideoAnalysis() {
         setAnalysisId(null);
         setAnalysisStatus(null);
         setAnalysisFeatures(null);
+        setAnalysisLess(null);
         setAnalyzeError("");
         if (pollRef.current) clearInterval(pollRef.current);
     }
@@ -187,6 +190,7 @@ function VideoAnalysis() {
         setAnalysisId(null);
         setAnalysisStatus(null);
         setAnalysisFeatures(null);
+        setAnalysisLess(null);
         if (pollRef.current) clearInterval(pollRef.current);
 
         try {
@@ -206,12 +210,18 @@ function VideoAnalysis() {
                         pollRef.current = null;
                         setAnalyzing(false);
 
-                        // Fetch extracted features
+                        // Fetch extracted features & LESS results
                         try {
                             const featData = await getAnalysisFeatures(uploadedVideo.video_id);
                             setAnalysisFeatures(featData);
                         } catch (featErr) {
                             console.warn("Could not load features:", featErr);
+                        }
+                        try {
+                            const lessData = await getLessResult(uploadedVideo.video_id);
+                            setAnalysisLess(lessData);
+                        } catch (lessErr) {
+                            console.warn("Could not load LESS results:", lessErr);
                         }
                     } else if (statusData.status === STATUS_FAILED) {
                         clearInterval(pollRef.current);
@@ -702,6 +712,128 @@ function VideoAnalysis() {
                                             Injury-risk prediction model inference will take place in the next phase.
                                         </p>
                                     </div>
+                                </div>
+                            </section>
+                        )}
+
+                        {/* ── LESS Risk Assessment Section ────────────────── */}
+                        {analysisLess && (
+                            <section className="panel" style={{ marginTop: 20 }}>
+                                <div className="panel-header">
+                                    <div>
+                                        <h2>Rule-Based Movement Quality Assessment (LESS)</h2>
+                                        <p>
+                                            Padua et al., 2009 Rule-Based Jump-Landing Biomechanical Screening Protocol &nbsp;·&nbsp;
+                                            <span style={{ fontWeight: 600, color: "#10b981" }}>
+                                                Version: {analysisLess.source_version}
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <ShieldAlert size={22} />
+                                </div>
+
+                                {/* Overview Metrics */}
+                                <div className="athlete-details-grid" style={{ marginTop: 16 }}>
+                                    <div className="detail-item" style={{ background: "#f8fafc", padding: "12px 16px", borderRadius: 8 }}>
+                                        <span className="detail-label" style={{ fontSize: 11, textTransform: "uppercase" }}>LESS Score</span>
+                                        <strong className="detail-value" style={{ fontSize: 22, color: "#1e293b" }}>
+                                            {analysisLess.score} <small style={{ fontSize: 13, color: "#64748b" }}>/ {analysisLess.max_computable_score} max</small>
+                                        </strong>
+                                        <small style={{ color: "#64748b", fontSize: 11 }}>Lower score = better technique</small>
+                                    </div>
+
+                                    <div className="detail-item" style={{ background: "#f8fafc", padding: "12px 16px", borderRadius: 8 }}>
+                                        <span className="detail-label" style={{ fontSize: 11, textTransform: "uppercase" }}>Classification</span>
+                                        <div style={{ marginTop: 4 }}>
+                                            <span style={{
+                                                display: "inline-block",
+                                                padding: "4px 10px",
+                                                borderRadius: 6,
+                                                fontSize: 12,
+                                                fontWeight: 700,
+                                                background: analysisLess.classification.includes("ELEVATED") ? "#fef2f2" : "#f0fdf4",
+                                                color: analysisLess.classification.includes("ELEVATED") ? "#dc2626" : "#16a34a",
+                                                border: `1px solid ${analysisLess.classification.includes("ELEVATED") ? "#fecaca" : "#bbf7d0"}`,
+                                            }}>
+                                                {analysisLess.classification.includes("ELEVATED") ? "ELEVATED RISK SCORE" : "LOWER RISK SCORE"}
+                                            </span>
+                                        </div>
+                                        <small style={{ color: "#64748b", fontSize: 11, marginTop: 4, display: "block" }}>Approximation heuristic</small>
+                                    </div>
+
+                                    <div className="detail-item" style={{ background: "#f8fafc", padding: "12px 16px", borderRadius: 8 }}>
+                                        <span className="detail-label" style={{ fontSize: 11, textTransform: "uppercase" }}>Item Coverage</span>
+                                        <strong className="detail-value" style={{ fontSize: 16, color: "#1e293b", marginTop: 2 }}>
+                                            {analysisLess.computable_items} / 17 Computable
+                                        </strong>
+                                        <small style={{ color: "#64748b", fontSize: 11 }}>
+                                            {analysisLess.error_items} errors, {analysisLess.not_computable_items} skipped
+                                        </small>
+                                    </div>
+                                </div>
+
+                                {/* Disclaimer */}
+                                <div className="error-box" style={{ marginTop: 16, background: "#fffbeb", borderColor: "#fde68a", color: "#92400e" }}>
+                                    <AlertTriangle size={15} style={{ marginRight: 8, verticalAlign: "middle" }} />
+                                    {analysisLess.disclaimer}
+                                </div>
+
+                                {/* Item Breakdown Table */}
+                                <div style={{ marginTop: 20, overflowX: "auto" }}>
+                                    <h3 style={{ fontSize: 14, fontWeight: 600, color: "#374151", marginBottom: 12 }}>
+                                        17-Item LESS Assessment Breakdown
+                                    </h3>
+                                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                                        <thead>
+                                            <tr style={{ background: "#f1f5f9", textAlign: "left", color: "#475569" }}>
+                                                <th style={{ padding: "8px 12px", borderRadius: "6px 0 0 6px" }}>#</th>
+                                                <th style={{ padding: "8px 12px" }}>Item Name</th>
+                                                <th style={{ padding: "8px 12px" }}>Status</th>
+                                                <th style={{ padding: "8px 12px" }}>Score</th>
+                                                <th style={{ padding: "8px 12px" }}>Measured Value / Note</th>
+                                                <th style={{ padding: "8px 12px", borderRadius: "0 6px 6px 0" }}>Reference</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {analysisLess.items?.map((item) => (
+                                                <tr key={item.item_number} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                                                    <td style={{ padding: "10px 12px", fontWeight: 600, color: "#64748b" }}>
+                                                        {item.item_number}
+                                                    </td>
+                                                    <td style={{ padding: "10px 12px", fontWeight: 500, color: "#1e293b" }}>
+                                                        {item.item_name}
+                                                    </td>
+                                                    <td style={{ padding: "10px 12px" }}>
+                                                        <span style={{
+                                                            padding: "2px 8px",
+                                                            borderRadius: 12,
+                                                            fontSize: 11,
+                                                            fontWeight: 600,
+                                                            background: item.status === "PASS" ? "#dcfce7" : item.status === "ERROR" ? "#fee2e2" : "#f1f5f9",
+                                                            color: item.status === "PASS" ? "#15803d" : item.status === "ERROR" ? "#b91c1c" : "#64748b",
+                                                        }}>
+                                                            {item.status}
+                                                        </span>
+                                                    </td>
+                                                    <td style={{ padding: "10px 12px", fontWeight: 600 }}>
+                                                        {item.score !== null ? item.score : "—"}
+                                                    </td>
+                                                    <td style={{ padding: "10px 12px", color: "#475569" }}>
+                                                        {item.reason ? (
+                                                            <span style={{ color: "#94a3b8", fontStyle: "italic", fontSize: 12 }}>{item.reason}</span>
+                                                        ) : item.measured_value !== null ? (
+                                                            `${item.measured_value.toFixed(1)} ${item.unit || ""}`.trim()
+                                                        ) : (
+                                                            "—"
+                                                        )}
+                                                    </td>
+                                                    <td style={{ padding: "10px 12px", color: "#94a3b8", fontSize: 11 }}>
+                                                        {item.reference}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
                             </section>
                         )}

@@ -42,6 +42,8 @@ from app.services.pose_estimator import MediaPipePoseEstimator, BasePoseEstimato
 
 logger = logging.getLogger(__name__)
 
+from app.services import less_scorer
+
 # Upload directory — matches the path used in api/videos.py
 UPLOAD_DIR = Path("/app/uploads")
 
@@ -53,7 +55,7 @@ def run_analysis_pipeline(
     frame_sample_rate: int = 5,
     max_processed_frames: int = 300,
     pose_estimator: BasePoseEstimator | None = None,
-) -> None:
+) -> less_scorer.LESSResult | None:
     """
     Full analysis pipeline executed as a background task.
 
@@ -153,7 +155,67 @@ def run_analysis_pipeline(
             FeatureExtractor.extract_and_save(analysis_id, db)
             logger.info("Analysis %s: Biomechanical features extracted and saved", analysis_id)
 
-        # ── 8. Mark COMPLETED ──────────────────────────────────────────────────
+        # ── 8. Calculate & Persist LESS Approximation Score ─────────────────────
+        less_result = None
+        if landmark_rows:
+            try:
+                less_result = less_scorer.LESSApproximationScorer.score_landmarks(landmark_rows)
+                
+                # Persist LESS result to database
+                from app.models.analysis_less import AnalysisLESS  # noqa: PLC0415
+                items_serialized = [
+                    {
+                        "item_number": item.item_number,
+                        "item_name": item.item_name,
+                        "status": item.status,
+                        "score": item.score,
+                        "measured_value": item.measured_value,
+                        "criterion_threshold": item.criterion_threshold,
+                        "unit": item.unit,
+                        "reference": item.reference,
+                        "reason": item.reason,
+                    }
+                    for item in less_result.items
+                ]
+                
+                less_record = AnalysisLESS(
+                    analysis_id=analysis_id,
+                    score=less_result.score,
+                    max_computable_score=less_result.max_computable_score,
+                    computable_items=less_result.computable_items,
+                    error_items=less_result.error_items,
+                    not_computable_items=less_result.not_computable_items,
+                    classification=less_result.classification,
+                    source=less_result.source,
+                    validation_source=less_result.validation_source,
+                    source_version=less_result.source_version,
+                    disclaimer=less_result.disclaimer,
+                    items=items_serialized,
+                )
+                db.add(less_record)
+                db.commit()
+
+                logger.info(
+                    "Analysis %s: LESS Scorer completed & persisted — "
+                    "landmarks_used=%d, computable_items=%d, not_computable_items=%d, "
+                    "score=%d, max_computable_score=%d, classification='%s'",
+                    analysis_id,
+                    len(landmark_rows),
+                    less_result.computable_items,
+                    less_result.not_computable_items,
+                    less_result.score,
+                    less_result.max_computable_score,
+                    less_result.classification,
+                )
+            except Exception as exc:  # noqa: BLE001
+                db.rollback()
+                logger.exception(
+                    "Analysis %s: LESSApproximationScorer failed (non-fatal) — %s",
+                    analysis_id,
+                    exc,
+                )
+
+        # ── 9. Mark COMPLETED ──────────────────────────────────────────────────
         analysis.frames_processed = frames_with_pose
         analysis.status           = ANALYSIS_STATUS_COMPLETED
         analysis.completed_at     = datetime.utcnow()
@@ -165,6 +227,8 @@ def run_analysis_pipeline(
             frames_with_pose,
             len(landmark_rows),
         )
+
+        return less_result
 
     except VideoProcessingError as exc:
         _mark_failed(db, analysis, str(exc))
