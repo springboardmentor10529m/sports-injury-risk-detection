@@ -39,6 +39,7 @@ class VideoStatus(str, enum.Enum):
     GENERATING_RECOMMENDATIONS = "generating_recommendations"
     COMPLETED = "completed"
     FAILED = "failed"
+    INSUFFICIENT_DATA = "insufficient_data"
 
 
 class ActivityType(str, enum.Enum):

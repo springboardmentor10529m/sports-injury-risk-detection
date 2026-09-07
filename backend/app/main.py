@@ -2,6 +2,7 @@ import logging
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
 from app.core.config import settings
 from app.core.database import Base, engine
@@ -10,6 +11,12 @@ from app.routers import admin, analysis, athlete, auth, coach, notifications, ph
 logging.basicConfig(level=logging.INFO)
 
 Base.metadata.create_all(bind=engine)
+
+# create_all does not extend existing PostgreSQL enums. Commit this additive
+# change before a pipeline session can write the new terminal status.
+if engine.dialect.name == "postgresql":
+    with engine.begin() as connection:
+        connection.execute(text("ALTER TYPE videostatus ADD VALUE IF NOT EXISTS 'INSUFFICIENT_DATA'"))
 
 app = FastAPI(
     title="InjuryGuard AI API",

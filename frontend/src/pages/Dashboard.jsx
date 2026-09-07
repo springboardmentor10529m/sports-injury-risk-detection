@@ -136,6 +136,7 @@ export function StatusPill({ status }) {
   const map = {
     completed: { color: "var(--risk-low)", label: "Completed" },
     failed: { color: "var(--risk-critical)", label: "Failed" },
+    insufficient_data: { color: "var(--risk-moderate)", label: "Insufficient data" },
     uploaded: { color: "var(--text-dim)", label: "Queued" },
   };
   const s = map[status] || { color: "var(--risk-moderate)", label: status.replace(/_/g, " ") };

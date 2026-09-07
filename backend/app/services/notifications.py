@@ -40,10 +40,10 @@ def notify_after_pipeline(db: Session, video: VideoAnalysis) -> None:
     athlete_user_id = athlete.user_id
     link = f"/analysis/{video.id}"
 
-    if video.status.value == "failed":
+    if video.status.value in ("failed", "insufficient_data"):
         _create(
             db, athlete_user_id, NotificationType.ASSESSMENT_FAILED,
-            "Analysis failed",
+            "Insufficient data" if video.status.value == "insufficient_data" else "Analysis failed",
             f"Your {video.activity_type.value} analysis couldn't be completed: {video.error_message}",
             link,
         )

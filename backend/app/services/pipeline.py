@@ -19,14 +19,13 @@ from app.video_processing.frame_extractor import extract_frames
 
 logger = logging.getLogger("pipeline")
 
-_pose_estimator: PoseEstimator | None = None
-
-
 def get_pose_estimator() -> PoseEstimator:
-    global _pose_estimator
-    if _pose_estimator is None:
-        _pose_estimator = PoseEstimator()
-    return _pose_estimator
+    # A VIDEO-mode landmarker owns tracking state and timestamps for one clip.
+    return PoseEstimator()
+
+
+class InsufficientPoseDataError(Exception):
+    pass
 
 
 def run_pipeline(video_id: str, db_session_factory) -> None:
@@ -53,7 +52,10 @@ def run_pipeline(video_id: str, db_session_factory) -> None:
                 video.frames_with_pose_detected = sum(1 for fp in current_batch if fp.detected)
                 db.commit()
 
-            frame_poses = estimator.process(frames, on_progress=_persist_pose_progress, progress_every=5)
+            try:
+                frame_poses = estimator.process(frames, on_progress=_persist_pose_progress, progress_every=5)
+            finally:
+                estimator.close()
             video.frames_with_pose_detected = sum(1 for fp in frame_poses if fp.detected)
             video.pose_frames = {"frames": [frame_pose_to_json(fp) for fp in frame_poses]}
             db.commit()
@@ -65,6 +67,17 @@ def run_pipeline(video_id: str, db_session_factory) -> None:
             )
             video.biomechanics = biomechanics_summary
             db.commit()
+
+            valid_count = biomechanics_summary["frames_with_pose"]
+            valid_ratio = valid_count / len(frame_poses) if frame_poses else 0.0
+            if (valid_count < biomech_svc.MIN_VALID_POSE_FRAMES
+                    or valid_ratio < biomech_svc.MIN_VALID_POSE_RATIO):
+                raise InsufficientPoseDataError(
+                    f"Insufficient data: {valid_count}/{len(frame_poses)} frames have usable pose geometry. "
+                    f"At least {biomech_svc.MIN_VALID_POSE_FRAMES} valid frames and "
+                    f"{biomech_svc.MIN_VALID_POSE_RATIO:.0%} coverage are required, with both shoulders, "
+                    "hips, knees and ankles visible. Record a longer, well-lit, full-body video."
+                )
 
             _set_status(db, video, VideoStatus.SCORING_RISK)
             risk = risk_scoring.compute_risk(
@@ -89,14 +102,23 @@ def run_pipeline(video_id: str, db_session_factory) -> None:
             video.status = VideoStatus.COMPLETED
             video.completed_at = datetime.utcnow()
             db.commit()
-            notif_svc.notify_after_pipeline(db, video)
-
         except Exception as exc:  # noqa: BLE001
             logger.exception("Pipeline failed for video %s", video_id)
-            video.status = VideoStatus.FAILED
+            db.rollback()
+            video.status = (VideoStatus.INSUFFICIENT_DATA if isinstance(exc, InsufficientPoseDataError)
+                            else VideoStatus.FAILED)
             video.error_message = str(exc)
+            video.risk_assessment = None
+            video.recommendations = None
+            video.completed_at = None
             db.commit()
+
+        # Notification delivery is independent of the committed analysis outcome.
+        try:
             notif_svc.notify_after_pipeline(db, video)
+        except Exception:
+            db.rollback()
+            logger.exception("Notification delivery failed for video %s", video_id)
     finally:
         db.close()
 

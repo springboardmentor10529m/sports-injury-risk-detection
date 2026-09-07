@@ -11,6 +11,7 @@ const STATUS_LABEL = {
   uploaded: "Uploaded", extracting_frames: "Extracting frames", running_pose: "Running pose",
   analyzing_biomechanics: "Analyzing biomechanics", scoring_risk: "Scoring risk",
   generating_recommendations: "Generating recommendations", completed: "Completed", failed: "Failed",
+  insufficient_data: "Insufficient data",
 };
 
 export default function AdminDashboard() {

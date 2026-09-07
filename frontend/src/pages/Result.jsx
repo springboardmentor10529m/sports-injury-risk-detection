@@ -62,7 +62,7 @@ export default function Result() {
         const status = String(nextVideo?.status ?? "");
 
         setVideo(nextVideo);
-        if (status === "completed" || status === "failed") {
+        if (["completed", "failed", "insufficient_data"].includes(status)) {
           clearInterval(pollRef.current);
           if (status === "completed") {
             window.setTimeout(() => setShowProcessing(false), 4600);
@@ -117,6 +117,15 @@ export default function Result() {
   if (!video) return <p style={{ color: "var(--text-dim)" }}>Loading analysis...</p>;
 
   const status = String(video.status ?? "");
+  if (status === "insufficient_data") {
+    return (
+      <div className="card" style={{ maxWidth: 620 }}>
+        <h1 style={{ fontSize: 24, marginBottom: 10 }}>Insufficient data</h1>
+        <p style={{ color: "var(--text-dim)", marginBottom: 20 }}>{video.error_message}</p>
+        <Link to="/analyze" className="btn btn-primary">Upload another video</Link>
+      </div>
+    );
+  }
   if (status !== "completed" || showProcessing) {
     return <ProcessingView video={video} poseFrames={poseFrames} />;
   }

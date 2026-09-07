@@ -23,11 +23,25 @@ from app.services.pose_estimation import FramePose
 
 Vec3 = np.ndarray
 
+# Initial input-quality safeguards, not clinical accuracy thresholds.
+MIN_LANDMARK_VISIBILITY = 0.5
+MIN_VALID_POSE_FRAMES = 10
+MIN_VALID_POSE_RATIO = 0.5
+REQUIRED_LANDMARKS = (
+    "left_shoulder", "right_shoulder", "left_hip", "right_hip",
+    "left_knee", "right_knee", "left_ankle", "right_ankle",
+)
+
 
 def _v(landmarks: dict, name: str) -> Vec3 | None:
     if landmarks is None or name not in landmarks:
         return None
-    x, y, z, _vis = landmarks[name]
+    values = landmarks[name]
+    if len(values) != 4 or not np.isfinite(values).all():
+        return None
+    x, y, z, visibility = values
+    if visibility < MIN_LANDMARK_VISIBILITY:
+        return None
     return np.array([x, y, z], dtype=float)
 
 
@@ -65,7 +79,7 @@ def _frontal_plane_deviation(hip: Vec3, knee: Vec3, ankle: Vec3) -> float | None
 def compute_frame_metrics(fp: FramePose) -> dict:
     """Per-frame biomechanical values. Returns None fields where a required
     keypoint wasn't detected in that frame."""
-    if not fp.detected or fp.world_landmarks is None:
+    if not fp.detected or any(_v(fp.world_landmarks, name) is None for name in REQUIRED_LANDMARKS):
         return {
             "timestamp_ms": fp.timestamp_ms, "frame_index": fp.frame_index, "detected": False,
         }
@@ -103,6 +117,12 @@ def compute_frame_metrics(fp: FramePose) -> dict:
             hip_line_angle = float(np.degrees(np.arccos(cos_a)))
 
     hip_mid = (l_hip + r_hip) / 2 if (l_hip is not None and r_hip is not None) else None
+
+    # Coincident landmarks cannot supply the geometry required by scoring.
+    if any(value is None for value in (
+        knee_angle_l, knee_angle_r, knee_valgus_l, knee_valgus_r, trunk_lean, hip_line_angle,
+    )):
+        return {"timestamp_ms": fp.timestamp_ms, "frame_index": fp.frame_index, "detected": False}
 
     return {
         "timestamp_ms": fp.timestamp_ms,
@@ -219,7 +239,7 @@ def aggregate_biomechanics(frame_metrics: list[dict], activity_type: str) -> dic
             return (max(vals) - min(vals)) if vals else None
 
         rom_first, rom_last = rom(first), rom(last)
-        if rom_first and rom_last and rom_first > 0:
+        if rom_first is not None and rom_last is not None and rom_first > 0:
             decline_pct = max(0.0, (rom_first - rom_last) / rom_first * 100)
             fatigue_score = float(np.clip(decline_pct * 2, 0, 100))  # amplify to a usable 0-100 range
 

@@ -28,12 +28,17 @@ WEIGHTS = {
     "fatigue": 0.10,
 }
 
-RISK_CATEGORIES = [
-    (0, 35, "LOW"),
-    (36, 60, "MODERATE"),
-    (61, 80, "HIGH"),
-    (81, 100, "CRITICAL"),
-]
+def risk_category(score: float) -> str:
+    """Continuous bands: [0, 35], (35, 60], (60, 80], (80, 100]."""
+    if not 0 <= score <= 100:
+        raise ValueError("Risk score must be finite and between 0 and 100.")
+    if score <= 35:
+        return "LOW"
+    if score <= 60:
+        return "MODERATE"
+    if score <= 80:
+        return "HIGH"
+    return "CRITICAL"
 
 
 def _clip(v: float, lo: float = 0.0, hi: float = 100.0) -> float:
@@ -144,7 +149,7 @@ def compute_risk(
     )
     overall = round(_clip(overall), 2)
 
-    category = next(cat for lo, hi, cat in RISK_CATEGORIES if lo <= overall <= hi)
+    category = risk_category(overall)
 
     # Per-injury-type flags derived from which biomechanical signals are
     # driving the score - transparent, rule-based, tied to the doc's injury
