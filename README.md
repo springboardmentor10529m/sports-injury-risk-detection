@@ -171,3 +171,40 @@ Biomechanical Features
 Symmetry / ROM
       ↓
 ML
+
+Range of Motion (ROM)
+
+Instead of looking at just one frame, we need to analyze the entire movement.
+
+For example, if the right knee angles across the video are:
+
+160° → 145° → 120° → 100° → 130° → 155°
+
+then:
+
+Maximum = 160°
+Minimum = 100°
+ROM     = 60°
+
+That gives us a much more meaningful biomechanical feature than a single-frame angle.
+
+We'll add:
+
+Left knee ROM
+Right knee ROM
+Left hip ROM
+Right hip ROM
+Average knee symmetry
+Maximum trunk lean
+
+Perfect. ✅ These values look usable for our first biomechanical feature set.
+
+What we have
+Feature	Left	Right
+Minimum knee angle	140.10°	146.02°
+Maximum knee angle	178.15°	178.53°
+Knee ROM	38.05°	32.51°
+
+The difference in knee ROM is:
+
+5.54°
