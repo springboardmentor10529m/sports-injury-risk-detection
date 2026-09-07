@@ -1,4 +1,4 @@
-# sports Injury Risk Detection 
+  # sports Injury Risk Detection 
 
 # Sports Injury Risk Detection - Frontend
 
@@ -115,7 +115,9 @@ Frontend & backend:
                     │
                PostgreSQL
 
-               
+
+07-09-2026
+
      Athlete Login
      ↓
     Athlete Profile
@@ -252,28 +254,29 @@ Your current feature set is:
 | Average right knee alignment     |  0.0002 |
 
 
-Current pipeline
-Video
-  ↓
-Video Processing
-  ↓
-Pose Estimation
-  ↓
-33 Landmarks
-  ↓
-Visibility Filtering
-  ↓
-Biomechanical Analysis
-  ├── Knee Angles
-  ├── Hip Angles
-  ├── Knee ROM
-  ├── Hip ROM
-  ├── Knee Symmetry
-  ├── Knee Alignment
-  └── Trunk Lean
-  ↓
-Movement-Level Feature Vector
-  ↓
-ML Classifier       ← later
-  ↓
-Injury Risk
+Current pipeline:
+
+      Video
+        ↓
+    Video Processing
+        ↓
+    Pose Estimation
+        ↓
+    33 Landmarks
+        ↓
+    Visibility Filtering
+        ↓
+    Biomechanical Analysis
+    ├── Knee Angles
+    ├── Hip Angles
+    ├── Knee ROM
+    ├── Hip ROM
+    ├── Knee Symmetry
+    ├── Knee Alignment
+    └── Trunk Lean
+      ↓
+    Movement-Level Feature Vector
+      ↓
+    ML Classifier       ← later
+      ↓
+    Injury Risk
