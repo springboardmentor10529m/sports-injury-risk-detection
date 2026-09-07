@@ -2,7 +2,9 @@ from django.urls import path
 
 from .views import (
     AthleteProfileView,
-    AthleteVideoUploadView
+    AthleteVideoUploadView,
+    AthleteVideoDeleteView,
+    AthleteVideoListView
 )
 
 
@@ -18,6 +20,18 @@ urlpatterns = [
         "upload-video/",
         AthleteVideoUploadView.as_view(),
         name="upload-video"
+    ),
+    
+    path(
+    "videos/",
+    AthleteVideoListView.as_view(),
+    name="video-list"
+    ),
+    
+    path(
+        "videos/<int:video_id>/",
+        AthleteVideoDeleteView.as_view(),
+        name="delete-video"
     ),
 
 ]

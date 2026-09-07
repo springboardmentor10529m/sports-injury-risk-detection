@@ -1,5 +1,13 @@
 FROM python:3.12-slim
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        libxcb1 \
+        libgl1 \
+        libegl1 \
+        libgles2 \
+        libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE=1
