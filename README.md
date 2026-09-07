@@ -209,3 +209,14 @@ What we have
 The difference in knee ROM is:
 
 5.54°
+
+current biomechanical output is: 
+| Feature                          |      Value |
+| -------------------------------- | ---------: |
+| Frames analyzed                  |     **78** |
+| Left knee ROM                    | **38.05°** |
+| Right knee ROM                   | **32.51°** |
+| Left hip ROM                     | **40.60°** |
+| Right hip ROM                    | **41.72°** |
+| Average knee symmetry difference |  **7.19°** |
+| Maximum trunk lean               | **10.28°** |
