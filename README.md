@@ -133,3 +133,29 @@ Frontend & backend:
      ├── View uploaded videos 
      ├── Upload new video 
      └── Delete video 
+     
+> Biomechanical_analysis.py
+
+What this module currently does
+
+It converts the MediaPipe landmarks into actual biomechanical measurements:
+
+Feature	Calculation
+Knee angle	Hip → Knee → Ankle
+Hip angle	Shoulder → Hip → Knee
+Knee symmetry	Difference between left/right knee angles
+Trunk lean	Shoulder midpoint vs hip midpoint
+
+And importantly:
+
+Visibility filtering is included.
+
+For example, your frame 24 has:
+
+Left shoulder visibility = 0.985
+Left hip visibility      = 0.987
+Left knee visibility     = 0.227
+Left ankle visibility    = 0.201
+
+
+we set MIN_VISIBILITY = 0.5
