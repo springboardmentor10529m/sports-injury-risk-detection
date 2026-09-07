@@ -115,33 +115,21 @@ Frontend & backend:
                     │
                PostgreSQL
 
-
-Dashboard
-│
-├── Athlete Profile
-│
-├── My Videos
-│     ├── Video #4
-│     │     ├── View Video
-│     │     └── Delete
-│     │
-│     └── Upload New Video
-│
-└── Statistics
-
-
-Dashboard
-      ↓
-Click Delete
-      ↓
-Confirmation
-      ↓
-DELETE /api/athlete/videos/4/
-      ↓
-Django
- ├── Original video deleted
- ├── Processed frames deleted
- ├── Pose results deleted
- └── Database record deleted
-      ↓
-Dashboard refreshes               
+               
+     Athlete Login
+     ↓
+    Athlete Profile
+     ↓
+    Upload Sports Video
+     ↓
+    Django Backend
+     ↓
+    Video Processing
+     ├── Video validation
+     ├── Frame extraction
+     └── Pose estimation
+     ↓
+    Dashboard
+     ├── View uploaded videos 
+     ├── Upload new video 
+     └── Delete video 
