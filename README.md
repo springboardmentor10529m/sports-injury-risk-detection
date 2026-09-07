@@ -200,10 +200,11 @@ Maximum trunk lean
 Perfect. ✅ These values look usable for our first biomechanical feature set.
 
 What we have
-Feature	Left	Right
-Minimum knee angle	140.10°	146.02°
-Maximum knee angle	178.15°	178.53°
-Knee ROM	38.05°	32.51°
+| Feature            |       Left |      Right |
+| ------------------ | ---------: | ---------: |
+| Minimum knee angle |    140.10° |    146.02° |
+| Maximum knee angle |    178.15° |    178.53° |
+| Knee ROM           | **38.05°** | **32.51°** |
 
 The difference in knee ROM is:
 
