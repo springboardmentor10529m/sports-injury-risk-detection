@@ -159,3 +159,15 @@ Left ankle visibility    = 0.201
 
 
 we set MIN_VISIBILITY = 0.5
+
+Our planned pipeline needs reliable bilateral measurements:
+
+Pose Landmarks
+      ↓
+Visibility Filtering
+      ↓
+Biomechanical Features
+      ↓
+Symmetry / ROM
+      ↓
+ML
