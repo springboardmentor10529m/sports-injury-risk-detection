@@ -95,6 +95,7 @@ function AppRoutes() {
         <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN]} />}>
           <Route path="/admin/dashboard" element={<RoleDashboard />} />
           <Route path="/admin/overview" element={<OrganizationOverview />} />
+          <Route path="/admin/video-analysis" element={<WorkspacePage type="video" />} />
           <Route path="/admin/analytics" element={<WorkspacePage type="analytics" />} />
           <Route path="/admin/users" element={<WorkspacePage type="access" />} />
           <Route path="/admin/athletes" element={<WorkspacePage type="athletes" />} />

@@ -1,0 +1,257 @@
+{
+  "severity_model": {
+    "model_name": "RandomForest",
+    "features": [
+      "Age",
+      "Height_cm",
+      "Weight_kg",
+      "Knee_Angle_deg",
+      "Jump_Height_cm",
+      "Ankle_Flexion_deg",
+      "Speed_m_s",
+      "Reaction_Time_ms",
+      "Injury_Recurrence"
+    ],
+    "classes": [
+      "Mild",
+      "Moderate",
+      "Severe"
+    ],
+    "accuracy": 0.44947916666666665,
+    "macro_precision": 0.45254202593600595,
+    "macro_recall": 0.44838331164371864,
+    "macro_f1": 0.4459191267065082,
+    "confusion_matrix": [
+      [
+        217,
+        189,
+        220
+      ],
+      [
+        125,
+        313,
+        210
+      ],
+      [
+        117,
+        196,
+        333
+      ]
+    ],
+    "classification_report": {
+      "Mild": {
+        "precision": 0.47276688453159044,
+        "recall": 0.3466453674121406,
+        "f1-score": 0.4,
+        "support": 626.0
+      },
+      "Moderate": {
+        "precision": 0.4484240687679083,
+        "recall": 0.48302469135802467,
+        "f1-score": 0.4650817236255572,
+        "support": 648.0
+      },
+      "Severe": {
+        "precision": 0.436435124508519,
+        "recall": 0.5154798761609907,
+        "f1-score": 0.47267565649396737,
+        "support": 646.0
+      },
+      "accuracy": 0.44947916666666665,
+      "macro avg": {
+        "precision": 0.45254202593600595,
+        "recall": 0.44838331164371864,
+        "f1-score": 0.4459191267065082,
+        "support": 1920.0
+      },
+      "weighted avg": {
+        "precision": 0.4523270607869185,
+        "recall": 0.44947916666666665,
+        "f1-score": 0.44641741198149165,
+        "support": 1920.0
+      }
+    }
+  },
+  "injury_type_model": {
+    "model_name": "RandomForest",
+    "features": [
+      "Age",
+      "Height_cm",
+      "Weight_kg",
+      "Knee_Angle_deg",
+      "Jump_Height_cm",
+      "Ankle_Flexion_deg",
+      "Speed_m_s",
+      "Reaction_Time_ms"
+    ],
+    "classes": [
+      "Ankle Sprain",
+      "Hamstring / Muscle Strain",
+      "Knee / ACL Tear",
+      "Other Musculoskeletal",
+      "Spinal / Back Pain",
+      "Upper Body / Shoulder"
+    ],
+    "accuracy": 0.28541666666666665,
+    "macro_precision": 0.19918187319732447,
+    "macro_recall": 0.23665619544157387,
+    "macro_f1": 0.2033910490221178,
+    "confusion_matrix": [
+      [
+        12,
+        62,
+        97,
+        38,
+        1,
+        161
+      ],
+      [
+        15,
+        64,
+        118,
+        44,
+        0,
+        80
+      ],
+      [
+        14,
+        65,
+        156,
+        44,
+        4,
+        61
+      ],
+      [
+        25,
+        54,
+        44,
+        37,
+        0,
+        83
+      ],
+      [
+        6,
+        5,
+        20,
+        2,
+        0,
+        129
+      ],
+      [
+        15,
+        23,
+        132,
+        24,
+        6,
+        279
+      ]
+    ],
+    "classification_report": {
+      "Ankle Sprain": {
+        "precision": 0.13793103448275862,
+        "recall": 0.03234501347708895,
+        "f1-score": 0.05240174672489083,
+        "support": 371.0
+      },
+      "Hamstring / Muscle Strain": {
+        "precision": 0.23443223443223443,
+        "recall": 0.19937694704049844,
+        "f1-score": 0.21548821548821548,
+        "support": 321.0
+      },
+      "Knee / ACL Tear": {
+        "precision": 0.2751322751322751,
+        "recall": 0.45348837209302323,
+        "f1-score": 0.3424807903402854,
+        "support": 344.0
+      },
+      "Other Musculoskeletal": {
+        "precision": 0.19576719576719576,
+        "recall": 0.1522633744855967,
+        "f1-score": 0.1712962962962963,
+        "support": 243.0
+      },
+      "Spinal / Back Pain": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 162.0
+      },
+      "Upper Body / Shoulder": {
+        "precision": 0.35182849936948296,
+        "recall": 0.5824634655532359,
+        "f1-score": 0.4386792452830189,
+        "support": 479.0
+      },
+      "accuracy": 0.28541666666666665,
+      "macro avg": {
+        "precision": 0.19918187319732447,
+        "recall": 0.23665619544157387,
+        "f1-score": 0.2033910490221178,
+        "support": 1920.0
+      },
+      "weighted avg": {
+        "precision": 0.22769163721914806,
+        "recall": 0.28541666666666665,
+        "f1-score": 0.2386346435282687,
+        "support": 1920.0
+      }
+    }
+  },
+  "workload_model": {
+    "model_name": "XGBoost",
+    "features": [
+      "Player_Age",
+      "Player_Weight",
+      "Player_Height",
+      "Previous_Injuries",
+      "Training_Intensity",
+      "Recovery_Time"
+    ],
+    "classes": [
+      "No Injury Risk",
+      "High Injury Risk"
+    ],
+    "accuracy": 0.53,
+    "precision": 0.5263157894736842,
+    "recall": 0.6,
+    "f1": 0.5607476635514018,
+    "confusion_matrix": [
+      [
+        46,
+        54
+      ],
+      [
+        40,
+        60
+      ]
+    ],
+    "classification_report": {
+      "0": {
+        "precision": 0.5348837209302325,
+        "recall": 0.46,
+        "f1-score": 0.4946236559139785,
+        "support": 100.0
+      },
+      "1": {
+        "precision": 0.5263157894736842,
+        "recall": 0.6,
+        "f1-score": 0.5607476635514018,
+        "support": 100.0
+      },
+      "accuracy": 0.53,
+      "macro avg": {
+        "precision": 0.5305997552019583,
+        "recall": 0.53,
+        "f1-score": 0.5276856597326902,
+        "support": 200.0
+      },
+      "weighted avg": {
+        "precision": 0.5305997552019583,
+        "recall": 0.53,
+        "f1-score": 0.5276856597326902,
+        "support": 200.0
+      }
+    }
+  }
+}
