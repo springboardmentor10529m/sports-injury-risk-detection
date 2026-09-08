@@ -15,42 +15,50 @@ class AthleteProfile(models.Model):
         ("no", "No"),
     ]
 
+    INJURY_TYPE_CHOICES = [
+        ("acl_tear", "ACL Tear"),
+        ("mcl_injury", "MCL Injury"),
+        ("meniscus_injury", "Meniscus Injury"),
+        ("hamstring_strain", "Hamstring Strain"),
+        ("quadriceps_strain", "Quadriceps Strain"),
+        ("ankle_sprain", "Ankle Sprain"),
+        ("achilles_injury", "Achilles Tendon Injury"),
+        ("shoulder_injury", "Shoulder Injury"),
+        ("lower_back_injury", "Lower Back Injury"),
+        ("other", "Other"),
+    ]
+
+    RECOVERY_STATUS_CHOICES = [
+        ("fully_recovered", "Fully Recovered"),
+        ("partially_recovered", "Partially Recovered"),
+        ("currently_injured", "Currently Injured"),
+    ]
+
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
         related_name="athlete_profile"
     )
 
-    full_name = models.CharField(
-        max_length=150
-    )
-
+    full_name = models.CharField(max_length=150)
     age = models.PositiveIntegerField()
-
     gender = models.CharField(
         max_length=10,
         choices=GENDER_CHOICES
     )
-
-    sport = models.CharField(
-        max_length=100
-    )
-
+    sport = models.CharField(max_length=100)
     height = models.DecimalField(
         max_digits=5,
         decimal_places=2
     )
-
     weight = models.DecimalField(
         max_digits=5,
         decimal_places=2
     )
-
     position = models.CharField(
         max_length=100,
         blank=True
     )
-
     training_hours = models.DecimalField(
         max_digits=5,
         decimal_places=2,
@@ -61,6 +69,18 @@ class AthleteProfile(models.Model):
     previous_injury = models.CharField(
         max_length=3,
         choices=INJURY_CHOICES
+    )
+
+    injury_type = models.CharField(
+        max_length=30,
+        choices=INJURY_TYPE_CHOICES,
+        blank=True
+    )
+
+    recovery_status = models.CharField(
+        max_length=30,
+        choices=RECOVERY_STATUS_CHOICES,
+        blank=True
     )
 
     created_at = models.DateTimeField(
@@ -92,4 +112,4 @@ class AthleteVideo(models.Model):
     )
 
     def __str__(self):
-        return f"{self.athlete.full_name} - {self.video.name}"        
+        return f"{self.athlete.full_name} - {self.video.name}"

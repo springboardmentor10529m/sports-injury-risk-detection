@@ -7,7 +7,6 @@ class AthleteProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AthleteProfile
-
         fields = [
             "full_name",
             "age",
@@ -18,43 +17,60 @@ class AthleteProfileSerializer(serializers.ModelSerializer):
             "position",
             "training_hours",
             "previous_injury",
+            "injury_type",
+            "recovery_status",
         ]
 
     def validate_age(self, value):
-
         if value < 1 or value > 100:
             raise serializers.ValidationError(
                 "Age must be between 1 and 100."
             )
-
         return value
 
     def validate_height(self, value):
-
         if value <= 0:
             raise serializers.ValidationError(
                 "Height must be greater than 0."
             )
-
         return value
 
     def validate_weight(self, value):
-
         if value <= 0:
             raise serializers.ValidationError(
                 "Weight must be greater than 0."
             )
-
         return value
 
     def validate_training_hours(self, value):
-
         if value is not None and value < 0:
             raise serializers.ValidationError(
                 "Training hours cannot be negative."
             )
-
         return value
+
+    def validate(self, attrs):
+        previous_injury = attrs.get("previous_injury")
+        injury_type = attrs.get("injury_type")
+        recovery_status = attrs.get("recovery_status")
+
+        if previous_injury == "yes":
+
+            if not injury_type:
+                raise serializers.ValidationError({
+                    "injury_type": "Please select your previous injury type."
+                })
+
+            if not recovery_status:
+                raise serializers.ValidationError({
+                    "recovery_status": "Please select your recovery status."
+                })
+
+        else:
+            attrs["injury_type"] = ""
+            attrs["recovery_status"] = ""
+
+        return attrs
 
 
 class AthleteVideoSerializer(serializers.ModelSerializer):

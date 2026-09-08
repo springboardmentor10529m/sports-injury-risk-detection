@@ -198,6 +198,8 @@
 
             <form id="athleteForm">
 
+                <!-- Full Name and Age -->
+
                 <div class="form-row">
 
                     <div class="form-group">
@@ -235,6 +237,8 @@
 
                 </div>
 
+
+                <!-- Gender and Sport -->
 
                 <div class="form-row">
 
@@ -288,6 +292,8 @@
                 </div>
 
 
+                <!-- Height and Weight -->
+
                 <div class="form-row">
 
                     <div class="form-group">
@@ -328,6 +334,8 @@
                 </div>
 
 
+                <!-- Playing Position -->
+
                 <div class="form-group">
 
                     <label for="position">
@@ -342,6 +350,8 @@
 
                 </div>
 
+
+                <!-- Training Hours -->
 
                 <div class="form-group">
 
@@ -359,6 +369,8 @@
 
                 </div>
 
+
+                <!-- Previous Injury -->
 
                 <div class="form-group">
 
@@ -387,6 +399,104 @@
 
                 </div>
 
+
+                <!-- Injury Details -->
+
+                <div
+                    class="form-row"
+                    id="injuryDetails"
+                    style="display: none;"
+                >
+
+                    <div class="form-group">
+
+                        <label for="injury-type">
+                            Injury Type
+                        </label>
+
+                        <select id="injury-type">
+
+                            <option value="">
+                                Select injury type
+                            </option>
+
+                            <option value="acl_tear">
+                                ACL Tear
+                            </option>
+
+                            <option value="mcl_injury">
+                                MCL Injury
+                            </option>
+
+                            <option value="meniscus_injury">
+                                Meniscus Injury
+                            </option>
+
+                            <option value="hamstring_strain">
+                                Hamstring Strain
+                            </option>
+
+                            <option value="quadriceps_strain">
+                                Quadriceps Strain
+                            </option>
+
+                            <option value="ankle_sprain">
+                                Ankle Sprain
+                            </option>
+
+                            <option value="achilles_injury">
+                                Achilles Tendon Injury
+                            </option>
+
+                            <option value="shoulder_injury">
+                                Shoulder Injury
+                            </option>
+
+                            <option value="lower_back_injury">
+                                Lower Back Injury
+                            </option>
+
+                            <option value="other">
+                                Other
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="recovery-status">
+                            Recovery Status
+                        </label>
+
+                        <select id="recovery-status">
+
+                            <option value="">
+                                Select recovery status
+                            </option>
+
+                            <option value="fully_recovered">
+                                Fully Recovered
+                            </option>
+
+                            <option value="partially_recovered">
+                                Partially Recovered
+                            </option>
+
+                            <option value="currently_injured">
+                                Currently Injured
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Save Button -->
 
                 <div class="button-container">
 
@@ -430,6 +540,75 @@
         const saveButton =
             document.getElementById("continueButton");
 
+
+        const previousInjurySelect =
+            document.getElementById("previous-injury");
+
+
+        const injuryDetails =
+            document.getElementById("injuryDetails");
+
+
+        const injuryType =
+            document.getElementById("injury-type");
+
+
+        const recoveryStatus =
+            document.getElementById("recovery-status");
+
+
+        /*
+         * Show or hide the additional injury fields
+         * based on the Previous Injury selection.
+         */
+
+        function updateInjuryFields() {
+
+            if (previousInjurySelect.value === "yes") {
+
+                injuryDetails.style.display = "grid";
+
+                injuryType.required = true;
+
+                recoveryStatus.required = true;
+
+            } else {
+
+                injuryDetails.style.display = "none";
+
+                injuryType.required = false;
+
+                recoveryStatus.required = false;
+
+                injuryType.value = "";
+
+                recoveryStatus.value = "";
+
+            }
+
+        }
+
+
+        /*
+         * Run when the page loads.
+         */
+
+        updateInjuryFields();
+
+
+        /*
+         * Run whenever Previous Injury changes.
+         */
+
+        previousInjurySelect.addEventListener(
+            "change",
+            updateInjuryFields
+        );
+
+
+        /*
+         * Submit Athlete Details
+         */
 
         athleteForm.addEventListener(
             "submit",
@@ -482,8 +661,7 @@
 
 
                 const previousInjury =
-                    document.getElementById("previous-injury")
-                    .value;
+                    previousInjurySelect.value;
 
 
                 saveButton.disabled = true;
@@ -514,7 +692,13 @@
                             : Number(trainingHours),
 
                     previous_injury:
-                        previousInjury
+                        previousInjury,
+
+                    injury_type:
+                        injuryType.value,
+
+                    recovery_status:
+                        recoveryStatus.value
 
                 };
 
@@ -550,7 +734,7 @@
                         alert(
                             "Athlete details saved successfully."
                         );
-                        
+
                         return;
 
                     }
@@ -613,6 +797,22 @@
                     else if (data.sport) {
 
                         alert(data.sport[0]);
+
+                    }
+
+                    else if (data.injury_type) {
+
+                        alert(
+                            data.injury_type[0]
+                        );
+
+                    }
+
+                    else if (data.recovery_status) {
+
+                        alert(
+                            data.recovery_status[0]
+                        );
 
                     }
 

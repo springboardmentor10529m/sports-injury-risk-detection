@@ -9,7 +9,6 @@
 
     <title>Dashboard - Smart Athlete</title>
 
-
     <style>
 
         * {
@@ -18,29 +17,23 @@
             box-sizing: border-box;
         }
 
-
         body {
             font-family: Arial, sans-serif;
             background: #f5f7fb;
             color: #1f2937;
         }
 
-
         /* Top Navigation */
 
         nav {
             height: 70px;
             background: white;
-
             display: flex;
             align-items: center;
             justify-content: space-between;
-
             padding: 0 40px;
-
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
-
 
         .logo {
             font-size: 24px;
@@ -48,25 +41,21 @@
             color: #2563eb;
         }
 
-
         .user-section {
             display: flex;
             align-items: center;
             gap: 20px;
         }
 
-
         .user-name {
             font-weight: 600;
         }
-
 
         .logout-btn {
             text-decoration: none;
             color: #dc2626;
             cursor: pointer;
         }
-
 
         /* Main Layout */
 
@@ -75,43 +64,33 @@
             min-height: calc(100vh - 70px);
         }
 
-
         /* Sidebar */
 
         .sidebar {
             width: 230px;
             background: white;
             padding: 30px 20px;
-
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.04);
         }
 
-
         .sidebar a {
             display: block;
-
             text-decoration: none;
             color: #4b5563;
-
             padding: 12px 15px;
-
             border-radius: 8px;
-
             margin-bottom: 8px;
         }
-
 
         .sidebar a:hover {
             background: #eff6ff;
             color: #2563eb;
         }
 
-
         .sidebar .active {
             background: #2563eb;
             color: white;
         }
-
 
         /* Content */
 
@@ -120,131 +99,93 @@
             padding: 40px;
         }
 
-
         .welcome h1 {
             font-size: 30px;
             margin-bottom: 8px;
         }
-
 
         .welcome p {
             color: #6b7280;
             margin-bottom: 35px;
         }
 
-
         /* Assessment Card */
 
         .assessment-card {
             background: white;
-
             padding: 30px;
-
             border-radius: 16px;
-
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
-
             margin-bottom: 30px;
         }
-
 
         .assessment-card h2 {
             margin-bottom: 10px;
         }
 
-
         .assessment-card p {
             color: #6b7280;
-
             margin-bottom: 25px;
-
             line-height: 1.6;
         }
 
-
         .assessment-btn {
             display: inline-block;
-
             padding: 13px 24px;
-
             background: #2563eb;
-
             color: white;
-
             text-decoration: none;
-
             border-radius: 8px;
         }
-
 
         .assessment-btn:hover {
             background: #1d4ed8;
         }
 
-
         /* Athlete Profile */
 
         .profile-card {
             background: white;
-
             padding: 30px;
-
             border-radius: 16px;
-
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
-
             margin-bottom: 30px;
         }
-
 
         .profile-card h2 {
             margin-bottom: 25px;
         }
 
-
         .profile-grid {
             display: grid;
-
             grid-template-columns: repeat(2, 1fr);
-
             gap: 20px;
         }
 
-
         .profile-item {
             padding: 15px;
-
             background: #f8fafc;
-
             border-radius: 10px;
         }
 
-
         .profile-item span {
             display: block;
-
             color: #6b7280;
-
             font-size: 14px;
-
             margin-bottom: 6px;
         }
-
 
         .profile-item strong {
             font-size: 16px;
         }
 
-
         .profile-loading {
             color: #6b7280;
         }
 
-
         .profile-error {
             color: #dc2626;
         }
-
 
         /* My Videos */
 
@@ -254,128 +195,95 @@
             gap: 15px;
         }
 
-
         .video-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
-
             gap: 20px;
-
             padding: 18px;
-
             background: #f8fafc;
-
             border-radius: 10px;
         }
-
 
         .video-info {
             flex: 1;
         }
 
-
         .video-name {
             font-weight: 600;
             margin-bottom: 6px;
-
             word-break: break-word;
         }
-
 
         .video-date {
             color: #6b7280;
             font-size: 14px;
         }
 
-
         .video-actions {
             display: flex;
             gap: 10px;
         }
 
-
         .view-video-btn,
         .delete-video-btn {
             border: none;
-
             padding: 9px 16px;
-
             border-radius: 7px;
-
             cursor: pointer;
-
             font-weight: 600;
         }
-
 
         .view-video-btn {
             background: #eff6ff;
             color: #2563eb;
         }
 
-
         .delete-video-btn {
             background: #fee2e2;
             color: #dc2626;
         }
 
-
         .view-video-btn:hover {
             background: #dbeafe;
         }
-
 
         .delete-video-btn:hover {
             background: #fecaca;
         }
 
-
         .video-empty {
             color: #6b7280;
         }
-
 
         .video-error {
             color: #dc2626;
         }
 
-
         /* Statistics */
 
         .stats {
             display: grid;
-
             grid-template-columns: repeat(3, 1fr);
-
             gap: 20px;
         }
 
-
         .stat-card {
             background: white;
-
             padding: 25px;
-
             border-radius: 14px;
-
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
         }
 
-
         .stat-card h3 {
             color: #6b7280;
-
             font-size: 15px;
-
             margin-bottom: 10px;
         }
-
 
         .stat-card strong {
             font-size: 30px;
         }
-
 
         /* Mobile */
 
@@ -385,28 +293,23 @@
                 flex-direction: column;
             }
 
-
             .sidebar {
                 width: 100%;
             }
-
 
             .stats {
                 grid-template-columns: 1fr;
             }
 
-
             .profile-grid {
                 grid-template-columns: 1fr;
             }
-
 
             .content {
                 padding: 25px;
             }
 
         }
-
 
         @media (max-width: 650px) {
 
@@ -415,11 +318,9 @@
                 align-items: flex-start;
             }
 
-
             .video-actions {
                 width: 100%;
             }
-
 
             .view-video-btn,
             .delete-video-btn {
@@ -435,7 +336,6 @@
 
 <body>
 
-
     <!-- Top Navigation -->
 
     <nav>
@@ -443,7 +343,6 @@
         <div class="logo">
             Smart Athlete
         </div>
-
 
         <div class="user-section">
 
@@ -453,7 +352,6 @@
             >
                 Athlete
             </span>
-
 
             <a
                 href="#"
@@ -472,7 +370,6 @@
 
     <div class="dashboard">
 
-
         <!-- Sidebar -->
 
         <aside class="sidebar">
@@ -484,16 +381,13 @@
                 Dashboard
             </a>
 
-
             <a href="athlete-details.html">
                 My Profile
             </a>
 
-
             <a href="#">
                 Assessments
             </a>
-
 
             <a href="#">
                 Settings
@@ -506,7 +400,6 @@
 
         <main class="content">
 
-
             <!-- Welcome -->
 
             <div class="welcome">
@@ -514,7 +407,6 @@
                 <h1 id="welcomeMessage">
                     Welcome to Smart Athlete
                 </h1>
-
 
                 <p>
                     Monitor your athletic performance and
@@ -532,13 +424,11 @@
                     Start a New Injury Assessment
                 </h2>
 
-
                 <p>
                     Provide your athlete information and upload
                     a sports video to analyze movement patterns
                     and identify potential injury risk.
                 </p>
-
 
                 <a
                     href="athlete-details.html"
@@ -546,7 +436,6 @@
                 >
                     My Athlete Profile →
                 </a>
-
 
                 <a
                     href="#"
@@ -568,7 +457,6 @@
                     Athlete Profile
                 </h2>
 
-
                 <div
                     id="profileContent"
                     class="profile-loading"
@@ -587,7 +475,6 @@
                     My Videos
                 </h2>
 
-
                 <div
                     id="videosContent"
                     class="profile-loading"
@@ -602,13 +489,11 @@
 
             <div class="stats">
 
-
                 <div class="stat-card">
 
                     <h3>
                         Total Assessments
                     </h3>
-
 
                     <strong id="totalAssessments">
                         0
@@ -623,7 +508,6 @@
                         Last Assessment
                     </h3>
 
-
                     <strong id="lastAssessment">
                         —
                     </strong>
@@ -637,16 +521,13 @@
                         Current Risk
                     </h3>
 
-
                     <strong id="currentRisk">
                         —
                     </strong>
 
                 </div>
 
-
             </div>
-
 
         </main>
 
@@ -655,18 +536,17 @@
 
     <script>
 
-
         /*
-            Get authentication token
-        */
+         * Get authentication token
+         */
 
         const authToken =
             localStorage.getItem("authToken");
 
 
         /*
-            Check login
-        */
+         * Check login
+         */
 
         if (!authToken) {
 
@@ -681,8 +561,8 @@
 
 
         /*
-            Elements
-        */
+         * Elements
+         */
 
         const userName =
             document.getElementById("userName");
@@ -713,15 +593,15 @@
 
 
         /*
-            Profile status
-        */
+         * Profile status
+         */
 
         let athleteProfileExists = false;
 
 
         /*
-            Load athlete profile
-        */
+         * Load athlete profile
+         */
 
         async function loadAthleteProfile() {
 
@@ -745,8 +625,8 @@
 
 
                 /*
-                    Profile exists
-                */
+                 * Profile exists
+                 */
 
                 if (response.ok) {
 
@@ -758,8 +638,8 @@
 
 
                     /*
-                        Display name
-                    */
+                     * Display name
+                     */
 
                     userName.textContent =
                         data.full_name;
@@ -770,13 +650,12 @@
 
 
                     /*
-                        Display profile
-                    */
+                     * Display profile
+                     */
 
                     profileContent.innerHTML = `
 
                         <div class="profile-grid">
-
 
                             <div class="profile-item">
 
@@ -895,6 +774,31 @@
                             </div>
 
 
+                            <div class="profile-item">
+
+                                <span>
+                                    Injury Type
+                                </span>
+
+                                <strong>
+                                    ${formatInjuryType(data.injury_type)}
+                                </strong>
+
+                            </div>
+
+
+                            <div class="profile-item">
+
+                                <span>
+                                    Recovery Status
+                                </span>
+
+                                <strong>
+                                    ${formatRecoveryStatus(data.recovery_status)}
+                                </strong>
+
+                            </div>
+
                         </div>
 
                     `;
@@ -903,13 +807,12 @@
 
 
                 /*
-                    No athlete profile
-                */
+                 * No athlete profile
+                 */
 
                 else if (response.status === 404) {
 
                     athleteProfileExists = false;
-
 
                     profileContent.innerHTML = `
 
@@ -923,8 +826,8 @@
 
 
                 /*
-                    Authentication failed
-                */
+                 * Authentication failed
+                 */
 
                 else if (response.status === 401) {
 
@@ -936,11 +839,9 @@
                         "user"
                     );
 
-
                     alert(
                         "Your login session has expired. Please login again."
                     );
-
 
                     window.location.href =
                         "login.html";
@@ -948,10 +849,13 @@
                 }
 
 
+                /*
+                 * Other error
+                 */
+
                 else {
 
                     athleteProfileExists = false;
-
 
                     profileContent.innerHTML = `
 
@@ -973,9 +877,7 @@
                     error
                 );
 
-
                 athleteProfileExists = false;
-
 
                 profileContent.innerHTML = `
 
@@ -992,8 +894,8 @@
 
 
         /*
-            Upload Video button
-        */
+         * Upload Video button
+         */
 
         uploadVideoButton.addEventListener(
             "click",
@@ -1003,8 +905,8 @@
 
 
                 /*
-                    Check profile first
-                */
+                 * Check profile first
+                 */
 
                 try {
 
@@ -1026,8 +928,8 @@
 
 
                     /*
-                        Profile exists
-                    */
+                     * Profile exists
+                     */
 
                     if (response.ok) {
 
@@ -1040,15 +942,14 @@
 
 
                     /*
-                        Profile doesn't exist
-                    */
+                     * Profile doesn't exist
+                     */
 
                     if (response.status === 404) {
 
                         alert(
                             "Please complete your athlete profile before uploading a video."
                         );
-
 
                         window.location.href =
                             "athlete-details.html";
@@ -1059,8 +960,8 @@
 
 
                     /*
-                        Invalid login
-                    */
+                     * Invalid login
+                     */
 
                     if (response.status === 401) {
 
@@ -1072,11 +973,9 @@
                             "user"
                         );
 
-
                         alert(
                             "Your login session has expired. Please login again."
                         );
-
 
                         window.location.href =
                             "login.html";
@@ -1100,7 +999,6 @@
                         error
                     );
 
-
                     alert(
                         "Unable to connect to the server. Please make sure Django is running."
                     );
@@ -1112,8 +1010,8 @@
 
 
         /*
-            Load uploaded videos
-        */
+         * Load uploaded videos
+         */
 
         async function loadVideos() {
 
@@ -1137,8 +1035,8 @@
 
 
                 /*
-                    Authentication failed
-                */
+                 * Authentication failed
+                 */
 
                 if (response.status === 401) {
 
@@ -1150,22 +1048,21 @@
                         "user"
                     );
 
-
                     alert(
                         "Your login session has expired. Please login again."
                     );
-
 
                     window.location.href =
                         "login.html";
 
                     return;
+
                 }
 
 
                 /*
-                    Profile not found
-                */
+                 * Profile not found
+                 */
 
                 if (response.status === 404) {
 
@@ -1175,12 +1072,13 @@
                         </p>`;
 
                     return;
+
                 }
 
 
                 /*
-                    Other error
-                */
+                 * Other error
+                 */
 
                 if (!response.ok) {
 
@@ -1190,6 +1088,7 @@
                         </p>`;
 
                     return;
+
                 }
 
 
@@ -1198,8 +1097,8 @@
 
 
                 /*
-                    No videos
-                */
+                 * No videos
+                 */
 
                 if (videos.length === 0) {
 
@@ -1209,12 +1108,13 @@
                         </p>`;
 
                     return;
+
                 }
 
 
                 /*
-                    Create video list
-                */
+                 * Create video list
+                 */
 
                 videosContent.innerHTML =
                     `<div class="video-list"></div>`;
@@ -1236,8 +1136,8 @@
 
 
                     /*
-                        Get filename
-                    */
+                     * Get filename
+                     */
 
                     const videoPath =
                         video.video || "";
@@ -1248,8 +1148,8 @@
 
 
                     /*
-                        Create video information
-                    */
+                     * Create video information
+                     */
 
                     const videoInfo =
                         document.createElement("div");
@@ -1291,8 +1191,8 @@
 
 
                     /*
-                        Create buttons
-                    */
+                     * Create buttons
+                     */
 
                     const actions =
                         document.createElement("div");
@@ -1322,8 +1222,8 @@
 
 
                     /*
-                        View video
-                    */
+                     * View video
+                     */
 
                     viewButton.addEventListener(
                         "click",
@@ -1334,10 +1234,10 @@
 
 
                             /*
-                                If Django returns
-                                a relative URL,
-                                add backend address.
-                            */
+                             * If Django returns
+                             * a relative URL,
+                             * add backend address.
+                             */
 
                             if (
                                 videoUrl &&
@@ -1365,8 +1265,8 @@
 
 
                     /*
-                        Delete video
-                    */
+                     * Delete video
+                     */
 
                     deleteButton.addEventListener(
                         "click",
@@ -1414,8 +1314,8 @@
 
 
                                 /*
-                                    Delete successful
-                                */
+                                 * Delete successful
+                                 */
 
                                 if (
                                     deleteResponse.ok
@@ -1428,8 +1328,8 @@
 
 
                                     /*
-                                        Reload videos
-                                    */
+                                     * Reload videos
+                                     */
 
                                     loadVideos();
 
@@ -1437,8 +1337,8 @@
 
 
                                 /*
-                                    Authentication failed
-                                */
+                                 * Authentication failed
+                                 */
 
                                 else if (
                                     deleteResponse.status === 401
@@ -1452,11 +1352,9 @@
                                         "user"
                                     );
 
-
                                     alert(
                                         "Your login session has expired. Please login again."
                                     );
-
 
                                     window.location.href =
                                         "login.html";
@@ -1465,8 +1363,8 @@
 
 
                                 /*
-                                    Delete failed
-                                */
+                                 * Delete failed
+                                 */
 
                                 else {
 
@@ -1475,10 +1373,8 @@
                                         "Unable to delete video."
                                     );
 
-
                                     deleteButton.disabled =
                                         false;
-
 
                                     deleteButton.textContent =
                                         "Delete";
@@ -1495,15 +1391,12 @@
                                     error
                                 );
 
-
                                 alert(
                                     "Unable to connect to the server."
                                 );
 
-
                                 deleteButton.disabled =
                                     false;
-
 
                                 deleteButton.textContent =
                                     "Delete";
@@ -1518,7 +1411,6 @@
                         viewButton
                     );
 
-
                     actions.appendChild(
                         deleteButton
                     );
@@ -1527,7 +1419,6 @@
                     videoItem.appendChild(
                         videoInfo
                     );
-
 
                     videoItem.appendChild(
                         actions
@@ -1550,7 +1441,6 @@
                     error
                 );
 
-
                 videosContent.innerHTML =
                     `<p class="video-error">
                         Unable to connect to the server.
@@ -1563,8 +1453,8 @@
 
 
         /*
-            Convert gender
-        */
+         * Convert gender
+         */
 
         function formatGender(gender) {
 
@@ -1574,7 +1464,6 @@
 
             }
 
-
             return gender.charAt(0).toUpperCase()
                 + gender.slice(1);
 
@@ -1582,8 +1471,8 @@
 
 
         /*
-            Convert injury
-        */
+         * Convert previous injury
+         */
 
         function formatInjury(injury) {
 
@@ -1593,13 +1482,11 @@
 
             }
 
-
             if (injury === "no") {
 
                 return "No";
 
             }
-
 
             return "Not provided";
 
@@ -1607,8 +1494,81 @@
 
 
         /*
-            Logout
-        */
+         * Convert injury type
+         */
+
+        function formatInjuryType(injuryType) {
+
+            const injuryTypes = {
+
+                acl_tear:
+                    "ACL Tear",
+
+                mcl_injury:
+                    "MCL Injury",
+
+                meniscus_injury:
+                    "Meniscus Injury",
+
+                hamstring_strain:
+                    "Hamstring Strain",
+
+                quadriceps_strain:
+                    "Quadriceps Strain",
+
+                ankle_sprain:
+                    "Ankle Sprain",
+
+                achilles_injury:
+                    "Achilles Tendon Injury",
+
+                shoulder_injury:
+                    "Shoulder Injury",
+
+                lower_back_injury:
+                    "Lower Back Injury",
+
+                other:
+                    "Other"
+
+            };
+
+
+            return injuryTypes[injuryType]
+                || "Not provided";
+
+        }
+
+
+        /*
+         * Convert recovery status
+         */
+
+        function formatRecoveryStatus(status) {
+
+            const recoveryStatuses = {
+
+                fully_recovered:
+                    "Fully Recovered",
+
+                partially_recovered:
+                    "Partially Recovered",
+
+                currently_injured:
+                    "Currently Injured"
+
+            };
+
+
+            return recoveryStatuses[status]
+                || "Not provided";
+
+        }
+
+
+        /*
+         * Logout
+         */
 
         const logoutButton =
             document.getElementById(
@@ -1627,7 +1587,6 @@
                     "authToken"
                 );
 
-
                 localStorage.removeItem(
                     "user"
                 );
@@ -1641,20 +1600,19 @@
 
 
         /*
-            Load profile
-            when dashboard opens
-        */
+         * Load profile
+         * when dashboard opens
+         */
 
         loadAthleteProfile();
 
 
         /*
-            Load videos
-            when dashboard opens
-        */
+         * Load videos
+         * when dashboard opens
+         */
 
         loadVideos();
-
 
     </script>
 
