@@ -1,0 +1,57 @@
+{
+    "model_name": "Random Forest (Balanced)",
+    "model_type": "RandomForestClassifier",
+    "training_rows": 4344,
+    "testing_rows": 1086,
+    "features_count": 18,
+    "selected_features": [
+        "fatigue_score",
+        "acceleration",
+        "angular_velocity",
+        "body_orientation",
+        "ground_reaction_force",
+        "step_count",
+        "cadence",
+        "jump_height_cm",
+        "range_of_motion",
+        "impact_force",
+        "gait_symmetry",
+        "speed",
+        "training_duration",
+        "previous_injury_history",
+        "rest_period",
+        "repetition_count",
+        "workload_intensity",
+        "acc_rms"
+    ],
+    "target_column": "injury_risk",
+    "class_distribution_full": {
+        "class_0_low_risk": 5160,
+        "class_1_high_risk": 270,
+        "positive_ratio_pct": 4.97
+    },
+    "preprocessing": {
+        "scaling_applied": false,
+        "scaler_type": "None (Raw Features used for Tree Model)"
+    },
+    "random_seed": 42,
+    "evaluation_metrics": {
+        "accuracy": 0.9355,
+        "precision": 0.3621,
+        "recall_high_risk": 0.3889,
+        "f1_score": 0.375,
+        "roc_auc": 0.7667,
+        "pr_auc": 0.2972,
+        "confusion_matrix": [
+            [
+                995,
+                37
+            ],
+            [
+                33,
+                21
+            ]
+        ]
+    },
+    "architecture_note": "Phase 1 model trained on 5,430 tabular rows. MediaPipe video landmarks are adapted at inference time via Phase 3 feature adaptation mapping."
+}

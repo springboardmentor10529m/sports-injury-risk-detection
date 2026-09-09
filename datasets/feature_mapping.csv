@@ -1,0 +1,19 @@
+final_feature,dataset,original_column,data_type,transformation,unit,reason,compatible_with_video_pipeline
+fatigue_score,sports_multimodal_data.csv,fatigue_index,float64,"renamed to fatigue_score, scaled 0-100",index (0-100),Quantifies overall neuromuscular & metabolic fatigue state prior to movement,YES
+acceleration,sports_multimodal_data.csv,acceleration,float64,none (-3.32 to +3.40),m/s^2,Peak linear body acceleration and deceleration magnitude during activity,YES
+angular_velocity,sports_multimodal_data.csv,angular_velocity,float64,none (-1.71 to +1.87),rad/s,Rotational joint angular velocity measuring movement suddenness,YES
+body_orientation,sports_multimodal_data.csv,body_orientation,float64,none (-180 to +180),degrees,Trunk and torso spatial orientation angle relative to vertical/movement plane,YES
+ground_reaction_force,sports_multimodal_data.csv,ground_reaction_force,float64,none (-58.9 to +1024.3),Newtons (N),Peak vertical ground impact force transmitted to lower extremity joints,PARTIAL
+step_count,sports_multimodal_data.csv,step_count,int64,none (67 to 139),count,Accumulated movement volume and stride repetition count during session,YES
+cadence,sports_multimodal_data.csv,cadence,float64,none (48.2 to 116.1),steps/min,Stride frequency per minute indicating movement tempo,YES
+jump_height_cm,sports_multimodal_data.csv,jump_height,float64,unit conversion from meters to cm (*100),cm,Maximum vertical jump displacement reached during explosive phase,YES
+range_of_motion,sports_multimodal_data.csv,range_of_motion,float64,none (30.0 to 120.0),degrees,Joint angular displacement range across maximum extension to flexion,YES
+impact_force,sports_multimodal_data.csv,impact_force,float64,none (-70.5 to +676.6),Newtons (N),Transient mechanical impact force experienced upon ground contact,PARTIAL
+gait_symmetry,sports_multimodal_data.csv,gait_symmetry,float64,none (0.60 to 1.00),ratio (0-1),Bilateral left-vs-right limb movement symmetry ratio,YES
+speed,sports_multimodal_data.csv,speed,float64,none (0.0 to 12.0),m/s,Linear locomotion velocity during movement execution,YES
+training_duration,sports_multimodal_data.csv,training_duration,float64,noise floor floor-clipped at 0.0 (0 to 198.5),minutes,Total workout exposure time driving acute physiological load,NO
+previous_injury_history,sports_multimodal_data.csv,previous_injury_history,int64,none (0 or 1),"binary (0=No, 1=Yes)","Prior injury presence, established clinically as top risk indicator",NO
+rest_period,sports_multimodal_data.csv,rest_period,float64,none (1.29 to 14.49),days,Rest duration between athletic sessions enabling tissue recovery,NO
+repetition_count,sports_multimodal_data.csv,repetition_count,int64,none (13 to 51),count,Exercise cycle count performed within training set,YES
+workload_intensity,sports_multimodal_data.csv,workload_intensity,float64,noise floor floor-clipped at 0.0 (0 to 13.95),index score,Session exertion intensity rating weighting overall movement load,PARTIAL
+acc_rms,sports_multimodal_data.csv,acc_rms,float64,none (0.81 to 1.21),g (RMS),Root-mean-square acceleration variance measuring movement jerkiness,YES

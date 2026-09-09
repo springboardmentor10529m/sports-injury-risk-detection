@@ -1,0 +1,49 @@
+dataset,original_column,reason_excluded
+Project-Injury-Dataset.csv,Player_ID,identity (unique numeric identifier)
+Project-Injury-Dataset.csv,PLAYER_NAME,identity (personal name identifier)
+Project-Injury-Dataset.csv,Sport,irrelevant metadata (categorical sport label not predictive of baseline movement risk)
+Project-Injury-Dataset.csv,Position / Exercise_Type,irrelevant metadata (textual exercise description category)
+Project-Injury-Dataset.csv,Injury_Type,data leakage / post-injury information (diagnosed clinical injury type recorded after event)
+Project-Injury-Dataset.csv,Injury_Severity,data leakage / post-injury information (clinical severity grade assigned after injury)
+Project-Injury-Dataset.csv,Rehabilitation_Program,data leakage / post-injury information (post-injury physical therapy intervention protocol)
+Project-Injury-Dataset.csv,Rehabilitation_Time_weeks,data leakage / post-injury information (recovery timeframe recorded post-injury)
+Project-Injury-Dataset.csv,Date_of_Injury,data leakage / timestamp (exact calendar date of injury event)
+Project-Injury-Dataset.csv,Rehabilitation_Efficiency_Score,data leakage / post-injury information (rehabilitation outcome score after treatment)
+Project-Injury-Dataset.csv,Injury_Recurrence,duplicate concept / post-injury information (captured in previous_injury_history)
+Project-Injury-Dataset.csv,Knee_Angle_deg,incompatible dataset structure (observational post-injury clinical registry dataset without non-injured control subjects)
+Project-Injury-Dataset.csv,Jump_Height_cm,incompatible dataset structure (observational post-injury clinical registry dataset without non-injured control subjects)
+Project-Injury-Dataset.csv,Ankle_Flexion_deg,incompatible dataset structure (observational post-injury clinical registry dataset without non-injured control subjects)
+Project-Injury-Dataset.csv,Speed_m_s,incompatible dataset structure (observational post-injury clinical registry dataset without non-injured control subjects)
+Project-Injury-Dataset.csv,Reaction_Time_ms,unsupported measurement in video pipeline / incompatible dataset structure
+Project-Injury-Dataset.csv,Age,incompatible dataset structure (ds1 is post-injury clinical registry only)
+Project-Injury-Dataset.csv,Height_cm,incompatible dataset structure (ds1 is post-injury clinical registry only)
+Project-Injury-Dataset.csv,Weight_kg,incompatible dataset structure (ds1 is post-injury clinical registry only)
+sports_multimodal_data.csv,heart_rate,irrelevant / unsupported sensor data (cardiovascular telemetry not captured by pose pipeline)
+sports_multimodal_data.csv,emg_amplitude,irrelevant / unsupported sensor data (electromyography muscle activation sensor signal)
+sports_multimodal_data.csv,skin_temp,irrelevant / unsupported sensor data (skin thermistor temperature sensor signal)
+sports_multimodal_data.csv,gsr,irrelevant / unsupported sensor data (galvanic skin response / electrodermal activity)
+sports_multimodal_data.csv,respiratory_rate,irrelevant / unsupported sensor data (respiratory rate telemetry signal)
+sports_multimodal_data.csv,spo2,irrelevant / unsupported sensor data (pulse oximeter oxygen saturation telemetry)
+sports_multimodal_data.csv,bp_systolic,irrelevant / unsupported sensor data (systolic blood pressure telemetry)
+sports_multimodal_data.csv,bp_diastolic,irrelevant / unsupported sensor data (diastolic blood pressure telemetry)
+sports_multimodal_data.csv,altitude,irrelevant environmental data (geographic altitude setting)
+sports_multimodal_data.csv,ambient_temp,irrelevant environmental data (ambient weather temperature)
+sports_multimodal_data.csv,humidity,irrelevant environmental data (relative humidity percentage)
+sports_multimodal_data.csv,heat_index,irrelevant environmental data (calculated weather heat index)
+collegiate_athlete_injury_dataset.csv,Athlete_ID,identity (alphanumeric athlete code A001-A200)
+collegiate_athlete_injury_dataset.csv,Gender,irrelevant metadata (demographic category without direct biomechanical causation)
+collegiate_athlete_injury_dataset.csv,Position,irrelevant metadata (basketball playing position label)
+collegiate_athlete_injury_dataset.csv,Performance_Score,irrelevant game metadata (subjective athletic performance score 50-99)
+collegiate_athlete_injury_dataset.csv,Team_Contribution_Score,irrelevant game metadata (subjective team contribution rating 50-99)
+collegiate_athlete_injury_dataset.csv,ACL_Risk_Score,data leakage (pre-calculated composite ACL risk index strongly correlated with target r=0.525)
+collegiate_athlete_injury_dataset.csv,Age,"small sample dataset exclusion (ds3 contains 200 rows with 14 positive cases; scale incompatible with 5,430 row primary dataset)"
+collegiate_athlete_injury_dataset.csv,Height_cm,"small sample dataset exclusion (ds3 contains 200 rows with 14 positive cases; scale incompatible with 5,430 row primary dataset)"
+collegiate_athlete_injury_dataset.csv,Weight_kg,"small sample dataset exclusion (ds3 contains 200 rows with 14 positive cases; scale incompatible with 5,430 row primary dataset)"
+collegiate_athlete_injury_dataset.csv,Training_Intensity,"small sample dataset exclusion (ds3 contains 200 rows with 14 positive cases; scale incompatible with 5,430 row primary dataset)"
+collegiate_athlete_injury_dataset.csv,Training_Hours_Per_Week,"small sample dataset exclusion (ds3 contains 200 rows with 14 positive cases; scale incompatible with 5,430 row primary dataset)"
+collegiate_athlete_injury_dataset.csv,Recovery_Days_Per_Week,"small sample dataset exclusion (ds3 contains 200 rows with 14 positive cases; scale incompatible with 5,430 row primary dataset)"
+collegiate_athlete_injury_dataset.csv,Match_Count_Per_Week,"small sample dataset exclusion (ds3 contains 200 rows with 14 positive cases; scale incompatible with 5,430 row primary dataset)"
+collegiate_athlete_injury_dataset.csv,Rest_Between_Events_Days,"small sample dataset exclusion (ds3 contains 200 rows with 14 positive cases; scale incompatible with 5,430 row primary dataset)"
+collegiate_athlete_injury_dataset.csv,Fatigue_Score,"small sample dataset exclusion (ds3 contains 200 rows with 14 positive cases; scale incompatible with 5,430 row primary dataset)"
+collegiate_athlete_injury_dataset.csv,Load_Balance_Score,"small sample dataset exclusion (ds3 contains 200 rows with 14 positive cases; scale incompatible with 5,430 row primary dataset)"
+collegiate_athlete_injury_dataset.csv,Injury_Indicator,incompatible target sample (ds3 target reserved for secondary macro evaluation due to 14-sample size)

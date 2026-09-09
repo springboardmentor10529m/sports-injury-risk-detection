@@ -1,0 +1,165 @@
+=== DB: d:\Infosys certificates\Infosys Project\sports-injury-detection\sql_app.db ===
+VIDEOS:
+[
+  {
+    "video_id": "6b83f84ac79f448bb15f10788debdb1d",
+    "athlete_id": "c054b1d6b20f40759390d040fa8bfbbc",
+    "activity": "Squatting",
+    "video_url": "uploads\\raw\\6b83f84a-c79f-448b-b15f-10788debdb1d_raw.mp4",
+    "duration": null,
+    "fps": null,
+    "resolution": null,
+    "quality_score": null,
+    "processing_status": "processing",
+    "uploaded_at": "2026-08-23 08:54:41"
+  },
+  {
+    "video_id": "559763edbe5747b6842d1dcced965d90",
+    "athlete_id": "c054b1d6b20f40759390d040fa8bfbbc",
+    "activity": "Squatting",
+    "video_url": "uploads\\raw\\559763ed-be57-47b6-842d-1dcced965d90_raw.mp4",
+    "duration": null,
+    "fps": null,
+    "resolution": null,
+    "quality_score": null,
+    "processing_status": "processing",
+    "uploaded_at": "2026-09-01 13:28:00"
+  },
+  {
+    "video_id": "e6c1d1b16db34d1094a9f5a757b716dc",
+    "athlete_id": "c054b1d6b20f40759390d040fa8bfbbc",
+    "activity": "Squatting",
+    "video_url": "uploads\\raw\\e6c1d1b1-6db3-4d10-94a9-f5a757b716dc_raw.mp4",
+    "duration": null,
+    "fps": null,
+    "resolution": null,
+    "quality_score": null,
+    "processing_status": "failed",
+    "uploaded_at": "2026-09-02 04:23:51"
+  },
+  {
+    "video_id": "563642b414854dd0ac94149e5250f726",
+    "athlete_id": "c054b1d6b20f40759390d040fa8bfbbc",
+    "activity": "Squatting",
+    "video_url": "uploads\\raw\\563642b4-1485-4dd0-ac94-149e5250f726_raw.mp4",
+    "duration": null,
+    "fps": null,
+    "resolution": null,
+    "quality_score": null,
+    "processing_status": "failed",
+    "uploaded_at": "2026-09-02 12:15:09"
+  },
+  {
+    "video_id": "7cf676c9a2f140ccb086b0aa774b5fea",
+    "athlete_id": "262fc82bc5494710a21dcbe471a6681a",
+    "activity": "Squatting",
+    "video_url": "uploads/processed/processed_7cf676c9-a2f1-40cc-b086-b0aa774b5fea_raw.mp4",
+    "duration": 14.92,
+    "fps": 24,
+    "resolution": "1280x720",
+    "quality_score": 83.4,
+    "processing_status": "completed",
+    "uploaded_at": "2026-09-02 12:35:42"
+  },
+  {
+    "video_id": "2e39eaffbbfe4172ae84539446b57fe0",
+    "athlete_id": "c054b1d6b20f40759390d040fa8bfbbc",
+    "activity": "Squatting",
+    "video_url": "uploads/processed/processed_2e39eaff-bbfe-4172-ae84-539446b57fe0_raw.mp4",
+    "duration": 14.92,
+    "fps": 24,
+    "resolution": "1280x720",
+    "quality_score": 83.4,
+    "processing_status": "completed",
+    "uploaded_at": "2026-09-02 12:38:42"
+  }
+]
+
+ANALYSIS RESULTS:
+[
+  {
+    "analysis_id": "dc8e4682478b4f17b501162bc189a48d",
+    "video_id": "7cf676c9a2f140ccb086b0aa774b5fea",
+    "athlete_id": "262fc82bc5494710a21dcbe471a6681a",
+    "knee_valgus": 1.0,
+    "hip_stability": 78.0,
+    "trunk_lean": 5.5,
+    "stride_length": 0.28,
+    "joint_alignment": 92.0,
+    "symmetry_score": 85.5,
+    "fatigue_score": 3.5,
+    "movement_quality": 83.4,
+    "overall_risk_score": 27.8,
+    "risk_level": "MODERATE",
+    "created_at": "2026-09-02 12:35:58"
+  },
+  {
+    "analysis_id": "0d6bf0ece16f495696a06df54cc60317",
+    "video_id": "2e39eaffbbfe4172ae84539446b57fe0",
+    "athlete_id": "c054b1d6b20f40759390d040fa8bfbbc",
+    "knee_valgus": 1.0,
+    "hip_stability": 78.0,
+    "trunk_lean": 5.5,
+    "stride_length": 0.28,
+    "joint_alignment": 92.0,
+    "symmetry_score": 85.5,
+    "fatigue_score": 3.5,
+    "movement_quality": 83.4,
+    "overall_risk_score": 31.3,
+    "risk_level": "MODERATE",
+    "created_at": "2026-09-02 12:39:04"
+  }
+]
+
+INJURY PREDICTIONS:
+[
+  {
+    "prediction_id": "b336bbea3efc48cb9172097bbbc55c5b",
+    "analysis_id": "dc8e4682478b4f17b501162bc189a48d",
+    "acl_risk": 27.2,
+    "hamstring_risk": 31.0,
+    "ankle_risk": 26.6,
+    "shoulder_risk": 25.7,
+    "lower_back_risk": 33.8,
+    "overuse_risk": 47.5
+  },
+  {
+    "prediction_id": "6a6bff3de81f4395b7905a2d12678c98",
+    "analysis_id": "0d6bf0ece16f495696a06df54cc60317",
+    "acl_risk": 27.2,
+    "hamstring_risk": 29.0,
+    "ankle_risk": 26.6,
+    "shoulder_risk": 25.7,
+    "lower_back_risk": 33.8,
+    "overuse_risk": 42.5
+  }
+]
+
+POSE DATA SUMMARY:
+[
+  {
+    "pose_id": "dcb083285d4e4c7d8f7e726d37631b81",
+    "video_id": "7cf676c9a2f140ccb086b0aa774b5fea",
+    "athlete_id": "262fc82bc5494710a21dcbe471a6681a"
+  },
+  {
+    "pose_id": "1b4c8e6bd2a54fc598e3df6e14f56bd1",
+    "video_id": "2e39eaffbbfe4172ae84539446b57fe0",
+    "athlete_id": "c054b1d6b20f40759390d040fa8bfbbc"
+  }
+]
+
+--- Detail for PoseData of Video 7cf676c9a2f140ccb086b0aa774b5fea ---
+  frames type: <class 'list'>
+  frames length: 358
+  frame[0] keys: ['frame', 'timestamp_seconds', 'confidence', 'landmarks']
+  frame[0]['landmarks'] len: <class 'dict'>
+  keypoints type: <class 'dict'>
+  keypoints keys: ['total_frames', 'fps']
+--- Detail for PoseData of Video 2e39eaffbbfe4172ae84539446b57fe0 ---
+  frames type: <class 'list'>
+  frames length: 358
+  frame[0] keys: ['frame', 'timestamp_seconds', 'confidence', 'landmarks']
+  frame[0]['landmarks'] len: <class 'dict'>
+  keypoints type: <class 'dict'>
+  keypoints keys: ['total_frames', 'fps']

@@ -260,9 +260,20 @@ def process_video_pose(video_path: str, output_video_path: str) -> Dict[str, Any
     if total_frames <= 0:
         total_frames = 90  # default 3 seconds
 
-    # Initialize VideoWriter
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(output_video_path, fourcc, fps, (width, height))
+    # Initialize VideoWriter prioritizing browser-compatible H.264 (avc1) codecs
+    out = None
+    for codec_name in ['avc1', 'H264', 'X264', 'mp4v']:
+        try:
+            fcc = cv2.VideoWriter_fourcc(*codec_name)
+            w = cv2.VideoWriter(output_video_path, fcc, fps, (width, height))
+            if w.isOpened():
+                out = w
+                break
+        except Exception:
+            pass
+    if out is None:
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        out = cv2.VideoWriter(output_video_path, fourcc, fps, (width, height))
 
     # Try running real MediaPipe Tasks API
     model_available = download_model_if_needed()

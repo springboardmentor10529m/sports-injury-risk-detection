@@ -166,3 +166,40 @@ class MovementAnomalyResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class RiskAssessmentResponse(BaseModel):
+    video_id: UUID
+    athlete_id: UUID
+    overall_risk_score: float
+    risk_category: str
+    biomechanical_risk: Optional[float] = None
+    historical_injury_risk: Optional[float] = None
+    asymmetry_risk: Optional[float] = None
+    training_load_risk: Optional[float] = None
+    fatigue_risk: Optional[float] = None
+    acl_risk: float
+    hamstring_risk: float
+    ankle_risk: float
+    shoulder_risk: float
+    lower_back_risk: float
+    overuse_risk: float
+    disclaimer: str
+    explanations: List[str] = []
+    contributing_factors: List[Dict[str, Any]] = []
+    anomalies: List[Dict[str, Any]] = []
+    recommendations: Dict[str, Any] = {}
+    ml_prediction: Optional[Dict[str, Any]] = None
+
+    class Config:
+        from_attributes = True
+
+
+class RiskHistoryItem(BaseModel):
+    video_id: UUID
+    uploaded_at: datetime
+    overall_risk_score: float
+    risk_category: str
+    acl_risk: float
+    hamstring_risk: float
+    movement_quality: float

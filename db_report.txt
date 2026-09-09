@@ -1,0 +1,10 @@
+=== DB: d:\Infosys certificates\Infosys Project\sports-injury-detection\sql_app.db (exists: True) ===
+Tables: ['users', 'athletes', 'notifications', 'audit_logs', 'injury_history', 'videos', 'reports', 'performance_records', 'analysis_results', 'pose_data', 'ai_logs', 'processing_jobs', 'injury_predictions', 'movement_anomalies', 'recommendations']
+Videos (6): [('6b83f84ac79f448bb15f10788debdb1d', 'Squatting', 'processing', 'uploads\\raw\\6b83f84a-c79f-448b-b15f-10788debdb1d_raw.mp4'), ('559763edbe5747b6842d1dcced965d90', 'Squatting', 'processing', 'uploads\\raw\\559763ed-be57-47b6-842d-1dcced965d90_raw.mp4'), ('e6c1d1b16db34d1094a9f5a757b716dc', 'Squatting', 'failed', 'uploads\\raw\\e6c1d1b1-6db3-4d10-94a9-f5a757b716dc_raw.mp4'), ('563642b414854dd0ac94149e5250f726', 'Squatting', 'failed', 'uploads\\raw\\563642b4-1485-4dd0-ac94-149e5250f726_raw.mp4'), ('7cf676c9a2f140ccb086b0aa774b5fea', 'Squatting', 'completed', 'uploads/processed/processed_7cf676c9-a2f1-40cc-b086-b0aa774b5fea_raw.mp4'), ('2e39eaffbbfe4172ae84539446b57fe0', 'Squatting', 'completed', 'uploads/processed/processed_2e39eaff-bbfe-4172-ae84-539446b57fe0_raw.mp4')]
+Error reading DB: no such column: risk_score
+
+=== DB: d:\Infosys certificates\Infosys Project\sports-injury-detection\backend\sql_app.db (exists: True) ===
+Tables: ['users', 'athletes', 'notifications', 'audit_logs', 'injury_history', 'videos', 'reports', 'performance_records', 'analysis_results', 'pose_data', 'ai_logs', 'processing_jobs', 'injury_predictions', 'movement_anomalies', 'recommendations']
+Videos (0): []
+Error reading DB: no such column: risk_score
+
