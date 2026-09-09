@@ -8,6 +8,7 @@ import uuid
 from unittest.mock import MagicMock, patch
 from pathlib import Path
 
+# pyrefly: ignore [missing-import]
 import pytest
 
 from app.database import SessionLocal
