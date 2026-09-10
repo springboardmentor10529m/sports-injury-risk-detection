@@ -17,7 +17,7 @@ if settings.DATABASE_HOST:
 
 connect_args = {"check_same_thread": False} if str(database_url).startswith("sqlite") else {}
 
-engine = create_engine(database_url, connect_args=connect_args)
+engine = create_engine(database_url, connect_args=connect_args, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 

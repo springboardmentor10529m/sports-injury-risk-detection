@@ -1,9 +1,9 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeftRight, Dumbbell, Footprints, MoveDown, UploadCloud, Video, Wind, Zap,
 } from "lucide-react";
-import { uploadVideo } from "../api/client";
+import { getUploadLimits, uploadVideo } from "../api/client";
 
 const ACTIVITIES = [
   { value: "running", label: "Running", icon: Footprints },
@@ -23,6 +23,13 @@ export default function Analyze() {
   const [progress, setProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const [limits, setLimits] = useState({ max_upload_mb: 50, max_video_seconds: 30 });
+
+  useEffect(() => {
+    let active = true;
+    getUploadLimits().then(({ data }) => { if (active) setLimits(data); }).catch(() => {});
+    return () => { active = false; };
+  }, []);
 
   function handleDrop(e) {
     e.preventDefault();
@@ -32,6 +39,10 @@ export default function Analyze() {
 
   async function handleSubmit() {
     if (!file) return;
+    if (file.size > limits.max_upload_mb * 1024 * 1024) {
+      setError(`Choose a video smaller than ${limits.max_upload_mb} MB.`);
+      return;
+    }
     setError("");
     setUploading(true);
     try {
@@ -100,7 +111,7 @@ export default function Analyze() {
         ) : (
           <div>
             <div style={{ fontSize: 14, marginBottom: 6, fontWeight: 500 }}>Drag & drop your video, or click to browse</div>
-            <div style={{ fontSize: 12, color: "var(--text-faint)" }}>MP4 / MOV / AVI / MKV, up to 300MB</div>
+            <div style={{ fontSize: 12, color: "var(--text-faint)" }}>MP4 / MOV / AVI / MKV, up to {limits.max_upload_mb} MB and {limits.max_video_seconds} seconds</div>
           </div>
         )}
       </div>

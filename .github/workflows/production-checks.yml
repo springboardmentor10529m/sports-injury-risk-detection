@@ -1,0 +1,41 @@
+name: Production checks
+on:
+  push:
+    branches: [samitha-muthyala]
+  pull_request:
+    branches: [samitha-muthyala]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      - run: sudo apt-get update && sudo apt-get install -y libegl1 libgles2 libgl1
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -r backend/requirements-dev.txt
+      - run: python -m pytest tests/test_biomechanics.py tests/test_pose_estimation.py tests/test_pipeline.py tests/test_risk_scoring.py tests/test_production.py tests/test_security_and_api.py
+        working-directory: backend
+      - run: python -m pip_audit
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - run: npm run lint
+      - run: npm audit --omit=dev

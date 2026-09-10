@@ -4,7 +4,8 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.security import create_access_token, hash_password, verify_password
+from app.core.config import settings
+from app.core.security import create_access_token, hash_password, verify_password, verify_invitation
 from app.models import (
     AthleteProfile,
     CoachProfile,
@@ -28,15 +29,19 @@ from app.services.notifications import notify_admins
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
-def _check_email_free(db: Session, email: str) -> None:
+def _check_email_free(db: Session, email: str, invitation_code: str = "", role: str = "athlete") -> None:
     normalized_email = email.strip().lower()
+    if settings.ENVIRONMENT == "production":
+        invited = {e.strip().lower() for e in settings.REGISTRATION_EMAILS.split(",") if e.strip()}
+        if normalized_email not in invited or not verify_invitation(invitation_code, normalized_email, role):
+            raise HTTPException(403, "Registration is by invitation. Please contact the administrator.")
     if db.query(User).filter(func.lower(User.email) == normalized_email).first():
         raise HTTPException(status_code=400, detail="An account with this email already exists.")
 
 
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def register_athlete(payload: RegisterRequest, db: Session = Depends(get_db)):
-    _check_email_free(db, payload.email)
+    _check_email_free(db, payload.email, payload.invitation_code, "athlete")
 
     user = User(
         email=payload.email.strip().lower(), hashed_password=hash_password(payload.password),
@@ -63,7 +68,7 @@ def register_athlete(payload: RegisterRequest, db: Session = Depends(get_db)):
 
 @router.post("/register/coach", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def register_coach(payload: RegisterCoachRequest, db: Session = Depends(get_db)):
-    _check_email_free(db, payload.email)
+    _check_email_free(db, payload.email, payload.invitation_code, "coach")
     user = User(
         email=payload.email.strip().lower(), hashed_password=hash_password(payload.password),
         full_name=payload.full_name, role=UserRole.COACH,
@@ -82,7 +87,7 @@ def register_coach(payload: RegisterCoachRequest, db: Session = Depends(get_db))
 
 @router.post("/register/physiotherapist", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def register_physio(payload: RegisterPhysioRequest, db: Session = Depends(get_db)):
-    _check_email_free(db, payload.email)
+    _check_email_free(db, payload.email, payload.invitation_code, "physiotherapist")
     user = User(
         email=payload.email.strip().lower(), hashed_password=hash_password(payload.password),
         full_name=payload.full_name, role=UserRole.PHYSIOTHERAPIST,
@@ -101,7 +106,7 @@ def register_physio(payload: RegisterPhysioRequest, db: Session = Depends(get_db
 
 @router.post("/register/sports-scientist", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def register_scientist(payload: RegisterScientistRequest, db: Session = Depends(get_db)):
-    _check_email_free(db, payload.email)
+    _check_email_free(db, payload.email, payload.invitation_code, "sports_scientist")
     user = User(
         email=payload.email.strip().lower(), hashed_password=hash_password(payload.password),
         full_name=payload.full_name, role=UserRole.SPORTS_SCIENTIST,

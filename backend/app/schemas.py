@@ -1,15 +1,29 @@
 from datetime import datetime
+from typing import Annotated
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import AfterValidator, BaseModel, EmailStr, Field
 
 from app.models import ActivityType, UserRole, VideoStatus
 
 # ---------- Auth ----------
 
 
-class RegisterRequest(BaseModel):
+def password_byte_limit(value):
+    if len(value.encode("utf-8")) > 72:
+        raise ValueError("Password must not exceed 72 UTF-8 bytes")
+    return value
+
+
+Password = Annotated[str, Field(min_length=8, max_length=72), AfterValidator(password_byte_limit)]
+
+
+class RegistrationBase(BaseModel):
+    invitation_code: str = Field(default="", max_length=2048)
+
+
+class RegisterRequest(RegistrationBase):
     email: EmailStr
-    password: str = Field(min_length=8)
+    password: Password
     full_name: str
 
     sport: str
@@ -24,9 +38,9 @@ class RegisterRequest(BaseModel):
     acute_chronic_ratio: float | None = None
 
 
-class RegisterCoachRequest(BaseModel):
+class RegisterCoachRequest(RegistrationBase):
     email: EmailStr
-    password: str = Field(min_length=8)
+    password: Password
     full_name: str
     sport: str
     specialization: str | None = None
@@ -34,9 +48,9 @@ class RegisterCoachRequest(BaseModel):
     organization: str | None = None
 
 
-class RegisterPhysioRequest(BaseModel):
+class RegisterPhysioRequest(RegistrationBase):
     email: EmailStr
-    password: str = Field(min_length=8)
+    password: Password
     full_name: str
     qualification: str | None = None
     specialization: str | None = None
@@ -44,9 +58,9 @@ class RegisterPhysioRequest(BaseModel):
     clinic: str | None = None
 
 
-class RegisterScientistRequest(BaseModel):
+class RegisterScientistRequest(RegistrationBase):
     email: EmailStr
-    password: str = Field(min_length=8)
+    password: Password
     full_name: str
     institution: str | None = None
     research_area: str | None = None
@@ -238,7 +252,7 @@ class AdminUserUpdate(BaseModel):
 
 class AdminCreateUserRequest(BaseModel):
     email: EmailStr
-    password: str = Field(min_length=8)
+    password: Password
     full_name: str
     role: UserRole
 

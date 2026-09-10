@@ -8,6 +8,7 @@ new-user-registration alerts.
 """
 
 from sqlalchemy.orm import Session
+import logging
 
 from app.models import AthleteLink, LinkType, Notification, NotificationType, User, UserRole, VideoAnalysis
 
@@ -17,6 +18,14 @@ def _create(db: Session, user_id: str, type_: NotificationType, title: str, mess
 
 
 def notify_admins(db: Session, title: str, message: str, link: str | None = None) -> None:
+    try:
+        _notify_admins(db, title, message, link)
+    except Exception:
+        db.rollback()
+        logging.getLogger(__name__).exception("Registration notification failed")
+
+
+def _notify_admins(db: Session, title: str, message: str, link: str | None = None) -> None:
     admin_ids = [u.id for u in db.query(User).filter(User.role == UserRole.ADMIN).all()]
     for admin_id in admin_ids:
         _create(db, admin_id, NotificationType.NEW_USER_REGISTERED, title, message, link)

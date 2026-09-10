@@ -10,7 +10,7 @@ results.
 from dataclasses import dataclass
 from pathlib import Path
 import threading
-from typing import Callable
+from typing import Callable, Iterable
 
 import cv2
 import mediapipe as mp
@@ -98,7 +98,7 @@ class PoseEstimator:
 
     def process(
         self,
-        frames: list[ExtractedFrame],
+        frames: Iterable[ExtractedFrame],
         on_progress: Callable[[list[FramePose]], None] | None = None,
         progress_every: int = 5,
     ) -> list[FramePose]:
@@ -109,7 +109,7 @@ class PoseEstimator:
 
     def _process(
         self,
-        frames: list[ExtractedFrame],
+        frames: Iterable[ExtractedFrame],
         on_progress: Callable[[list[FramePose]], None] | None,
         progress_every: int,
     ) -> list[FramePose]:
@@ -149,8 +149,10 @@ class PoseEstimator:
                     )
                 )
 
-            if on_progress and (len(results) % progress_every == 0 or frame_index == len(frames) - 1):
+            if on_progress and len(results) % progress_every == 0:
                 on_progress(list(results))
+        if on_progress and len(results) % progress_every:
+            on_progress(list(results))
         return results
 
     def close(self):

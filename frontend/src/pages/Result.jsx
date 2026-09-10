@@ -10,7 +10,7 @@ import Pose3DViewer from "../components/Pose3DViewer";
 import { RecoList } from "./Dashboard";
 
 const PIPELINE_STAGES = [
-  ["uploaded", "Video uploaded"],
+  ["uploaded", "Uploaded — waiting for processing"],
   ["extracting_frames", "Frame extraction"],
   ["running_pose", "Pose detection (MediaPipe BlazePose)"],
   ["analyzing_biomechanics", "Biomechanical analysis"],
@@ -143,6 +143,10 @@ export default function Result() {
       </p>
 
       <Pose3DViewer poseFrames={completedPoseFrames} />
+      <p style={{ color: "var(--text-dim)", marginBottom: 20 }}>
+        This score is a rule-based movement assessment, not a medical diagnosis or a validated
+        probability of future injury. Recommendations are general guidance; discuss pain or injury with a qualified clinician.
+      </p>
 
       <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 20, marginBottom: 20 }}>
         <div

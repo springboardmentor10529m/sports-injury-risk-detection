@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8001";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? "/" : "http://127.0.0.1:8001");
 
 export const api = axios.create({ baseURL: API_BASE_URL, timeout: 15000 });
 
@@ -13,6 +13,9 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (Array.isArray(error.response?.data?.detail)) {
+      error.response.data.detail = error.response.data.detail.map((item) => item.msg).join("; ");
+    }
     if (error.response?.status === 401) {
       localStorage.removeItem("injuryguard_token");
       if (window.location.pathname !== "/login") {
@@ -43,8 +46,10 @@ export const uploadVideo = (file, activityType, onUploadProgress) => {
   return api.post("/api/videos/upload", form, {
     headers: { "Content-Type": "multipart/form-data" },
     onUploadProgress,
+    timeout: 180000,
   });
 };
+export const getUploadLimits = () => api.get("/api/videos/limits");
 export const listVideos = () => api.get("/api/videos");
 export const getVideo = (id) => api.get(`/api/videos/${id}`);
 export const getPoseFrames = (id) => api.get(`/api/videos/${id}/pose-frames`);

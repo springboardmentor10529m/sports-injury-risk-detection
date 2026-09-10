@@ -80,6 +80,10 @@ export default function StaffRegister({ role }) {
 
       <form onSubmit={handleSubmit}>
         <div className="field">
+          <label>Invitation code (if provided)</label>
+          <input type="password" autoComplete="off" value={form.invitation_code || ""} onChange={(e) => set("invitation_code", e.target.value)} />
+        </div>
+        <div className="field">
           <label>Full name</label>
           <input required value={form.full_name} onChange={(e) => set("full_name", e.target.value)} />
         </div>

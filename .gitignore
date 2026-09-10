@@ -7,6 +7,10 @@ venv/
 
 # Env
 .env
+.env.*
+!.env.example
+!.env.production.example
+backups/
 
 # Node
 node_modules/

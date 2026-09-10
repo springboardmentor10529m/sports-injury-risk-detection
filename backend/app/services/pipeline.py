@@ -15,7 +15,7 @@ from app.services import notifications as notif_svc
 from app.services import recommendations as reco_svc
 from app.services import risk_scoring
 from app.services.pose_estimation import PoseEstimator, frame_pose_to_json
-from app.video_processing.frame_extractor import extract_frames
+from app.video_processing.frame_extractor import extract_frames, VideoReadError
 
 logger = logging.getLogger("pipeline")
 
@@ -39,7 +39,7 @@ def run_pipeline(video_id: str, db_session_factory) -> None:
 
         try:
             _set_status(db, video, VideoStatus.EXTRACTING_FRAMES)
-            frames, video_meta = extract_frames(video.stored_path, settings.POSE_SAMPLE_FPS)
+            frames, video_meta = extract_frames(video.stored_path, settings.POSE_SAMPLE_FPS, True)
             video.fps_sampled = video_meta["effective_sample_fps"]
             video.frame_count_sampled = video_meta["sampled_frame_count"]
             db.commit()
@@ -56,6 +56,9 @@ def run_pipeline(video_id: str, db_session_factory) -> None:
                 frame_poses = estimator.process(frames, on_progress=_persist_pose_progress, progress_every=5)
             finally:
                 estimator.close()
+                if hasattr(frames, "close"):
+                    frames.close()
+            video.frame_count_sampled = video_meta["sampled_frame_count"]
             video.frames_with_pose_detected = sum(1 for fp in frame_poses if fp.detected)
             video.pose_frames = {"frames": [frame_pose_to_json(fp) for fp in frame_poses]}
             db.commit()
@@ -103,11 +106,15 @@ def run_pipeline(video_id: str, db_session_factory) -> None:
             video.completed_at = datetime.utcnow()
             db.commit()
         except Exception as exc:  # noqa: BLE001
-            logger.exception("Pipeline failed for video %s", video_id)
+            if isinstance(exc, (InsufficientPoseDataError, VideoReadError)):
+                logger.warning("Video %s could not be analyzed: %s", video_id, exc)
+            else:
+                logger.exception("Pipeline failed for video %s", video_id)
             db.rollback()
             video.status = (VideoStatus.INSUFFICIENT_DATA if isinstance(exc, InsufficientPoseDataError)
                             else VideoStatus.FAILED)
-            video.error_message = str(exc)
+            video.error_message = (str(exc) if isinstance(exc, (InsufficientPoseDataError, VideoReadError))
+                                   else "Analysis could not be completed. Please retry or contact the administrator.")
             video.risk_assessment = None
             video.recommendations = None
             video.completed_at = None
