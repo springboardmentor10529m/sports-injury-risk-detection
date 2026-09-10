@@ -219,7 +219,38 @@
             color: #6b7280;
             font-size: 14px;
         }
+        .video-risk {
+            margin-top: 10px;
+            font-size: 14px;
+        }
 
+        .risk-level {
+            font-weight: 600;
+        }
+
+        .risk-score {
+            color: #6b7280;
+            margin-left: 8px;
+        }
+
+        .risk-factors {
+            margin-top: 6px;
+            padding-left: 18px;
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        .risk-low {
+            color: #16a34a;
+        }
+
+        .risk-medium {
+            color: #d97706;
+        }
+
+        .risk-high {
+            color: #dc2626;
+        }
         .video-actions {
             display: flex;
             gap: 10px;
@@ -1189,6 +1220,114 @@
                         date
                     );
 
+
+                                        /*
+                     * Risk assessment
+                     */
+
+                     const riskContainer =
+                        document.createElement("div");
+
+                    riskContainer.className =
+                        "video-risk";
+
+
+                    const riskLevel =
+                        video.risk_level;
+
+
+                    if (riskLevel) {
+
+                        const riskLevelElement =
+                            document.createElement("span");
+
+                        riskLevelElement.className =
+                            "risk-level";
+
+
+                        const riskClass =
+                            riskLevel.toLowerCase();
+
+
+                        riskLevelElement.classList.add(
+                            "risk-" + riskClass
+                        );
+
+
+                        riskLevelElement.textContent =
+                            "Risk: " + riskLevel;
+
+
+                        riskContainer.appendChild(
+                            riskLevelElement
+                        );
+
+
+                        if (
+                            video.risk_score !== null &&
+                            video.risk_score !== undefined
+                        ) {
+
+                            const riskScore =
+                                document.createElement("span");
+
+                            riskScore.className =
+                                "risk-score";
+
+                            riskScore.textContent =
+                                "Score: " +
+                                video.risk_score +
+                                "/100";
+
+
+                            riskContainer.appendChild(
+                                riskScore
+                            );
+
+                        }
+
+
+                        if (
+                            video.risk_factors &&
+                            video.risk_factors.length > 0
+                        ) {
+
+                            const factorsList =
+                                document.createElement("ul");
+
+                            factorsList.className =
+                                "risk-factors";
+
+
+                            video.risk_factors.forEach(
+                                function(factor) {
+
+                                    const factorItem =
+                                        document.createElement("li");
+
+                                    factorItem.textContent =
+                                        factor;
+
+                                    factorsList.appendChild(
+                                        factorItem
+                                    );
+
+                                }
+                            );
+
+
+                            riskContainer.appendChild(
+                                factorsList
+                            );
+
+                        }
+
+                    }
+
+
+                    videoInfo.appendChild(
+                        riskContainer
+                    );
 
                     /*
                      * Create buttons

@@ -126,6 +126,34 @@ class AthleteVideoUploadView(APIView):
                 video.id
             )
 
+            # Save the risk assessment to the database
+            risk_assessment = processing_result.get(
+                "risk_assessment"
+            )
+
+            if risk_assessment:
+
+                video.risk_level = risk_assessment.get(
+                    "risk_level"
+                )
+
+                video.risk_score = risk_assessment.get(
+                    "risk_score"
+                )
+
+                video.risk_factors = risk_assessment.get(
+                    "risk_factors",
+                    []
+                )
+
+                video.save(
+                    update_fields=[
+                        "risk_level",
+                        "risk_score",
+                        "risk_factors"
+                    ]
+                )
+
             if not processing_result["success"]:
 
                 return Response(

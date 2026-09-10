@@ -111,5 +111,21 @@ class AthleteVideo(models.Model):
         auto_now_add=True
     )
 
+    risk_level = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True
+    )
+
+    risk_score = models.IntegerField(
+        blank=True,
+        null=True
+    )
+
+    risk_factors = models.JSONField(
+        blank=True,
+        null=True
+    )
+
     def __str__(self):
         return f"{self.athlete.full_name} - {self.video.name}"

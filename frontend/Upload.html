@@ -516,22 +516,53 @@
 
                     if (response.ok) {
 
-                        alert(
-                            data.message ||
-                            "Video uploaded successfully."
-                        );
+                        if (response.ok) {
+
+                            const riskAssessment =
+                                data.processing &&
+                                data.processing.risk_assessment;
+
+                            if (riskAssessment) {
+
+                                const riskLevel =
+                                    riskAssessment.risk_level;
+
+                                const riskScore =
+                                    riskAssessment.risk_score;
+
+                                const riskFactors =
+                                    riskAssessment.risk_factors || [];
 
 
-                        /*
-                            For now we go back
-                            to the dashboard.
+                                alert(
+                                    "Video processed successfully.\n\n" +
+                                    "Risk Level: " + riskLevel + "\n" +
+                                    "Risk Score: " + riskScore + "/100\n\n" +
+                                    "Risk Factors:\n- " +
+                                    riskFactors.join("\n- ")
+                                );
 
-                            Actual injury analysis
-                            will be connected later.
-                        */
+                            }
 
-                        window.location.href =
-                            "dashboard.html";
+                            else {
+
+                                alert(
+                                    data.message ||
+                                    "Video uploaded successfully."
+                                );
+
+                            }
+
+
+                            /*
+                                Go back to dashboard
+                                after showing the result.
+                            */
+
+                            window.location.href =
+                                "dashboard.html";
+
+                        }
 
                     }
 

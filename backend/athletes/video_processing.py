@@ -172,7 +172,7 @@ def extract_frames(video_path, video_id):
 
 def process_video(video_path, video_id):
     """
-    Run the complete Phase 1 video-processing pipeline.
+    Run the complete video-processing and risk-assessment pipeline.
     """
 
     validation = validate_video(
@@ -190,6 +190,49 @@ def process_video(video_path, video_id):
         video_id
     )
 
+    # Run pose estimation on the extracted frames.
+    from .pose_estimation import process_pose_frames
+
+    pose_result = process_pose_frames(
+        extraction["frames_directory"],
+        video_id
+    )
+
+    if not pose_result["success"]:
+        return {
+            "success": False,
+            "error": pose_result["error"],
+            "video_info": validation,
+            "processing": {
+                "frames_extracted": extraction["frame_count"],
+                "frames_directory": extraction[
+                    "frames_directory"
+                ],
+            },
+            "pose_estimation": pose_result,
+        }
+
+    # Run biomechanical analysis on the pose results.
+    from .biomechanical_analysis import (
+        analyze_pose_file,
+        summarize_analysis
+    )
+
+    analysis_results = analyze_pose_file(
+        pose_result["output_file"]
+    )
+
+    biomechanical_summary = summarize_analysis(
+        analysis_results
+    )
+
+    # Run rule-based injury-risk assessment.
+    from .rule_based_risk import assess_injury_risk
+
+    risk_assessment = assess_injury_risk(
+        biomechanical_summary
+    )
+
     return {
         "success": True,
         "video_info": validation,
@@ -199,4 +242,7 @@ def process_video(video_path, video_id):
                 "frames_directory"
             ],
         },
+        "pose_estimation": pose_result,
+        "biomechanical_analysis": biomechanical_summary,
+        "risk_assessment": risk_assessment,
     }

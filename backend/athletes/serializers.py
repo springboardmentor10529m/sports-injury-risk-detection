@@ -78,9 +78,12 @@ class AthleteVideoSerializer(serializers.ModelSerializer):
     class Meta:
         model = AthleteVideo
         fields = [
-            "id",
+             "id",
             "video",
             "uploaded_at",
+            "risk_level",
+            "risk_score",
+            "risk_factors",
         ]
         read_only_fields = [
             "id",
