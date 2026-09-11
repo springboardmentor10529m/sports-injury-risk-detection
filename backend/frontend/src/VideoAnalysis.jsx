@@ -2,6 +2,13 @@ import React, { useState, useEffect, useRef } from "react";
 import "./VideoAnalysis.css";
 import API_BASE from "./config/api";
 
+const PROCESSING_STEPS = [
+  { id: 1, label: "Video Uploaded" },
+  { id: 2, label: "Processing Video" },
+  { id: 3, label: "AI Movement Analysis" },
+  { id: 4, label: "Analysis Complete" },
+];
+
 function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
   const activeAthleteId = athleteId || localStorage.getItem("athlete_id");
 
@@ -9,7 +16,7 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [videoPreviewUrl, setVideoPreviewUrl] = useState("");
   const [processing, setProcessing] = useState(false);
-  const [processingMsg, setProcessingMsg] = useState("");
+  const [currentStep, setCurrentStep] = useState(1);
 
   // Analysis & Prediction Results
   const [analysisResult, setAnalysisResult] = useState(null);
@@ -18,19 +25,16 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
 
   // Notifications
   const [errorMsg, setErrorMsg] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
 
   // Video History from Database
   const [videoHistory, setVideoHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
-  const [selectedHistoryId, setSelectedHistoryId] = useState(null);
 
   const fileInputRef = useRef(null);
 
   // Helper to load analysis results from an item into active state
   const loadHistoryItem = (item) => {
     if (!item) return;
-    setSelectedHistoryId(item.video_id);
     localStorage.setItem("active_video_id", item.video_id);
 
     if (item.video_url) {
@@ -41,7 +45,6 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
 
     setViewingHistory(true);
     setErrorMsg("");
-    setSuccessMsg("");
     setProcessing(false);
 
     setAnalysisResult({
@@ -112,24 +115,27 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
   }, [activeAthleteId]);
 
   // Handle local file selection
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
+  const handleFileSelect = (file) => {
     if (file) {
       setSelectedFile(file);
       setErrorMsg("");
-      setSuccessMsg("");
       setAnalysisResult(null);
       setPredictionResult(null);
       setViewingHistory(false);
-      setSelectedHistoryId(null);
       const localUrl = URL.createObjectURL(file);
       setVideoPreviewUrl(localUrl);
     }
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    handleFileSelect(file);
+  };
+
+  const delay = (ms) => new Promise((res) => setTimeout(res, ms));
+
   // Run full video analysis pipeline: Upload -> Analysis (MediaPipe) -> Prediction
-  const handleAnalyzeVideo = async (e) => {
-    e.preventDefault();
+  const handleAnalyzeVideo = async () => {
     if (!activeAthleteId) {
       setErrorMsg("Athlete profile missing. Please complete your profile setup first.");
       return;
@@ -140,9 +146,8 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
     }
 
     setProcessing(true);
-    setProcessingMsg("Uploading training video to server...");
+    setCurrentStep(1); // Stage 1: Video Uploaded (in progress)
     setErrorMsg("");
-    setSuccessMsg("");
     setAnalysisResult(null);
     setPredictionResult(null);
     setViewingHistory(false);
@@ -151,7 +156,7 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
       // 1. Upload Video
       const formData = new FormData();
       formData.append("athlete_id", activeAthleteId);
-      formData.append("activity", "Movement Analysis"); // Auto-classified by pose engine
+      formData.append("activity", "Movement Analysis"); // Auto-detected from video kinematics
       formData.append("video", selectedFile);
 
       const uploadRes = await fetch(`${API_BASE}/video/upload`, {
@@ -170,8 +175,10 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
         setVideoPreviewUrl(`${API_BASE}${uploadData.video_url}`);
       }
 
+      // Move to Stage 2: Processing Video
+      setCurrentStep(2);
+
       // 2. Run MediaPipe Pose Estimation & Biomechanics
-      setProcessingMsg("Extracting 33 3D skeletal landmarks and joint kinematics with MediaPipe...");
       const analysisFormData = new URLSearchParams();
       analysisFormData.append("video_id", videoId);
       analysisFormData.append("athlete_id", activeAthleteId);
@@ -187,8 +194,10 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
         throw new Error(analysisData.detail || analysisData.message || "Biomechanical pose analysis failed.");
       }
 
+      // Move to Stage 3: AI Movement Analysis
+      setCurrentStep(3);
+
       // 3. Run Injury Risk Models (Random Forest + Biomechanical Rules)
-      setProcessingMsg("Calculating injury risk scores and targeted recommendations...");
       const predFormData = new URLSearchParams();
       predFormData.append("analysis_id", analysisData.analysis_id);
 
@@ -205,10 +214,13 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
 
       localStorage.setItem("latest_prediction_id", predData.prediction_id);
 
+      // Move to Stage 4: Analysis Complete
+      setCurrentStep(4);
+      await delay(400);
+
       // Finish successfully
       setAnalysisResult(analysisData);
       setPredictionResult(predData);
-      setSuccessMsg("Video analysis completed successfully!");
       setProcessing(false);
 
       // Refresh history list so the new upload appears
@@ -228,10 +240,9 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
     setAnalysisResult(null);
     setPredictionResult(null);
     setViewingHistory(false);
-    setSelectedHistoryId(null);
-    setErrorMsg("");
-    setSuccessMsg("");
     setProcessing(false);
+    setCurrentStep(1);
+    setErrorMsg("");
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -257,442 +268,506 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
       <div className="va-container">
 
         {/* ── HEADER ── */}
-        <section className="va-header">
+        <section className="va-header" style={{ marginBottom: "24px" }}>
           <div>
-            <span className="va-kicker">ATHLETE BIOMECHANICS &amp; INJURY RISK</span>
-            <h1>Movement Video Analysis</h1>
-            <p>
-              Upload your training video to analyze joint angles, detect biomechanical movement faults,
-              and assess injury risks using computer vision and validated clinical rules.
+            <h1 style={{ margin: "0 0 6px 0", fontSize: "2rem", color: "#0f172a", fontWeight: 800 }}>
+              Movement Video Analysis
+            </h1>
+            <p style={{ margin: 0, fontSize: "0.95rem", color: "#64748b" }}>
+              Upload your movement video to analyze biomechanics, joint kinematics, and injury risk.
             </p>
           </div>
+
+          {/* If viewing completed results, show the ONLY primary action button */}
+          {(analysisResult || viewingHistory) && !processing && (
+            <button
+              className="btn btn-primary"
+              onClick={handleResetAnalysis}
+              style={{ padding: "10px 20px", fontSize: "0.9rem", fontWeight: 700 }}
+            >
+              + Analyze New Video
+            </button>
+          )}
         </section>
 
         {/* ── NOTIFICATIONS ── */}
-        {errorMsg && <div className="va-alert error" style={{ marginBottom: "16px" }}>{errorMsg}</div>}
-        {successMsg && <div className="va-alert success" style={{ marginBottom: "16px" }}>{successMsg}</div>}
-
-        {/* ── VIEWING HISTORY BANNER ── */}
-        {viewingHistory && (
-          <div style={{
-            background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "10px",
-            padding: "10px 16px", marginBottom: "16px", fontSize: "0.85rem",
-            color: "#1e40af", display: "flex", justifyContent: "space-between", alignItems: "center"
-          }}>
-            <span>📁 <strong>Showing past analysis record</strong> from your database history.</span>
-            <button
-              className="view-button"
-              onClick={handleResetAnalysis}
-              style={{ fontSize: "0.8rem", padding: "4px 12px", cursor: "pointer" }}
-            >
-              + Upload New Video
-            </button>
+        {errorMsg && (
+          <div className="va-alert error" style={{ marginBottom: "20px" }}>
+            {errorMsg}
           </div>
         )}
 
-        <div className="va-layout">
+        {/* =========================================================================
+            STATE 1: PROCESSING / LOADING STATE (Simple 4-Step Indicator)
+            ========================================================================= */}
+        {processing && (
+          <div style={{ maxWidth: "720px", margin: "30px auto" }}>
+            <div className="va-card" style={{ padding: "36px 28px", textAlign: "center" }}>
+              <h2 style={{ margin: "0 0 24px 0", fontSize: "1.3rem", color: "#0f172a" }}>
+                Analyzing Movement Video
+              </h2>
 
-          {/* ── LEFT COLUMN: UPLOAD & HISTORY ── */}
-          <div className="va-left-panel">
-
-            {/* Video Upload Card */}
-            <div className="va-card">
-              <div className="card-heading">
-                <h3>📹 Video Upload</h3>
-                <span className="status-badge">
-                  {processing ? "Processing..." : analysisResult ? "Analysed" : "Ready"}
-                </span>
+              {/* 4-Step Progress Stepper */}
+              <div className="va-stepper" style={{ marginBottom: "28px", background: "#f8fafc", padding: "18px 24px" }}>
+                {PROCESSING_STEPS.map((step, idx) => {
+                  const isDone = currentStep > step.id;
+                  const isActive = currentStep === step.id;
+                  return (
+                    <React.Fragment key={step.id}>
+                      <div
+                        className={`step-item ${isDone ? "completed" : isActive ? "active" : ""}`}
+                        style={{ flexDirection: "column", gap: "6px", flex: 1, textAlign: "center" }}
+                      >
+                        <div
+                          className="step-circle"
+                          style={{
+                            margin: "0 auto",
+                            width: "32px",
+                            height: "32px",
+                            fontSize: "13px",
+                            fontWeight: 800,
+                            background: isDone ? "#16a34a" : (isActive ? "#2563eb" : "#e2e8f0"),
+                            color: isDone || isActive ? "#ffffff" : "#64748b"
+                          }}
+                        >
+                          {isDone ? "✓" : isActive ? "●" : step.id}
+                        </div>
+                        <span style={{ fontSize: "0.78rem", fontWeight: isActive ? 700 : 600, color: isDone ? "#16a34a" : (isActive ? "#1e40af" : "#94a3b8") }}>
+                          {step.label}
+                        </span>
+                      </div>
+                      {idx < PROCESSING_STEPS.length - 1 && (
+                        <div
+                          className="step-line"
+                          style={{
+                            height: "2px",
+                            background: isDone ? "#16a34a" : "#e2e8f0",
+                            margin: "0 8px",
+                            marginBottom: "20px"
+                          }}
+                        />
+                      )}
+                    </React.Fragment>
+                  );
+                })}
               </div>
 
-              {/* Upload Dropzone */}
-              {!viewingHistory && (
-                <form onSubmit={handleAnalyzeVideo} className="upload-form">
-                  <div
-                    className="dropzone"
-                    onClick={() => !processing && fileInputRef.current?.click()}
-                    style={{ cursor: processing ? "not-allowed" : "pointer", opacity: processing ? 0.6 : 1 }}
-                  >
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      style={{ display: "none" }}
-                      accept="video/mp4,video/quicktime,video/webm,video/x-matroska"
-                      onChange={handleFileChange}
-                      disabled={processing}
-                    />
-                    <div className="dropzone-icon">🎥</div>
-                    {selectedFile ? (
-                      <div className="selected-file-info">
-                        <strong>{selectedFile.name}</strong>
-                        <span>{(selectedFile.size / (1024 * 1024)).toFixed(1)} MB</span>
-                      </div>
-                    ) : (
-                      <div className="dropzone-prompt">
-                        <strong>Click or Drag &amp; Drop Training Video</strong>
-                        <span>Supports MP4, MOV, WEBM (Max 50 MB)</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Single Clean "Analyze Video" Button */}
-                  <button
-                    type="submit"
-                    className="btn btn-primary btn-full"
-                    disabled={!selectedFile || processing}
-                    style={{ marginTop: "14px" }}
-                  >
-                    {processing ? "Analyzing Video..." : "Analyze Video →"}
-                  </button>
-                </form>
+              {/* Video Preview during processing */}
+              {videoPreviewUrl && (
+                <video
+                  src={videoPreviewUrl}
+                  controls
+                  muted
+                  style={{
+                    width: "100%",
+                    maxHeight: "260px",
+                    borderRadius: "10px",
+                    background: "#000",
+                    marginBottom: "16px"
+                  }}
+                />
               )}
 
-              {/* Video Player Display (Always visible if video exists) */}
-              {videoPreviewUrl && (
-                <div style={{ marginTop: "16px" }}>
-                  <div style={{ fontSize: "0.78rem", fontWeight: 700, color: "#475569", marginBottom: "6px" }}>
-                    🎥 Video Player
+              <div style={{ fontSize: "0.9rem", color: "#2563eb", fontWeight: 600 }}>
+                {currentStep === 1 && "Uploading video file to server..."}
+                {currentStep === 2 && "Running MediaPipe pose estimation & extracting joint kinematics..."}
+                {currentStep === 3 && "Evaluating injury risk models and generating recommendations..."}
+                {currentStep === 4 && "Analysis complete! Finalizing results..."}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================================
+            STATE 2: BEFORE VIDEO UPLOAD (Clean, Large Dropzone)
+            ========================================================================= */}
+        {!processing && !analysisResult && (
+          <div style={{ maxWidth: "720px", margin: "20px auto" }}>
+            <div className="va-card" style={{ padding: "36px 30px", textAlign: "center" }}>
+
+              {/* Large Drag and Drop Upload Zone */}
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    handleFileSelect(e.dataTransfer.files[0]);
+                  }
+                }}
+                style={{
+                  border: "2px dashed #cbd5e1",
+                  borderRadius: "16px",
+                  padding: "48px 20px",
+                  background: "#f8fafc",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease"
+                }}
+              >
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  style={{ display: "none" }}
+                  accept="video/mp4,video/quicktime,video/webm,video/x-matroska"
+                  onChange={handleFileChange}
+                />
+
+                <div style={{ fontSize: "3rem", marginBottom: "12px" }}>☁️</div>
+                <h3 style={{ fontSize: "1.2rem", fontWeight: 700, color: "#0f172a", margin: "0 0 6px" }}>
+                  Drag and drop your movement video here
+                </h3>
+                <div style={{ fontSize: "0.9rem", color: "#94a3b8", margin: "6px 0" }}>or</div>
+
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  style={{ padding: "10px 24px", fontSize: "0.9rem", pointerEvents: "none" }}
+                >
+                  Choose Video
+                </button>
+
+                <div style={{ marginTop: "16px", fontSize: "0.8rem", color: "#64748b" }}>
+                  Supports MP4, MOV, WEBM (Max 50 MB)
+                </div>
+              </div>
+
+              {/* Selected File Details & Preview */}
+              {selectedFile && (
+                <div style={{ marginTop: "24px", textAlign: "left" }}>
+                  <div style={{
+                    background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "10px",
+                    padding: "12px 16px", display: "flex", justifyContent: "space-between",
+                    alignItems: "center", marginBottom: "16px"
+                  }}>
+                    <div>
+                      <strong style={{ fontSize: "0.9rem", color: "#1e40af" }}>{selectedFile.name}</strong>
+                      <span style={{ fontSize: "0.78rem", color: "#3b82f6", display: "block" }}>
+                        {(selectedFile.size / (1024 * 1024)).toFixed(1)} MB
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        fileInputRef.current?.click();
+                      }}
+                      style={{ fontSize: "0.82rem", color: "#2563eb", background: "none", border: "none", cursor: "pointer", fontWeight: 700 }}
+                    >
+                      Change Video
+                    </button>
                   </div>
+
+                  {videoPreviewUrl && (
+                    <video
+                      src={videoPreviewUrl}
+                      controls
+                      muted
+                      style={{
+                        width: "100%", maxHeight: "280px", borderRadius: "10px",
+                        background: "#000", marginBottom: "18px"
+                      }}
+                    />
+                  )}
+
+                  {/* Single Clear Upload Action */}
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-full"
+                    onClick={handleAnalyzeVideo}
+                    style={{ padding: "14px", fontSize: "1rem", fontWeight: 700 }}
+                  >
+                    Analyze Video →
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Recent Upload History from Database */}
+            {videoHistory.length > 0 && !selectedFile && (
+              <div className="va-card" style={{ marginTop: "24px", padding: "20px" }}>
+                <h4 style={{ margin: "0 0 12px", fontSize: "0.95rem", color: "#475569" }}>
+                  📁 Recent Video Analyses
+                </h4>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  {videoHistory.slice(0, 5).map((v) => (
+                    <div
+                      key={v.video_id}
+                      onClick={() => v.analysis && loadHistoryItem(v)}
+                      style={{
+                        padding: "10px 14px", borderRadius: "8px", border: "1px solid #e2e8f0",
+                        display: "flex", justifyContent: "space-between", alignItems: "center",
+                        cursor: v.analysis ? "pointer" : "default", background: "#f8fafc"
+                      }}
+                    >
+                      <div>
+                        <strong style={{ fontSize: "0.85rem", color: "#0f172a" }}>
+                          {v.activity || "Movement Analysis"}
+                        </strong>
+                        <span style={{ fontSize: "0.75rem", color: "#64748b", display: "block" }}>
+                          {v.uploaded_at ? new Date(v.uploaded_at).toLocaleDateString() : "Recent"}
+                        </span>
+                      </div>
+                      {v.analysis ? (
+                        <span style={{
+                          fontSize: "0.78rem", fontWeight: 700, padding: "3px 8px",
+                          borderRadius: "6px", backgroundColor: riskBg(v.analysis.risk_level),
+                          color: riskColour(v.analysis.risk_level)
+                        }}>
+                          {v.analysis.risk_level} Risk · View Results →
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>Pending</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* =========================================================================
+            STATE 3: COMPLETED RESULTS STATE
+            ========================================================================= */}
+        {!processing && analysisResult && predictionResult && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+
+            {/* Top Grid: Video Player (Left) + Overall Risk & Activity (Right) */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", alignItems: "stretch" }}>
+
+              {/* Video Player */}
+              <div className="va-card" style={{ padding: "18px", margin: 0, display: "flex", flexDirection: "column" }}>
+                <h3 style={{ margin: "0 0 10px 0", fontSize: "1rem", color: "#0f172a" }}>
+                  🎥 Movement Video
+                </h3>
+                {videoPreviewUrl ? (
                   <video
                     src={videoPreviewUrl}
                     controls
                     muted
                     style={{
-                      width: "100%", borderRadius: "8px", maxHeight: "240px",
-                      background: "#000", display: "block"
+                      width: "100%", borderRadius: "10px", maxHeight: "280px",
+                      background: "#000", flex: 1, objectFit: "contain"
                     }}
                   />
-                </div>
-              )}
-
-              {/* Reset action when viewing history */}
-              {viewingHistory && (
-                <button
-                  className="btn btn-primary btn-full"
-                  onClick={handleResetAnalysis}
-                  style={{ marginTop: "16px" }}
-                >
-                  + Analyze New Video
-                </button>
-              )}
-
-              {/* Compact, Non-Blocking Processing Indicator */}
-              {processing && (
-                <div style={{
-                  background: "#f0f9ff", border: "1px solid #bae6fd",
-                  borderRadius: "10px", padding: "14px", marginTop: "14px"
-                }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <div style={{
-                      width: "18px", height: "18px", border: "2px solid #bae6fd",
-                      borderTopColor: "#0284c7", borderRadius: "50%",
-                      animation: "spin 1s linear infinite", flexShrink: 0
-                    }} />
-                    <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "#0369a1" }}>
-                      {processingMsg || "Processing video..."}
-                    </div>
+                ) : (
+                  <div style={{ background: "#f1f5f9", borderRadius: "10px", padding: "40px 20px", textAlign: "center", color: "#94a3b8" }}>
+                    Video preview not available
                   </div>
-                  <div style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "6px" }}>
-                    Pose estimation and biomechanical risk calculation in progress.
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* ── Upload History Card ── */}
-            <div className="va-card history-card" style={{ marginTop: "16px" }}>
-              <div className="card-heading">
-                <h3>📁 Upload History</h3>
-                <span className="badge-count">{videoHistory.length}</span>
+                )}
               </div>
 
-              {loadingHistory ? (
-                <p className="loading-txt">Loading history from database...</p>
-              ) : videoHistory.length === 0 ? (
-                <p className="empty-txt" style={{ fontSize: "0.82rem", color: "#94a3b8" }}>
-                  No previous videos found.
-                </p>
-              ) : (
-                <div className="history-list" style={{ marginTop: "10px" }}>
-                  {videoHistory.map((v) => {
-                    const isSelected = selectedHistoryId === v.video_id;
-                    const hasAnalysis = !!v.analysis;
-                    return (
-                      <div
-                        key={v.video_id}
-                        onClick={() => hasAnalysis && loadHistoryItem(v)}
-                        style={{
-                          cursor: hasAnalysis ? "pointer" : "default",
-                          border: isSelected ? "2px solid #2563eb" : "1px solid #e2e8f0",
-                          borderRadius: "8px",
-                          padding: "8px 10px",
-                          marginBottom: "6px",
-                          background: isSelected ? "#eff6ff" : "white",
-                          transition: "all 0.15s"
-                        }}
-                      >
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <div>
-                            <strong style={{ fontSize: "0.82rem", color: "#0f172a", display: "block" }}>
-                              {v.activity || "Movement Analysis"}
-                            </strong>
-                            <span style={{ fontSize: "0.72rem", color: "#64748b" }}>
-                              {v.uploaded_at ? new Date(v.uploaded_at).toLocaleDateString() : "Recent"}
-                            </span>
-                          </div>
-                          <div style={{ textAlign: "right" }}>
-                            {v.analysis ? (
-                              <span style={{
-                                fontSize: "0.72rem", fontWeight: 700,
-                                color: riskColour(v.analysis.risk_level),
-                                background: riskBg(v.analysis.risk_level),
-                                padding: "2px 6px", borderRadius: "6px"
-                              }}>
-                                {v.analysis.risk_level} · {v.analysis.overall_risk_score}
-                              </span>
-                            ) : (
-                              <span style={{ fontSize: "0.7rem", color: "#94a3b8" }}>Pending</span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+              {/* Overall Risk & Detected Movement */}
+              <div className="va-card" style={{ padding: "22px", margin: 0, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                <div>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563eb", letterSpacing: "1px", textTransform: "uppercase" }}>
+                    MOVEMENT ASSESSMENT
+                  </span>
+                  <h2 style={{ margin: "6px 0 16px 0", fontSize: "1.4rem", color: "#0f172a" }}>
+                    Detected Activity: {analysisResult.detected_activity}
+                  </h2>
 
-          </div>
-
-          {/* ── RIGHT COLUMN: CLEAN ANALYSIS RESULTS ── */}
-          <div className="va-right-panel">
-
-            {/* Results Container */}
-            {analysisResult && predictionResult ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-
-                {/* 1. Overall Risk Summary Card */}
-                <div className="va-card" style={{ padding: "20px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
-                    <div>
-                      <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563eb", letterSpacing: "1px", textTransform: "uppercase" }}>
-                        ANALYSIS SUMMARY
-                      </span>
-                      <h2 style={{ margin: "4px 0 0 0", fontSize: "1.4rem", color: "#0f172a" }}>
-                        Detected Movement: {analysisResult.detected_activity}
-                      </h2>
-                    </div>
-
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                      <div style={{ textAlign: "right" }}>
-                        <div style={{ fontSize: "0.75rem", color: "#64748b" }}>Overall Risk Score</div>
-                        <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "#0f172a" }}>
-                          {predictionResult.overall_risk_score} <span style={{ fontSize: "0.9rem", color: "#94a3b8" }}>/100</span>
-                        </div>
-                      </div>
-                      <span style={{
-                        padding: "6px 14px", borderRadius: "20px", fontWeight: 800, fontSize: "0.85rem",
-                        backgroundColor: riskBg(predictionResult.risk_level),
-                        color: riskColour(predictionResult.risk_level),
-                        border: `1px solid ${riskColour(predictionResult.risk_level)}40`
-                      }}>
-                        {predictionResult.risk_level} Risk
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Transparent ML & Rule-Based Model Attribution */}
                   <div style={{
-                    marginTop: "16px", background: "#f8fafc", border: "1px solid #e2e8f0",
-                    borderRadius: "8px", padding: "10px 14px", fontSize: "0.78rem", color: "#475569"
+                    background: riskBg(predictionResult.risk_level),
+                    border: `1px solid ${riskColour(predictionResult.risk_level)}40`,
+                    borderRadius: "12px", padding: "18px", display: "flex",
+                    justifyContent: "space-between", alignItems: "center", marginBottom: "16px"
                   }}>
-                    <strong style={{ color: "#0f172a" }}>Model Transparency:</strong>
-                    <div style={{ marginTop: "2px" }}>
-                      Tabular ML Baseline: <strong>Random Forest Classifier</strong> trained on <code>Project-Injury-Dataset.csv</code>
-                      {predictionResult.ml_probability != null && ` (Baseline Probability: ${Math.round(predictionResult.ml_probability * 100)}%)`}
-                      . Specific anatomical joint risks are evaluated using validated biomechanical kinematic rules.
-                    </div>
-                  </div>
-                </div>
-
-                {/* 2. Previous Injury History Card */}
-                <div className="va-card" style={{ padding: "18px 20px" }}>
-                  <h3 style={{ margin: "0 0 8px 0", fontSize: "1rem", color: "#0f172a" }}>
-                    📋 Previous Injury History
-                  </h3>
-                  {analysisResult.history_notes && analysisResult.history_notes.length > 0 ? (
-                    <div style={{ background: "#fefce8", border: "1px solid #fde68a", borderRadius: "8px", padding: "10px 14px" }}>
-                      <strong style={{ fontSize: "0.8rem", color: "#92400e" }}>
-                        Recorded Past Injuries (From Athlete Profile):
-                      </strong>
-                      <ul style={{ margin: "4px 0 0 0", paddingLeft: "18px", fontSize: "0.8rem", color: "#78350f" }}>
-                        {analysisResult.history_notes.map((note, idx) => (
-                          <li key={idx} style={{ marginTop: "2px" }}>{note}</li>
-                        ))}
-                      </ul>
-                      <small style={{ display: "block", marginTop: "4px", fontSize: "0.72rem", color: "#92400e" }}>
-                        * Prior injury records apply risk weighting to corresponding anatomical joints.
-                      </small>
-                    </div>
-                  ) : (
-                    <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "10px 14px", fontSize: "0.82rem", color: "#64748b" }}>
-                      No previous injury record available. Risk scores reflect pure movement kinematics without prior injury weightings.
-                    </div>
-                  )}
-                </div>
-
-                {/* 3. Key Biomechanical Features */}
-                <div className="va-card" style={{ padding: "18px 20px" }}>
-                  <h3 style={{ margin: "0 0 12px 0", fontSize: "1rem", color: "#0f172a" }}>
-                    📐 Key Biomechanical Measurements
-                  </h3>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "10px" }}>
-                    <div style={{ background: "#f8fafc", padding: "10px 12px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                      <span style={{ fontSize: "0.72rem", color: "#64748b", display: "block" }}>Knee Valgus</span>
-                      <strong style={{ fontSize: "1.1rem", color: (analysisResult.knee_valgus || 0) > 12 ? "#dc2626" : "#16a34a" }}>
-                        {analysisResult.knee_valgus ? `${analysisResult.knee_valgus}°` : "—"}
-                      </strong>
-                      <span style={{ fontSize: "0.68rem", color: "#94a3b8", display: "block" }}>Safe: &lt; 12°</span>
-                    </div>
-
-                    <div style={{ background: "#f8fafc", padding: "10px 12px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                      <span style={{ fontSize: "0.72rem", color: "#64748b", display: "block" }}>Hip Stability</span>
-                      <strong style={{ fontSize: "1.1rem", color: (analysisResult.hip_stability || 0) < 75 ? "#d97706" : "#16a34a" }}>
-                        {analysisResult.hip_stability ? `${analysisResult.hip_stability}/100` : "—"}
-                      </strong>
-                      <span style={{ fontSize: "0.68rem", color: "#94a3b8", display: "block" }}>Target: &gt; 75</span>
-                    </div>
-
-                    <div style={{ background: "#f8fafc", padding: "10px 12px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                      <span style={{ fontSize: "0.72rem", color: "#64748b", display: "block" }}>Trunk Lean</span>
-                      <strong style={{ fontSize: "1.1rem", color: (analysisResult.trunk_lean || 0) > 6 ? "#d97706" : "#16a34a" }}>
-                        {analysisResult.trunk_lean ? `${analysisResult.trunk_lean}°` : "—"}
-                      </strong>
-                      <span style={{ fontSize: "0.68rem", color: "#94a3b8", display: "block" }}>Safe: &lt; 6°</span>
-                    </div>
-
-                    <div style={{ background: "#f8fafc", padding: "10px 12px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                      <span style={{ fontSize: "0.72rem", color: "#64748b", display: "block" }}>Bilateral Symmetry</span>
-                      <strong style={{ fontSize: "1.1rem", color: "#0f172a" }}>
-                        {analysisResult.symmetry_score ? `${analysisResult.symmetry_score}%` : "—"}
-                      </strong>
-                      <span style={{ fontSize: "0.68rem", color: "#94a3b8", display: "block" }}>Target: &gt; 80%</span>
-                    </div>
-
-                    <div style={{ background: "#f8fafc", padding: "10px 12px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                      <span style={{ fontSize: "0.72rem", color: "#64748b", display: "block" }}>Movement Quality</span>
-                      <strong style={{ fontSize: "1.1rem", color: "#0f172a" }}>
-                        {analysisResult.movement_quality ? `${analysisResult.movement_quality}%` : "—"}
-                      </strong>
-                      <span style={{ fontSize: "0.68rem", color: "#94a3b8", display: "block" }}>Target: &gt; 80%</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 4. Injury Risk Categories Breakdown */}
-                <div className="va-card" style={{ padding: "18px 20px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
-                    <h3 style={{ margin: 0, fontSize: "1rem", color: "#0f172a" }}>
-                      🛡️ Injury Risk Categories
-                    </h3>
-                    <div style={{ display: "flex", gap: "10px", fontSize: "0.72rem" }}>
-                      <span style={{ color: "#16a34a" }}>● Low &lt; 30%</span>
-                      <span style={{ color: "#d97706" }}>● Moderate 30-59%</span>
-                      <span style={{ color: "#dc2626" }}>● High ≥ 60%</span>
-                    </div>
-                  </div>
-
-                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                    {[
-                      { key: "acl", label: "🦵 ACL / Knee Ligament", value: predictionResult.acl_risk },
-                      { key: "hamstring", label: "⚡ Hamstring Strain", value: predictionResult.hamstring_risk },
-                      { key: "ankle", label: "🦶 Ankle Sprain", value: predictionResult.ankle_risk },
-                      { key: "shoulder", label: "💪 Shoulder Impingement", value: predictionResult.shoulder_risk },
-                      { key: "lower_back", label: "🛡️ Lower Back Strain", value: predictionResult.lower_back_risk },
-                      { key: "overuse", label: "⚠️ Overuse Syndrome", value: predictionResult.overuse_risk },
-                    ].map((item) => {
-                      const val = Math.round(Number(item.value) || 0);
-                      const isHigh = val >= 60;
-                      const isMod = val >= 30 && val < 60;
-                      const level = isHigh ? "High" : isMod ? "Moderate" : "Low";
-                      const color = isHigh ? "#dc2626" : isMod ? "#d97706" : "#16a34a";
-                      const bg = isHigh ? "#fee2e2" : isMod ? "#fef3c7" : "#dcfce7";
-
-                      return (
-                        <div key={item.key} style={{ background: "#f8fafc", padding: "8px 12px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                            <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "#1e293b" }}>{item.label}</span>
-                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                              <span style={{ fontSize: "0.72rem", fontWeight: 700, padding: "1px 6px", borderRadius: "4px", background: bg, color: color }}>
-                                {level}
-                              </span>
-                              <strong style={{ fontSize: "0.85rem", color: "#0f172a", minWidth: "32px", textAlign: "right" }}>
-                                {val}%
-                              </strong>
-                            </div>
-                          </div>
-                          <div style={{ height: "6px", background: "#e2e8f0", borderRadius: "3px", overflow: "hidden" }}>
-                            <div style={{ width: `${Math.min(100, Math.max(4, val))}%`, height: "100%", background: color, borderRadius: "3px" }} />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* 5. Targeted Recommendations */}
-                <div className="va-card" style={{ padding: "18px 20px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-                    <h3 style={{ margin: 0, fontSize: "1rem", color: "#0f172a" }}>
-                      💡 Targeted Corrective Recommendations
-                    </h3>
-                    {onNavigateToRecommendations && (
-                      <button
-                        className="view-button"
-                        onClick={onNavigateToRecommendations}
-                        style={{ fontSize: "0.78rem", padding: "4px 10px", cursor: "pointer" }}
-                      >
-                        View Full Plan →
-                      </button>
-                    )}
-                  </div>
-
-                  <p style={{ margin: "0 0 12px 0", fontSize: "0.78rem", color: "#64748b" }}>
-                    Mapped directly from your detected movement deviations and joint risk scores:
-                  </p>
-
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    {predictionResult.recommendations?.summary_strings ? (
-                      Object.entries(predictionResult.recommendations.summary_strings).map(([cat, text]) => (
-                        <div key={cat} style={{ background: "#f8fafc", padding: "8px 12px", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize: "0.8rem" }}>
-                          <strong style={{ color: "#1e40af", textTransform: "capitalize" }}>
-                            {cat.replace(/_/g, " ")}:
-                          </strong>{" "}
-                          <span style={{ color: "#334155" }}>{text}</span>
-                        </div>
-                      ))
-                    ) : (
-                      <div style={{ background: "#f8fafc", padding: "10px 12px", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize: "0.8rem", color: "#475569" }}>
-                        Complete dynamic warm-up drills, focus on eccentric hamstring conditioning, and maintain bilateral alignment during landing.
+                    <div>
+                      <div style={{ fontSize: "0.8rem", color: "#475569", fontWeight: 600 }}>Overall Injury Risk Score</div>
+                      <div style={{ fontSize: "2rem", fontWeight: 800, color: "#0f172a" }}>
+                        {predictionResult.overall_risk_score} <span style={{ fontSize: "1rem", color: "#64748b" }}>/ 100</span>
                       </div>
-                    )}
+                    </div>
+                    <span style={{
+                      padding: "8px 18px", borderRadius: "24px", fontWeight: 800, fontSize: "0.95rem",
+                      backgroundColor: "white", color: riskColour(predictionResult.risk_level),
+                      boxShadow: "0 2px 6px rgba(0,0,0,0.06)"
+                    }}>
+                      {predictionResult.risk_level} Risk
+                    </span>
                   </div>
                 </div>
 
+                {/* Concise Model Transparency Note */}
+                <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "10px 14px", fontSize: "0.76rem", color: "#64748b" }}>
+                  <strong>Model Information:</strong> Baseline probability evaluated using a Random Forest model trained on <code>Project-Injury-Dataset.csv</code>. Specific joint injury risks are derived from validated biomechanical kinematic rules.
+                </div>
               </div>
-            ) : (
-              /* Empty State When Awaiting Video */
-              <div className="va-card" style={{ textAlign: "center", padding: "48px 24px", color: "#94a3b8" }}>
-                <div style={{ fontSize: "2.5rem", marginBottom: "12px" }}>🎯</div>
-                <h3 style={{ color: "#475569", margin: "0 0 6px 0" }}>Ready for Video Analysis</h3>
-                <p style={{ fontSize: "0.85rem", margin: 0, maxWidth: "420px", marginLeft: "auto", marginRight: "auto" }}>
-                  Select or drag a training video on the left and click <strong>Analyze Video</strong> to run the automated biomechanical analysis, or click a previous video from your upload history.
-                </p>
+
+            </div>
+
+            {/* Key Biomechanical Measurements */}
+            <div className="va-card" style={{ padding: "20px" }}>
+              <h3 style={{ margin: "0 0 14px 0", fontSize: "1.05rem", color: "#0f172a" }}>
+                📐 Key Biomechanical Measurements
+              </h3>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "12px" }}>
+                <div style={{ background: "#f8fafc", padding: "12px 14px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+                  <span style={{ fontSize: "0.75rem", color: "#64748b", display: "block" }}>Knee Valgus</span>
+                  <strong style={{ fontSize: "1.2rem", color: (analysisResult.knee_valgus || 0) > 12 ? "#dc2626" : "#16a34a" }}>
+                    {analysisResult.knee_valgus ? `${analysisResult.knee_valgus}°` : "—"}
+                  </strong>
+                  <span style={{ fontSize: "0.7rem", color: "#94a3b8", display: "block", marginTop: "2px" }}>Safe: &lt; 12°</span>
+                </div>
+
+                <div style={{ background: "#f8fafc", padding: "12px 14px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+                  <span style={{ fontSize: "0.75rem", color: "#64748b", display: "block" }}>Hip Stability</span>
+                  <strong style={{ fontSize: "1.2rem", color: (analysisResult.hip_stability || 0) < 75 ? "#d97706" : "#16a34a" }}>
+                    {analysisResult.hip_stability ? `${analysisResult.hip_stability}/100` : "—"}
+                  </strong>
+                  <span style={{ fontSize: "0.7rem", color: "#94a3b8", display: "block", marginTop: "2px" }}>Target: &gt; 75</span>
+                </div>
+
+                <div style={{ background: "#f8fafc", padding: "12px 14px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+                  <span style={{ fontSize: "0.75rem", color: "#64748b", display: "block" }}>Trunk Lean</span>
+                  <strong style={{ fontSize: "1.2rem", color: (analysisResult.trunk_lean || 0) > 6 ? "#d97706" : "#16a34a" }}>
+                    {analysisResult.trunk_lean ? `${analysisResult.trunk_lean}°` : "—"}
+                  </strong>
+                  <span style={{ fontSize: "0.7rem", color: "#94a3b8", display: "block", marginTop: "2px" }}>Safe: &lt; 6°</span>
+                </div>
+
+                <div style={{ background: "#f8fafc", padding: "12px 14px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+                  <span style={{ fontSize: "0.75rem", color: "#64748b", display: "block" }}>Bilateral Symmetry</span>
+                  <strong style={{ fontSize: "1.2rem", color: "#0f172a" }}>
+                    {analysisResult.symmetry_score ? `${analysisResult.symmetry_score}%` : "—"}
+                  </strong>
+                  <span style={{ fontSize: "0.7rem", color: "#94a3b8", display: "block", marginTop: "2px" }}>Target: &gt; 80%</span>
+                </div>
+
+                <div style={{ background: "#f8fafc", padding: "12px 14px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+                  <span style={{ fontSize: "0.75rem", color: "#64748b", display: "block" }}>Movement Quality</span>
+                  <strong style={{ fontSize: "1.2rem", color: "#0f172a" }}>
+                    {analysisResult.movement_quality ? `${analysisResult.movement_quality}%` : "—"}
+                  </strong>
+                  <span style={{ fontSize: "0.7rem", color: "#94a3b8", display: "block", marginTop: "2px" }}>Target: &gt; 80%</span>
+                </div>
               </div>
-            )}
+            </div>
+
+            {/* Injury Risk Categories Breakdown (6 Joint Bars) */}
+            <div className="va-card" style={{ padding: "20px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
+                <h3 style={{ margin: 0, fontSize: "1.05rem", color: "#0f172a" }}>
+                  🛡️ Injury Risk Categories
+                </h3>
+                <div style={{ display: "flex", gap: "12px", fontSize: "0.75rem" }}>
+                  <span style={{ color: "#16a34a", fontWeight: 600 }}>● Low &lt; 30%</span>
+                  <span style={{ color: "#d97706", fontWeight: 600 }}>● Moderate 30-59%</span>
+                  <span style={{ color: "#dc2626", fontWeight: 600 }}>● High ≥ 60%</span>
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "12px" }}>
+                {[
+                  { key: "acl", label: "🦵 ACL / Knee Ligament", value: predictionResult.acl_risk },
+                  { key: "hamstring", label: "⚡ Hamstring Strain", value: predictionResult.hamstring_risk },
+                  { key: "ankle", label: "🦶 Ankle Sprain", value: predictionResult.ankle_risk },
+                  { key: "shoulder", label: "💪 Shoulder Impingement", value: predictionResult.shoulder_risk },
+                  { key: "lower_back", label: "🛡️ Lower Back Strain", value: predictionResult.lower_back_risk },
+                  { key: "overuse", label: "⚠️ Overuse Syndrome", value: predictionResult.overuse_risk },
+                ].map((item) => {
+                  const val = Math.round(Number(item.value) || 0);
+                  const isHigh = val >= 60;
+                  const isMod = val >= 30 && val < 60;
+                  const level = isHigh ? "High" : isMod ? "Moderate" : "Low";
+                  const color = isHigh ? "#dc2626" : isMod ? "#d97706" : "#16a34a";
+                  const bg = isHigh ? "#fee2e2" : isMod ? "#fef3c7" : "#dcfce7";
+
+                  return (
+                    <div key={item.key} style={{ background: "#f8fafc", padding: "12px 14px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                        <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#1e293b" }}>{item.label}</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span style={{ fontSize: "0.72rem", fontWeight: 700, padding: "2px 7px", borderRadius: "5px", background: bg, color: color }}>
+                            {level}
+                          </span>
+                          <strong style={{ fontSize: "0.9rem", color: "#0f172a", minWidth: "32px", textAlign: "right" }}>
+                            {val}%
+                          </strong>
+                        </div>
+                      </div>
+                      <div style={{ height: "6px", background: "#e2e8f0", borderRadius: "3px", overflow: "hidden" }}>
+                        <div style={{ width: `${Math.min(100, Math.max(4, val))}%`, height: "100%", background: color, borderRadius: "3px" }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Previous Injury History */}
+            <div className="va-card" style={{ padding: "18px 20px" }}>
+              <h3 style={{ margin: "0 0 8px 0", fontSize: "1rem", color: "#0f172a" }}>
+                📋 Previous Injury History
+              </h3>
+              {analysisResult.history_notes && analysisResult.history_notes.length > 0 ? (
+                <div style={{ background: "#fefce8", border: "1px solid #fde68a", borderRadius: "8px", padding: "10px 14px" }}>
+                  <strong style={{ fontSize: "0.8rem", color: "#92400e" }}>
+                    Recorded Past Injuries (From Athlete Profile):
+                  </strong>
+                  <ul style={{ margin: "4px 0 0 0", paddingLeft: "18px", fontSize: "0.8rem", color: "#78350f" }}>
+                    {analysisResult.history_notes.map((note, idx) => (
+                      <li key={idx} style={{ marginTop: "2px" }}>{note}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "10px 14px", fontSize: "0.82rem", color: "#64748b" }}>
+                  No previous injury record available. Risk scores reflect pure movement kinematics without prior injury weightings.
+                </div>
+              )}
+            </div>
+
+            {/* Personalized Recommendations */}
+            <div className="va-card" style={{ padding: "20px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                <h3 style={{ margin: 0, fontSize: "1.05rem", color: "#0f172a" }}>
+                  💡 Targeted Recommendations
+                </h3>
+                {onNavigateToRecommendations && (
+                  <button
+                    className="view-button"
+                    onClick={onNavigateToRecommendations}
+                    style={{ fontSize: "0.8rem", padding: "4px 12px", cursor: "pointer" }}
+                  >
+                    View Full Plan in Recommendations Tab →
+                  </button>
+                )}
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {predictionResult.recommendations?.summary_strings ? (
+                  Object.entries(predictionResult.recommendations.summary_strings).map(([cat, text]) => (
+                    <div key={cat} style={{ background: "#f8fafc", padding: "10px 14px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "0.82rem" }}>
+                      <strong style={{ color: "#1e40af", textTransform: "capitalize" }}>
+                        {cat.replace(/_/g, " ")}:
+                      </strong>{" "}
+                      <span style={{ color: "#334155" }}>{text}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div style={{ background: "#f8fafc", padding: "12px 14px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "0.82rem", color: "#475569" }}>
+                    Complete dynamic warm-up drills, focus on eccentric hamstring conditioning, and maintain bilateral alignment during landing.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Single primary button at bottom to start another analysis */}
+            <div style={{ textAlign: "center", margin: "10px 0 30px" }}>
+              <button
+                className="btn btn-primary"
+                onClick={handleResetAnalysis}
+                style={{ padding: "12px 28px", fontSize: "0.95rem", fontWeight: 700 }}
+              >
+                + Analyze New Video
+              </button>
+            </div>
 
           </div>
+        )}
 
-        </div>
       </div>
     </main>
   );
