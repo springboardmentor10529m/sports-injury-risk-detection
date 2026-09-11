@@ -1,0 +1,31 @@
+athlete_id,college_division,sport_discipline,gender,age,height_cm,weight_kg,years_experience,prior_acl_tear,prior_ankle_sprain,prior_hamstring_strain,squat_depth_deg,jump_landing_valgus_deg,core_endurance_sec,session_rpe,injury_in_season,days_missed,injury_site
+COL-301,NCAA-D1,Basketball,Male,20,198.0,95.2,5,0,1,0,105.0,11.5,145,4,0,0,None
+COL-302,NCAA-D1,Basketball,Female,21,182.5,74.0,4,1,1,0,94.0,20.2,95,8,1,28,ACL
+COL-303,NCAA-D1,Soccer,Female,19,168.0,62.5,3,0,1,0,108.0,13.8,130,5,0,0,None
+COL-304,NCAA-D1,Soccer,Male,22,185.0,80.0,6,0,2,1,96.0,19.5,110,7,1,14,Hamstring
+COL-305,NCAA-D2,Volleyball,Female,20,180.0,70.5,4,0,0,0,115.0,10.2,160,3,0,0,None
+COL-306,NCAA-D1,Track & Field,Male,21,180.5,75.0,5,0,1,1,102.0,16.5,125,6,0,0,None
+COL-307,NCAA-D1,Basketball,Male,22,206.0,110.0,6,1,2,0,88.0,22.4,85,9,1,42,Patellar Tendon
+COL-308,NCAA-D2,Soccer,Female,20,165.0,59.0,3,0,0,0,112.0,11.0,150,4,0,0,None
+COL-309,NCAA-D1,Rugby,Male,21,188.0,98.5,5,0,1,0,100.0,15.8,120,6,0,0,None
+COL-310,NCAA-D1,Rugby,Male,23,191.0,106.0,7,1,2,1,91.0,20.0,90,8,1,35,Meniscus
+COL-311,NCAA-D2,Tennis,Female,19,172.0,64.0,3,0,1,0,110.0,12.8,140,4,0,0,None
+COL-312,NCAA-D1,Basketball,Female,20,175.0,66.0,4,0,0,0,118.0,10.0,165,3,0,0,None
+COL-313,NCAA-D1,Soccer,Female,21,170.0,63.5,5,1,1,0,90.0,22.8,80,9,1,60,ACL
+COL-314,NCAA-D1,Basketball,Male,19,195.0,90.0,3,0,1,0,104.0,14.5,135,5,0,0,None
+COL-315,NCAA-D2,Volleyball,Female,22,183.0,72.0,6,0,0,0,114.0,11.2,155,4,0,0,None
+COL-316,NCAA-D1,Soccer,Male,20,183.0,78.0,4,0,1,0,103.0,15.5,128,5,0,0,None
+COL-317,NCAA-D1,Track & Field,Female,21,173.0,61.0,5,0,0,1,95.0,19.8,100,8,1,21,Hamstring
+COL-318,NCAA-D1,Basketball,Male,20,201.0,99.0,4,0,0,0,112.0,11.8,148,4,0,0,None
+COL-319,NCAA-D1,Rugby,Male,22,189.0,102.0,6,1,2,0,89.0,23.5,75,9,1,50,ACL
+COL-320,NCAA-D2,Soccer,Male,19,178.0,73.0,3,0,1,0,107.0,13.2,138,5,0,0,None
+COL-321,NCAA-D1,Tennis,Male,21,185.0,79.0,5,0,1,0,105.0,14.9,132,6,0,0,None
+COL-322,NCAA-D1,Basketball,Female,22,188.0,79.0,6,1,1,0,92.0,19.2,92,7,1,30,Patellar Tendon
+COL-323,NCAA-D2,Soccer,Female,20,167.0,60.0,4,0,0,0,116.0,10.5,162,3,0,0,None
+COL-324,NCAA-D1,Volleyball,Female,21,185.0,75.0,5,1,1,0,93.0,21.0,88,8,1,35,Patellar Tendon
+COL-325,NCAA-D1,Track & Field,Male,20,182.0,76.0,4,0,1,1,97.0,18.9,105,8,1,18,Achilles
+COL-326,NCAA-D1,Basketball,Male,21,192.0,87.0,5,0,0,0,111.0,12.0,146,4,0,0,None
+COL-327,NCAA-D2,Soccer,Male,20,181.0,77.0,4,0,1,0,101.0,16.8,122,6,0,0,None
+COL-328,NCAA-D1,Rugby,Male,22,186.0,96.0,6,1,2,1,88.0,22.0,82,9,1,45,Ankle
+COL-329,NCAA-D1,Basketball,Female,19,179.0,68.0,3,0,0,0,109.0,13.9,134,5,0,0,None
+COL-330,NCAA-D2,Soccer,Female,21,169.0,62.0,5,0,0,0,115.0,11.1,158,4,0,0,None

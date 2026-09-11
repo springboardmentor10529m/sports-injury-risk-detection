@@ -37,13 +37,19 @@ class Athlete(Base):
     height = Column(Float)
     weight = Column(Float)
 
+    # Training capability metrics (0–100 self-reported scores)
     training_load = Column(Float)
     flexibility = Column(Float)
     strength = Column(Float)
     balance = Column(Float)
     endurance = Column(Float)
 
-    coach_notes = Column(Text)
+    # Additional athlete context
+    training_level = Column(String)   # Beginner / Intermediate / Advanced / Elite
+    gender = Column(String)           # Male / Female / Other
+
+    # Athlete personal notes (not coach-specific)
+    coach_notes = Column(Text)        # kept as coach_notes in DB for backward compatibility
 
 
 # -------------------------
@@ -145,3 +151,22 @@ class InjuryPrediction(Base):
     shoulder_risk = Column(Float)
     lower_back_risk = Column(Float)
     overuse_risk = Column(Float)
+
+
+# -------------------------
+# INJURY HISTORY MODEL
+# -------------------------
+
+class InjuryHistory(Base):
+    __tablename__ = "injury_histories"
+
+    injury_id = Column(UUID(as_uuid=True), primary_key=True)
+    athlete_id = Column(UUID(as_uuid=True), nullable=False)
+
+    injury_type = Column(String, nullable=False)  # e.g. "ACL Tear", "Hamstring Strain"
+    body_part = Column(String, nullable=False)    # e.g. "Knee", "Hamstring", "Ankle", "Lower Back", "Shoulder"
+    severity = Column(String)                     # "Mild", "Moderate", "Severe"
+    months_ago = Column(Integer)                  # Months since occurrence
+    fully_recovered = Column(Integer, default=1)  # 1 = Yes, 0 = Ongoing / Residual
+    notes = Column(Text)
+    recorded_at = Column(DateTime)

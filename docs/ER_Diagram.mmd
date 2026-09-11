@@ -15,6 +15,8 @@ erDiagram
         UUID user_id FK
         string sport
         string position
+        string gender
+        string training_level
         int age
         float height
         float weight
@@ -24,6 +26,18 @@ erDiagram
         float balance
         float endurance
         text coach_notes
+    }
+
+    INJURY_HISTORIES {
+        UUID injury_id PK
+        UUID athlete_id FK
+        string injury_type
+        string body_part
+        string severity
+        int months_ago
+        int fully_recovered
+        text notes
+        datetime recorded_at
     }
 
     PERFORMANCE_RECORDS {
@@ -87,6 +101,7 @@ erDiagram
     }
 
     USERS ||--o{ ATHLETES : "has"
+    ATHLETES ||--o{ INJURY_HISTORIES : "records"
     ATHLETES ||--o{ PERFORMANCE_RECORDS : "logs"
     ATHLETES ||--o{ VIDEOS : "uploads"
     ATHLETES ||--o{ ANALYSIS_RESULTS : "receives"

@@ -351,6 +351,16 @@ function Performance({ athleteId, athleteData, onNavigate }) {
                   ></div>
                 </div>
               </div>
+
+              <div className="baseline-explanation-box" style={{ marginTop: "1.25rem", padding: "0.85rem", backgroundColor: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "0.82rem", color: "#475569" }}>
+                <strong style={{ color: "#1e293b", display: "block", marginBottom: "0.25rem" }}>ℹ️ Baseline & Session Log Implementation:</strong>
+                <p style={{ margin: 0, lineHeight: "1.4" }}>
+                  <strong>Baseline Score:</strong> Derived as a composite average of your physical capability metrics (Strength, Flexibility, Balance, Endurance). It updates dynamically as new performance logs and movement video scores are submitted.
+                </p>
+                <p style={{ margin: "0.4rem 0 0 0", lineHeight: "1.4" }}>
+                  <strong>Session Logs Usage:</strong> Session logs store historical outputs to track longitudinal performance trends, moving averages, and training load progression over time.
+                </p>
+              </div>
             </div>
           </section>
 
@@ -505,7 +515,7 @@ function Performance({ athleteId, athleteData, onNavigate }) {
                 </div>
 
                 <div className="form-group">
-                  <label>Coach Remarks / Notes (Optional)</label>
+                  <label>Athlete Training Remarks / Notes (Optional)</label>
                   <textarea
                     rows="3"
                     placeholder="e.g. Excellent acceleration, slight right hip fatigue in final repetition..."

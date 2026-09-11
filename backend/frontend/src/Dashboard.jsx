@@ -10,6 +10,8 @@ function Dashboard({ athleteData, onNavigate, onLogout }) {
   const [liveAthlete, setLiveAthlete] = useState(athleteData || null);
   const [recentRecords, setRecentRecords] = useState([]);
   const [latestAnalysis, setLatestAnalysis] = useState(null);
+  const [videoHistory, setVideoHistory] = useState([]);
+  const [loadingVideoHistory, setLoadingVideoHistory] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const athleteId = athleteData?.athlete_id || localStorage.getItem("athlete_id");
@@ -63,10 +65,34 @@ function Dashboard({ athleteData, onNavigate, onLogout }) {
       }
     };
 
+    const fetchVideoHistory = async () => {
+      if (!athleteId) return;
+      try {
+        setLoadingVideoHistory(true);
+        const res = await fetch(`${API_BASE}/videos/with-analysis/${athleteId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setVideoHistory(data);
+        }
+      } catch (err) {
+        console.error("Error fetching video history on dashboard:", err);
+      } finally {
+        setLoadingVideoHistory(false);
+      }
+    };
+
     fetchAthleteDetails();
     fetchAthleteRecords();
     fetchAnalysisSummary();
+    fetchVideoHistory();
   }, [athleteId, userId]);
+
+  const handleViewAnalysis = (videoItem) => {
+    if (videoItem.video_id) {
+      localStorage.setItem("active_video_id", videoItem.video_id);
+    }
+    setCurrentTab("video");
+  };
 
   // Derived display values
   const athleteName = liveAthlete?.name || athleteData?.name || "Athlete";
@@ -345,6 +371,14 @@ function Dashboard({ athleteData, onNavigate, onLogout }) {
                 </div>
               </div>
 
+              {latestAnalysis?.overall_risk_score != null && (
+                <div style={{ textAlign: "center", marginBottom: "0.5rem" }}>
+                  <span style={{ fontSize: "1.3rem", fontWeight: 800, color: "#0f172a" }}>{latestAnalysis.overall_risk_score}</span>
+                  <span style={{ fontSize: "0.85rem", color: "#64748b" }}>/100</span>
+                  <div style={{ fontSize: "0.65rem", color: "#94a3b8", marginTop: "0.15rem" }}>0.35×Max + 0.35×Mean + 0.30×(100−MQ)</div>
+                </div>
+              )}
+
               <div className="risk-message">
                 <span>{riskLevel === "Low" ? "✓" : "⚠️"}</span>
                 <div>
@@ -403,6 +437,125 @@ function Dashboard({ athleteData, onNavigate, onLogout }) {
             </div>
           </section>
 
+          {/* ── UPLOAD & ANALYSIS HISTORY SECTION ── */}
+          <section className="dashboard-card history-section" style={{ marginTop: "24px", marginBottom: "24px" }}>
+            <div className="card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", margin: 0 }}>
+                  📁 Upload &amp; Analysis History
+                </h3>
+                <p style={{ fontSize: "0.82rem", color: "#64748b", margin: "4px 0 0 0" }}>
+                  Previous training videos and biomechanical risk assessments saved in database
+                </p>
+              </div>
+              <button
+                className="view-button"
+                onClick={() => setCurrentTab("video")}
+                style={{ padding: "6px 14px", fontSize: "0.82rem", cursor: "pointer" }}
+              >
+                + Analyze Video →
+              </button>
+            </div>
+
+            {loadingVideoHistory ? (
+              <p style={{ fontSize: "0.85rem", color: "#64748b", padding: "16px 0" }}>Loading analysis history from database...</p>
+            ) : videoHistory.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "32px 16px", color: "#94a3b8" }}>
+                <span style={{ fontSize: "2rem", display: "block", marginBottom: "8px" }}>📹</span>
+                <p style={{ margin: 0, fontSize: "0.9rem", color: "#64748b" }}>No video analyses recorded yet.</p>
+                <button
+                  className="primary-button"
+                  onClick={() => setCurrentTab("video")}
+                  style={{ marginTop: "12px", fontSize: "0.82rem" }}
+                >
+                  Upload Your First Video →
+                </button>
+              </div>
+            ) : (
+              <div style={{ overflowX: "auto", marginTop: "12px" }}>
+                <table className="history-table" style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
+                  <thead>
+                    <tr style={{ background: "#f8fafc", textAlign: "left", borderBottom: "2px solid #e2e8f0" }}>
+                      <th style={{ padding: "10px 12px", color: "#475569", fontWeight: 700 }}>Video / Session</th>
+                      <th style={{ padding: "10px 12px", color: "#475569", fontWeight: 700 }}>Date &amp; Time</th>
+                      <th style={{ padding: "10px 12px", color: "#475569", fontWeight: 700 }}>Activity</th>
+                      <th style={{ padding: "10px 12px", color: "#475569", fontWeight: 700 }}>Risk Summary</th>
+                      <th style={{ padding: "10px 12px", color: "#475569", fontWeight: 700 }}>Status</th>
+                      <th style={{ padding: "10px 12px", color: "#475569", fontWeight: 700, textAlign: "right" }}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {videoHistory.map((item) => {
+                      const hasAnalysis = !!item.analysis;
+                      const rLevel = item.analysis?.risk_level || "Unknown";
+                      const rScore = item.analysis?.overall_risk_score;
+                      const dateStr = item.uploaded_at ? new Date(item.uploaded_at).toLocaleString() : "Recent";
+                      const isHigh = rLevel.toLowerCase() === "high";
+                      const isMod = rLevel.toLowerCase() === "moderate";
+                      const badgeBg = isHigh ? "#fee2e2" : isMod ? "#fef3c7" : "#dcfce7";
+                      const badgeColor = isHigh ? "#b91c1c" : isMod ? "#b45309" : "#15803d";
+
+                      return (
+                        <tr key={item.video_id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                          <td style={{ padding: "12px", fontWeight: 600, color: "#0f172a" }}>
+                            🎬 {item.video_url ? item.video_url.split("/").pop() : `Session (${item.activity})`}
+                          </td>
+                          <td style={{ padding: "12px", color: "#64748b", whiteSpace: "nowrap" }}>
+                            {dateStr}
+                          </td>
+                          <td style={{ padding: "12px" }}>
+                            <span style={{
+                              display: "inline-block", padding: "2px 8px", borderRadius: "12px",
+                              backgroundColor: "#eff6ff", color: "#1e40af", fontWeight: 600, fontSize: "0.78rem"
+                            }}>
+                              {item.activity}
+                            </span>
+                          </td>
+                          <td style={{ padding: "12px" }}>
+                            {hasAnalysis ? (
+                              <span style={{
+                                display: "inline-block", padding: "3px 9px", borderRadius: "8px",
+                                fontWeight: 700, fontSize: "0.78rem",
+                                backgroundColor: badgeBg, color: badgeColor
+                              }}>
+                                {rLevel} Risk · {rScore}/100
+                              </span>
+                            ) : (
+                              <span style={{ color: "#94a3b8", fontSize: "0.78rem" }}>Pending</span>
+                            )}
+                          </td>
+                          <td style={{ padding: "12px" }}>
+                            <span style={{
+                              fontSize: "0.75rem", padding: "2px 7px", borderRadius: "6px",
+                              backgroundColor: item.processing_status === "completed" ? "#f0fdf4" : "#f8fafc",
+                              color: item.processing_status === "completed" ? "#166534" : "#64748b",
+                              border: "1px solid #e2e8f0"
+                            }}>
+                              {item.processing_status || "completed"}
+                            </span>
+                          </td>
+                          <td style={{ padding: "12px", textAlign: "right" }}>
+                            {hasAnalysis ? (
+                              <button
+                                className="view-button"
+                                onClick={() => handleViewAnalysis(item)}
+                                style={{ fontSize: "0.78rem", padding: "4px 10px", cursor: "pointer" }}
+                              >
+                                View Analysis →
+                              </button>
+                            ) : (
+                              <span style={{ color: "#cbd5e1", fontSize: "0.75rem" }}>—</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+
           {/* BOTTOM GRID */}
           <section className="bottom-grid">
             <div className="dashboard-card training-card">
@@ -437,7 +590,19 @@ function Dashboard({ athleteData, onNavigate, onLogout }) {
               <div className="account-icon">👤</div>
               <div>
                 <span>ATHLETE ACCOUNT</span>
-                <h3>{liveAthlete?.sport ? `${liveAthlete.sport} Profile Active` : "Profile Active"}</h3>
+                <h3>{athleteName}</h3>
+                <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", margin: "0.25rem 0" }}>
+                  {liveAthlete?.sport && (
+                    <span style={{ display: "inline-block", padding: "0.2rem 0.6rem", backgroundColor: "#dbeafe", color: "#1e40af", borderRadius: "12px", fontSize: "0.75rem", fontWeight: 600 }}>
+                      {liveAthlete.sport}
+                    </span>
+                  )}
+                  {liveAthlete?.position && (
+                    <span style={{ display: "inline-block", padding: "0.2rem 0.6rem", backgroundColor: "#f0fdf4", color: "#166534", borderRadius: "12px", fontSize: "0.75rem", fontWeight: 600 }}>
+                      {liveAthlete.position}
+                    </span>
+                  )}
+                </div>
                 <p>
                   {liveAthlete?.position ? `Playing Position: ${liveAthlete.position}` : "Keep your athlete information updated for accurate predictions."}
                 </p>

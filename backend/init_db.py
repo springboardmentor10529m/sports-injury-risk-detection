@@ -14,13 +14,23 @@ from models import (  # noqa: F401 — register all models with Base
     AnalysisResult,
     InjuryPrediction,
     Recommendation,
+    InjuryHistory,
 )
 from database import Base
 
 
 def init_database() -> None:
     Base.metadata.create_all(bind=engine)
-    print("Database tables created successfully (existing tables are left unchanged).")
+    # Ensure newly added columns exist in PostgreSQL
+    from sqlalchemy import text
+    with engine.connect() as conn:
+        try:
+            conn.execute(text("ALTER TABLE athletes ADD COLUMN IF NOT EXISTS training_level VARCHAR(50);"))
+            conn.execute(text("ALTER TABLE athletes ADD COLUMN IF NOT EXISTS gender VARCHAR(50);"))
+            conn.commit()
+        except Exception as e:
+            print(f"Column check note: {e}")
+    print("Database tables and columns initialized successfully.")
 
 
 if __name__ == "__main__":

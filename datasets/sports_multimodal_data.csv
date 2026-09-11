@@ -1,0 +1,41 @@
+session_id,athlete_id,sport,session_type,session_duration_mins,acute_training_load,chronic_training_load,acwr_ratio,knee_valgus_peak_deg,asymmetry_index_pct,trunk_sway_deg,sleep_quality_score,soreness_score,fatigue_index,historical_injury_count,injury_risk_flag,injury_category
+SESS-201,ATH-101,Basketball,Game,42,480,450,1.07,13.2,7.9,4.2,8,2,3,0,0,Non-Injury
+SESS-202,ATH-102,Basketball,Practice,90,720,510,1.41,19.5,18.6,9.1,5,7,8,2,1,Knee
+SESS-203,ATH-103,Soccer,Match,90,810,750,1.08,14.8,12.4,6.5,7,4,5,0,0,Non-Injury
+SESS-204,ATH-104,Soccer,High-Intensity Drills,75,790,520,1.52,22.1,25.5,11.8,4,8,8,1,1,Knee
+SESS-205,ATH-105,Volleyball,Match,80,620,600,1.03,10.1,4.8,3.5,9,1,2,0,0,Non-Injury
+SESS-206,ATH-106,Track & Field,Sprint Intervals,60,650,480,1.35,17.2,17.0,8.1,6,6,6,0,0,Non-Injury
+SESS-207,ATH-107,Basketball,Practice,110,880,550,1.60,23.8,29.0,13.2,4,9,9,2,1,Patellar Tendon
+SESS-208,ATH-108,Soccer,Match,95,780,720,1.08,11.5,6.6,4.0,8,3,4,0,0,Non-Injury
+SESS-209,ATH-109,Rugby,Contact Practice,85,740,630,1.17,16.1,15.2,7.5,6,5,6,1,0,Non-Injury
+SESS-210,ATH-110,Rugby,Match,80,850,560,1.52,20.2,20.8,9.9,5,7,8,1,1,Meniscus
+SESS-211,ATH-111,Tennis,Tournament Match,120,720,680,1.06,13.4,9.8,5.3,8,3,4,0,0,Non-Injury
+SESS-212,ATH-112,Basketball,Practice,60,450,430,1.05,10.9,5.9,4.1,8,2,3,0,0,Non-Injury
+SESS-213,ATH-113,Soccer,Match,90,830,520,1.60,23.4,27.2,13.5,3,8,9,2,1,Knee
+SESS-214,ATH-114,Basketball,Scrimmage,75,640,580,1.10,15.3,13.6,6.9,7,4,5,0,0,Non-Injury
+SESS-215,ATH-115,Volleyball,Practice,90,580,560,1.04,12.0,7.2,4.7,8,3,4,0,0,Non-Injury
+SESS-216,ATH-116,Soccer,Goalkeeper Drills,70,550,510,1.08,16.5,16.0,7.4,6,5,5,1,0,Non-Injury
+SESS-217,ATH-117,Track & Field,Hurdle Drills,65,710,480,1.48,20.9,24.0,11.2,5,7,8,1,1,Hamstring
+SESS-218,ATH-118,Basketball,Shooting Session,45,350,370,0.95,12.3,8.5,4.5,8,2,3,0,0,Non-Injury
+SESS-219,ATH-119,Rugby,Match,80,890,540,1.65,24.6,30.5,14.5,4,9,9,2,1,Knee
+SESS-220,ATH-120,Soccer,Practice,80,620,610,1.02,14.0,11.1,5.8,7,3,4,0,0,Non-Injury
+SESS-221,ATH-121,Tennis,Practice,90,660,600,1.10,15.5,14.5,7.0,6,5,5,0,0,Non-Injury
+SESS-222,ATH-122,Basketball,Scrimmage,85,750,510,1.47,19.0,19.5,9.2,5,7,7,1,1,Patellar Tendon
+SESS-223,ATH-123,Soccer,Match,90,760,730,1.04,11.0,5.5,4.1,9,2,3,0,0,Non-Injury
+SESS-224,ATH-124,Volleyball,Plyometrics,75,730,500,1.46,21.5,25.0,11.5,4,8,8,1,1,Patellar Tendon
+SESS-225,ATH-125,Track & Field,Bounding Session,60,680,470,1.45,20.1,22.0,10.2,5,7,7,1,1,Achilles
+SESS-226,ATH-126,Basketball,Skill Work,50,380,390,0.97,12.9,9.0,5.1,8,3,4,0,0,Non-Injury
+SESS-227,ATH-127,Soccer,Practice,85,700,640,1.09,17.4,17.5,8.0,6,5,6,0,0,Non-Injury
+SESS-228,ATH-128,Rugby,Scrum Session,75,760,510,1.49,23.0,27.0,12.5,4,8,9,2,1,Lower Extremity
+SESS-229,ATH-129,Basketball,Conditioning,65,580,540,1.07,14.8,13.0,6.3,7,4,5,0,0,Non-Injury
+SESS-230,ATH-130,Soccer,Recovery Session,40,250,290,0.86,11.8,7.0,4.6,8,2,2,0,0,Non-Injury
+SESS-231,ATH-131,Tennis,Match,105,740,650,1.14,16.8,16.5,7.8,6,5,6,0,0,Non-Injury
+SESS-232,ATH-132,Volleyball,Agility Drills,60,490,470,1.04,10.5,5.0,3.8,9,2,3,0,0,Non-Injury
+SESS-233,ATH-133,Track & Field,Combined Events,120,920,580,1.59,24.0,30.0,14.0,4,9,9,2,1,Knee
+SESS-234,ATH-134,Basketball,Practice,80,690,620,1.11,18.1,19.0,8.7,6,6,6,1,0,Non-Injury
+SESS-235,ATH-135,Soccer,Match,90,750,710,1.06,12.5,8.2,4.8,8,3,4,0,0,Non-Injury
+SESS-236,ATH-136,Rugby,High-Speed Running,70,720,490,1.47,18.6,20.5,9.4,5,7,8,1,1,Hamstring
+SESS-237,ATH-137,Basketball,Shooting,45,340,350,0.97,11.3,6.5,4.2,9,2,2,0,0,Non-Injury
+SESS-238,ATH-138,Soccer,Finishing Drills,75,700,480,1.46,21.2,24.5,10.9,5,7,8,0,1,Knee
+SESS-239,ATH-139,Volleyball,Serve/Receive,60,420,440,0.95,13.8,12.0,6.0,8,3,4,0,0,Non-Injury
+SESS-240,ATH-140,Track & Field,Speed Endurance,70,750,500,1.50,22.2,26.0,12.1,4,8,9,2,1,Hamstring

@@ -136,7 +136,7 @@ function Recommendations({ athleteId, onNavigateToVideo }) {
             <span className="rec-kicker">INJURY PREVENTION PROTOCOLS</span>
             <h1>Tailored Corrective Recommendations</h1>
             <p>
-              AI-generated corrective exercises, mobility drills, strengthening regimens, and training load adjustments.
+              Targeted rule-based corrective exercises, mobility drills, strengthening regimens, and workload adjustments mapped from detected biomechanical deviations and risk scores.
             </p>
           </div>
 
@@ -185,6 +185,9 @@ function Recommendations({ athleteId, onNavigateToVideo }) {
                 <span className="rec-badge blue-badge">Daily Routine</span>
                 <span className="rec-badge">3 Sets · 8-10 Reps</span>
               </div>
+              <div style={{ marginTop: "10px", padding: "8px 10px", background: "#f0f9ff", borderRadius: "8px", border: "1px solid #bae6fd", fontSize: "0.74rem", color: "#0369a1" }}>
+                🎯 <strong>Why Generated:</strong> Prescribed to correct dynamic knee valgus collapse (&gt;12°) and improve unilateral deceleration landing mechanics.
+              </div>
             </div>
 
             {/* CARD 2: MOBILITY & FLEXIBILITY */}
@@ -198,6 +201,9 @@ function Recommendations({ athleteId, onNavigateToVideo }) {
               <div className="rec-badge-row">
                 <span className="rec-badge purple-badge">Pre-Training Warmup</span>
                 <span className="rec-badge">10 Mins Duration</span>
+              </div>
+              <div style={{ marginTop: "10px", padding: "8px 10px", background: "#faf5ff", borderRadius: "8px", border: "1px solid #e9d5ff", fontSize: "0.74rem", color: "#7e22ce" }}>
+                🎯 <strong>Why Generated:</strong> Expands hip joint internal/external rotation and knee excursion to relieve compensatory lateral trunk lean.
               </div>
             </div>
 
@@ -213,6 +219,9 @@ function Recommendations({ athleteId, onNavigateToVideo }) {
                 <span className="rec-badge green-badge">3x Per Week</span>
                 <span className="rec-badge">Eccentric Focus</span>
               </div>
+              <div style={{ marginTop: "10px", padding: "8px 10px", background: "#f0fdf4", borderRadius: "8px", border: "1px solid #bbf7d0", fontSize: "0.74rem", color: "#15803d" }}>
+                🎯 <strong>Why Generated:</strong> Targets hip abductors (gluteus medius) and posterior chain to stabilize pelvis and prevent valgus moments.
+              </div>
             </div>
 
             {/* CARD 4: RECOVERY PROTOCOLS */}
@@ -227,6 +236,9 @@ function Recommendations({ athleteId, onNavigateToVideo }) {
                 <span className="rec-badge orange-badge">Post-Drill Routine</span>
                 <span className="rec-badge">Hydro & Myofascial</span>
               </div>
+              <div style={{ marginTop: "10px", padding: "8px 10px", background: "#fffbeb", borderRadius: "8px", border: "1px solid #fde68a", fontSize: "0.74rem", color: "#b45309" }}>
+                🎯 <strong>Why Generated:</strong> Accelerates motor unit recovery following high neuromuscular fatigue ratings to maintain kinematic symmetry.
+              </div>
             </div>
 
             {/* CARD 5: TRAINING MODIFICATION (FULL WIDTH) */}
@@ -239,6 +251,9 @@ function Recommendations({ athleteId, onNavigateToVideo }) {
               <p className="rec-text-highlight">
                 {recommendation?.training_modification || "Maintain normal workload with regular monitoring."}
               </p>
+              <div style={{ margin: "10px 0", padding: "8px 12px", background: "#fef2f2", borderRadius: "8px", border: "1px solid #fecaca", fontSize: "0.74rem", color: "#b91c1c" }}>
+                🎯 <strong>Why Generated:</strong> Workload calibrated to prevent acute-to-chronic training load spikes (&gt;1.4 ACWR ratio) and avoid overuse syndrome.
+              </div>
               <div className="rec-guidance">
                 <span>🛡️ Physiotherapist Recommendation:</span>
                 <small>
@@ -271,17 +286,16 @@ function Recommendations({ athleteId, onNavigateToVideo }) {
 
             <form onSubmit={handleCustomSubmit}>
               <div className="modal-body">
-                <div className="form-group">
-                  <label>Prediction ID (UUID)</label>
+                <div className="form-group" style={{ display: "none" }}>
+                  <label>Target Analysis Session Key</label>
                   <input
-                    type="text"
+                    type="hidden"
                     required
-                    placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000"
                     value={customForm.prediction_id}
-                    onChange={(e) =>
-                      setCustomForm({ ...customForm, prediction_id: e.target.value })
-                    }
                   />
+                </div>
+                <div style={{ marginBottom: "14px", padding: "8px 12px", background: "#f1f5f9", borderRadius: "8px", fontSize: "0.8rem", color: "#475569" }}>
+                  📋 <strong>Active Assessment Session:</strong> Latest Video Kinematics Session
                 </div>
 
                 <div className="form-group">

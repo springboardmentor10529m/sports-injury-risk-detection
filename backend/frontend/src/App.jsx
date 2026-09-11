@@ -54,10 +54,22 @@ function App() {
     strength: "",
     balance: "",
     endurance: "",
+    training_level: "Intermediate",
+    gender: "Male",
     coach_notes: "",
   });
 
   const [athleteMessage, setAthleteMessage] = useState(null); // { type, text }
+  const [priorInjuries, setPriorInjuries] = useState([]);
+  const [injuryForm, setInjuryForm] = useState({
+    body_part: "Knee",
+    injury_type: "ACL / Ligament Strain",
+    severity: "Moderate",
+    months_ago: "6",
+    fully_recovered: 1,
+    notes: "",
+  });
+
 
   // Restore session from localStorage on refresh
   useEffect(() => {
@@ -126,7 +138,7 @@ function App() {
       if (response.ok && data.user_id) {
         setRegisterMessage({
           type: "success",
-          text: `Account created successfully! User ID: ${data.user_id}`
+          text: "Account created successfully! Redirecting to athlete profile setup..."
         });
 
         // Save user ID in storage & state
@@ -226,13 +238,13 @@ function App() {
   };
 
   // =========================
-  // ATHLETE PROFILE SUBMIT
+  // ATHLETE SUBMIT
   // =========================
 
   const handleAthleteSubmit = async (e) => {
     e.preventDefault();
 
-    setAthleteMessage({ type: "info", text: "Saving your athlete profile..." });
+    setAthleteMessage({ type: "info", text: "Saving athlete profile..." });
 
     const validationError = validateAthleteProfile(athleteData);
     if (validationError) {
@@ -247,7 +259,9 @@ function App() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          ...athleteData,
+          user_id: athleteData.user_id,
+          sport: athleteData.sport,
+          position: athleteData.position,
           age: Number(athleteData.age),
           height: Number(athleteData.height),
           weight: Number(athleteData.weight),
@@ -256,6 +270,9 @@ function App() {
           strength: Number(athleteData.strength),
           balance: Number(athleteData.balance),
           endurance: Number(athleteData.endurance),
+          training_level: athleteData.training_level || "Intermediate",
+          gender: athleteData.gender || "Male",
+          coach_notes: athleteData.coach_notes,
         }),
       });
 
@@ -268,9 +285,30 @@ function App() {
           athlete_id: data.athlete_id,
         }));
 
+        // Persist any logged prior injuries
+        for (const inj of priorInjuries) {
+          try {
+            await fetch(`${API_BASE}/athlete/${data.athlete_id}/injuries`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                athlete_id: data.athlete_id,
+                injury_type: inj.injury_type,
+                body_part: inj.body_part,
+                severity: inj.severity || "Moderate",
+                months_ago: Number(inj.months_ago) || 0,
+                fully_recovered: Number(inj.fully_recovered) || 1,
+                notes: inj.notes || "",
+              }),
+            });
+          } catch (e) {
+            console.warn("Could not save injury history:", e);
+          }
+        }
+
         setAthleteMessage({
           type: "success",
-          text: `Profile saved successfully! Athlete ID: ${data.athlete_id}`
+          text: "Profile saved successfully! Loading your dashboard..."
         });
 
         setTimeout(() => {
@@ -340,6 +378,8 @@ function App() {
       strength: "",
       balance: "",
       endurance: "",
+      training_level: "Intermediate",
+      gender: "Male",
       coach_notes: "",
     });
 
@@ -1076,73 +1116,91 @@ function App() {
           <div className="profile-grid">
 
             <div className="field">
-
-              <label>
-                Sport
-              </label>
-
+              <label>Sport</label>
               <select
                 name="sport"
                 value={athleteData.sport}
                 onChange={handleAthleteChange}
                 required
               >
-
-                <option value="">
-                  Select your sport
-                </option>
-
-                <option value="Cricket">
-                  Cricket
-                </option>
-
-                <option value="Football">
-                  Football
-                </option>
-
-                <option value="Basketball">
-                  Basketball
-                </option>
-
-                <option value="Tennis">
-                  Tennis
-                </option>
-
-                <option value="Athletics">
-                  Athletics
-                </option>
-
-                <option value="Other">
-                  Other
-                </option>
-
+                <option value="">Select your sport</option>
+                <option value="Cricket">Cricket</option>
+                <option value="Football">Football / Soccer</option>
+                <option value="Basketball">Basketball</option>
+                <option value="Tennis">Tennis</option>
+                <option value="Athletics">Athletics / Track &amp; Field</option>
+                <option value="Badminton">Badminton</option>
+                <option value="Volleyball">Volleyball</option>
+                <option value="Rugby">Rugby</option>
+                <option value="Swimming">Swimming</option>
+                <option value="Weightlifting">Weightlifting / CrossFit</option>
+                <option value="Baseball">Baseball / Softball</option>
+                <option value="Other">Other</option>
               </select>
-
             </div>
 
             <div className="field">
-
-              <label>
-                Position
-              </label>
-
+              <label>Position / Role</label>
               <input
                 type="text"
                 name="position"
-                placeholder="e.g. Batsman"
+                list="position-suggestions"
+                placeholder="e.g. Batsman, Fast Bowler, Midfielder, Point Guard"
                 value={athleteData.position}
                 onChange={handleAthleteChange}
                 required
               />
-
+              <datalist id="position-suggestions">
+                <option value="Batsman" />
+                <option value="Fast Bowler" />
+                <option value="Spin Bowler" />
+                <option value="Wicketkeeper" />
+                <option value="All-Rounder" />
+                <option value="Striker / Forward" />
+                <option value="Midfielder" />
+                <option value="Defender" />
+                <option value="Goalkeeper" />
+                <option value="Point Guard" />
+                <option value="Shooting Guard" />
+                <option value="Small Forward" />
+                <option value="Power Forward" />
+                <option value="Center" />
+                <option value="Sprinter" />
+                <option value="Distance Runner" />
+                <option value="Hurdler" />
+                <option value="Jumper" />
+              </datalist>
             </div>
 
             <div className="field">
+              <label>Gender</label>
+              <select
+                name="gender"
+                value={athleteData.gender || "Male"}
+                onChange={handleAthleteChange}
+              >
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other / Prefer not to say</option>
+              </select>
+            </div>
 
-              <label>
-                Age
-              </label>
+            <div className="field">
+              <label>Training Level</label>
+              <select
+                name="training_level"
+                value={athleteData.training_level || "Intermediate"}
+                onChange={handleAthleteChange}
+              >
+                <option value="Beginner">Beginner (Recreational)</option>
+                <option value="Intermediate">Intermediate (Club / College)</option>
+                <option value="Advanced">Advanced (Semi-Professional)</option>
+                <option value="Elite">Elite (National / Olympic)</option>
+              </select>
+            </div>
 
+            <div className="field">
+              <label>Age</label>
               <input
                 type="number"
                 name="age"
@@ -1151,43 +1209,158 @@ function App() {
                 onChange={handleAthleteChange}
                 required
               />
-
             </div>
 
             <div className="field">
-
               <label>
-                Height <span>(cm)</span>
+                Height <span>(cm)</span> <small style={{ color: "#64748b", fontWeight: 400 }}>(50 – 250 cm)</small>
               </label>
-
               <input
                 type="number"
                 name="height"
-                placeholder="e.g. 170"
+                min="50"
+                max="250"
+                step="0.5"
+                placeholder="e.g. 175"
                 value={athleteData.height}
                 onChange={handleAthleteChange}
                 required
               />
-
             </div>
 
             <div className="field">
-
               <label>
-                Weight <span>(kg)</span>
+                Weight <span>(kg)</span> <small style={{ color: "#64748b", fontWeight: 400 }}>(20 – 250 kg)</small>
               </label>
-
               <input
                 type="number"
                 name="weight"
-                placeholder="e.g. 65"
+                min="20"
+                max="250"
+                step="0.5"
+                placeholder="e.g. 70"
                 value={athleteData.weight}
                 onChange={handleAthleteChange}
                 required
               />
-
             </div>
 
+          </div>
+
+          <div className="profile-divider"></div>
+
+          {/* SECTION 03: PRIOR INJURY HISTORY */}
+          <div className="profile-section-header">
+            <div className="section-icon">02</div>
+            <div>
+              <h2>Prior Injury History</h2>
+              <p>
+                Document past musculoskeletal injuries. Note: Prior injuries directly increase risk weighting (+25% to +40%) for vulnerable anatomical joints.
+              </p>
+            </div>
+          </div>
+
+          <div style={{ background: "#f8fafc", padding: "16px", borderRadius: "12px", border: "1px solid #e2e8f0", marginBottom: "20px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px", marginBottom: "12px" }}>
+              <div>
+                <label style={{ fontSize: "12px", fontWeight: 700, color: "#475569", display: "block", marginBottom: "4px" }}>Affected Body Part</label>
+                <select
+                  value={injuryForm.body_part}
+                  onChange={(e) => {
+                    const bp = e.target.value;
+                    let defaultType = "Ligament Sprain";
+                    if (bp === "Knee") defaultType = "ACL / Meniscus Injury";
+                    if (bp === "Hamstring") defaultType = "Hamstring Strain";
+                    if (bp === "Ankle") defaultType = "Lateral Ankle Sprain";
+                    if (bp === "Shoulder") defaultType = "Rotator Cuff / Impingement";
+                    if (bp === "Lower Back") defaultType = "Lumbar Strain / Disc";
+                    setInjuryForm({ ...injuryForm, body_part: bp, injury_type: defaultType });
+                  }}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #cbd5e1" }}
+                >
+                  <option value="Knee">Knee / ACL</option>
+                  <option value="Hamstring">Hamstring</option>
+                  <option value="Ankle">Ankle</option>
+                  <option value="Shoulder">Shoulder</option>
+                  <option value="Lower Back">Lower Back</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ fontSize: "12px", fontWeight: 700, color: "#475569", display: "block", marginBottom: "4px" }}>Injury Type / Diagnosis</label>
+                <input
+                  type="text"
+                  value={injuryForm.injury_type}
+                  onChange={(e) => setInjuryForm({ ...injuryForm, injury_type: e.target.value })}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #cbd5e1" }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: "12px", fontWeight: 700, color: "#475569", display: "block", marginBottom: "4px" }}>Months Ago</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="120"
+                  value={injuryForm.months_ago}
+                  onChange={(e) => setInjuryForm({ ...injuryForm, months_ago: e.target.value })}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #cbd5e1" }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: "12px", fontWeight: 700, color: "#475569", display: "block", marginBottom: "4px" }}>Recovery Status</label>
+                <select
+                  value={injuryForm.fully_recovered}
+                  onChange={(e) => setInjuryForm({ ...injuryForm, fully_recovered: Number(e.target.value) })}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #cbd5e1" }}
+                >
+                  <option value={1}>Fully Recovered (Normal +25% weighting)</option>
+                  <option value={0}>Ongoing / Residual (+40% weighting)</option>
+                </select>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="btn btn-secondary"
+              style={{ fontSize: "13px", padding: "6px 14px" }}
+              onClick={() => {
+                if (injuryForm.injury_type.trim()) {
+                  setPriorInjuries([...priorInjuries, { ...injuryForm, id: Date.now() }]);
+                  setInjuryForm({
+                    body_part: "Knee",
+                    injury_type: "ACL / Ligament Strain",
+                    severity: "Moderate",
+                    months_ago: "6",
+                    fully_recovered: 1,
+                    notes: "",
+                  });
+                }
+              }}
+            >
+              + Add Prior Injury Record
+            </button>
+
+            {priorInjuries.length > 0 && (
+              <div style={{ marginTop: "12px", borderTop: "1px solid #e2e8f0", paddingTop: "10px" }}>
+                <span style={{ fontSize: "12px", fontWeight: 700, color: "#334155" }}>Logged Prior Injuries ({priorInjuries.length}):</span>
+                <ul style={{ margin: "6px 0 0 0", paddingLeft: "16px", fontSize: "13px", color: "#475569" }}>
+                  {priorInjuries.map((inj, idx) => (
+                    <li key={inj.id || idx} style={{ marginBottom: "4px" }}>
+                      <strong>{inj.body_part}</strong>: {inj.injury_type} ({inj.months_ago} months ago, {inj.fully_recovered === 1 ? "Recovered" : "Residual/Ongoing"})
+                      <button
+                        type="button"
+                        onClick={() => setPriorInjuries(priorInjuries.filter((_, i) => i !== idx))}
+                        style={{ marginLeft: "8px", color: "#ef4444", background: "none", border: "none", cursor: "pointer", fontSize: "12px" }}
+                      >
+                        ✕ Remove
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
 
           <div className="profile-divider"></div>
@@ -1195,7 +1368,7 @@ function App() {
           <div className="profile-section-header">
 
             <div className="section-icon">
-              02
+              03
             </div>
 
             <div>
@@ -1334,39 +1507,30 @@ function App() {
           <div className="profile-divider"></div>
 
           <div className="profile-section-header">
-
             <div className="section-icon">
-              03
+              04
             </div>
-
             <div>
-
               <h2>
-                Additional notes
+                Athlete Training Notes
               </h2>
-
               <p>
-                Add anything your coach should know.
+                Add any training history, medical notes, or personal athletic goals.
               </p>
-
             </div>
-
           </div>
 
           <div className="field">
-
             <label>
-              Coach notes
+              Athlete Notes / Training History
             </label>
-
             <textarea
               name="coach_notes"
-              rows="5"
-              placeholder="Training history, goals, previous concerns, or anything else..."
+              rows="4"
+              placeholder="Training history, past concerns, target events, or any recurring discomfort..."
               value={athleteData.coach_notes}
               onChange={handleAthleteChange}
             ></textarea>
-
           </div>
 
           <div className="profile-submit-row">

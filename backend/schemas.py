@@ -70,13 +70,15 @@ class AthleteCreate(BaseModel):
     sport: str = Field(..., min_length=1, max_length=80)
     position: Optional[str] = Field(None, max_length=80)
     age: Optional[int] = Field(None, ge=5, le=100)
-    height: Optional[float] = Field(None, gt=0, le=300)
-    weight: Optional[float] = Field(None, gt=0, le=500)
+    height: Optional[float] = Field(None, ge=50, le=250)
+    weight: Optional[float] = Field(None, ge=20, le=250)
     training_load: Optional[float] = Field(None, ge=0, le=100)
     flexibility: Optional[float] = Field(None, ge=0, le=100)
     strength: Optional[float] = Field(None, ge=0, le=100)
     balance: Optional[float] = Field(None, ge=0, le=100)
     endurance: Optional[float] = Field(None, ge=0, le=100)
+    training_level: Optional[str] = Field(None, max_length=50)   # Beginner/Intermediate/Advanced/Elite
+    gender: Optional[str] = Field(None, max_length=50)            # Male/Female/Other
     coach_notes: Optional[str] = Field(None, max_length=5000)
 
     @field_validator("sport", "position")
@@ -93,3 +95,28 @@ class AthleteCreate(BaseModel):
         if not value.strip():
             raise ValueError("Sport is required.")
         return value.strip()
+
+    @field_validator("height")
+    @classmethod
+    def validate_height(cls, value: Optional[float]) -> Optional[float]:
+        if value is not None and (value < 50 or value > 250):
+            raise ValueError("Height must be a realistic human value between 50 cm and 250 cm.")
+        return value
+
+    @field_validator("weight")
+    @classmethod
+    def validate_weight(cls, value: Optional[float]) -> Optional[float]:
+        if value is not None and (value < 20 or value > 250):
+            raise ValueError("Weight must be a realistic human value between 20 kg and 250 kg.")
+        return value
+
+
+class InjuryHistoryCreate(BaseModel):
+    athlete_id: Optional[str] = None
+    injury_type: str = Field(..., min_length=2, max_length=120)
+    body_part: str = Field(..., min_length=2, max_length=100)
+    severity: Optional[str] = Field("Moderate", max_length=50)
+    months_ago: Optional[int] = Field(0, ge=0, le=240)
+    fully_recovered: Optional[int] = Field(1, ge=0, le=1)
+    notes: Optional[str] = Field(None, max_length=2000)
+

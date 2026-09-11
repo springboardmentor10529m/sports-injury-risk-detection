@@ -65,13 +65,13 @@ export const validateAthleteProfile = (data) => {
   }
 
   const height = Number(data.height);
-  if (Number.isNaN(height) || height <= 0 || height > 300) {
-    return "Height must be a positive value up to 300 cm.";
+  if (Number.isNaN(height) || height < 50 || height > 250) {
+    return "Height must be a realistic human value between 50 cm and 250 cm.";
   }
 
   const weight = Number(data.weight);
-  if (Number.isNaN(weight) || weight <= 0 || weight > 500) {
-    return "Weight must be a positive value up to 500 kg.";
+  if (Number.isNaN(weight) || weight < 20 || weight > 250) {
+    return "Weight must be a realistic human value between 20 kg and 250 kg.";
   }
 
   const metricFields = [
