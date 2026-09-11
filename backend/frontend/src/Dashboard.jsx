@@ -6,7 +6,7 @@ import Recommendations from "./Recommendations";
 import API_BASE from "./config/api";
 
 function Dashboard({ athleteData, onNavigate, onLogout }) {
-  const [currentTab, setCurrentTab] = useState("overview"); // "overview" | "performance" | "video" | "recommendations"
+  const [currentTab, setCurrentTab] = useState(() => localStorage.getItem("sportshield_current_tab") || "overview"); // "overview" | "performance" | "video" | "recommendations"
   const [liveAthlete, setLiveAthlete] = useState(athleteData || null);
   const [recentRecords, setRecentRecords] = useState([]);
   const [latestAnalysis, setLatestAnalysis] = useState(null);
@@ -16,6 +16,11 @@ function Dashboard({ athleteData, onNavigate, onLogout }) {
 
   const athleteId = athleteData?.athlete_id || localStorage.getItem("athlete_id");
   const userId = athleteData?.user_id || localStorage.getItem("user_id");
+
+  const handleTabSwitch = (tab) => {
+    localStorage.setItem("sportshield_current_tab", tab);
+    setCurrentTab(tab);
+  };
 
   // Fetch live athlete data if not already fully populated
   useEffect(() => {
@@ -91,7 +96,7 @@ function Dashboard({ athleteData, onNavigate, onLogout }) {
     if (videoItem.video_id) {
       localStorage.setItem("active_video_id", videoItem.video_id);
     }
-    setCurrentTab("video");
+    handleTabSwitch("video");
   };
 
   // Derived display values
@@ -136,7 +141,7 @@ function Dashboard({ athleteData, onNavigate, onLogout }) {
         <div
           className="brand"
           style={{ cursor: "pointer" }}
-          onClick={() => setCurrentTab("overview")}
+          onClick={() => handleTabSwitch("overview")}
         >
           <div className="brand-icon">🏃</div>
           <span>SportShield</span>
@@ -145,25 +150,25 @@ function Dashboard({ athleteData, onNavigate, onLogout }) {
         <div className="nav-links">
           <a
             className={currentTab === "overview" ? "active" : ""}
-            onClick={() => setCurrentTab("overview")}
+            onClick={() => handleTabSwitch("overview")}
           >
             Dashboard
           </a>
           <a
             className={currentTab === "performance" ? "active" : ""}
-            onClick={() => setCurrentTab("performance")}
+            onClick={() => handleTabSwitch("performance")}
           >
             Performance
           </a>
           <a
             className={currentTab === "video" ? "active" : ""}
-            onClick={() => setCurrentTab("video")}
+            onClick={() => handleTabSwitch("video")}
           >
             Video Analysis
           </a>
           <a
             className={currentTab === "recommendations" ? "active" : ""}
-            onClick={() => setCurrentTab("recommendations")}
+            onClick={() => handleTabSwitch("recommendations")}
           >
             Recommendations
           </a>
@@ -318,7 +323,7 @@ function Dashboard({ athleteData, onNavigate, onLogout }) {
                 </div>
                 <button
                   className="view-button"
-                  onClick={() => setCurrentTab("performance")}
+                  onClick={() => handleTabSwitch("performance")}
                 >
                   View details →
                 </button>
@@ -403,34 +408,34 @@ function Dashboard({ athleteData, onNavigate, onLogout }) {
           </section>
 
           <section className="action-grid">
-            <div className="action-card" onClick={() => setCurrentTab("video")} style={{ cursor: "pointer" }}>
+            <div className="action-card" onClick={() => handleTabSwitch("video")} style={{ cursor: "pointer" }}>
               <div className="action-icon blue-bg">🎥</div>
               <div className="action-content">
                 <h3>Analyze Movement</h3>
                 <p>Upload a training video and analyze your movement kinematic patterns.</p>
-                <button onClick={() => setCurrentTab("video")}>
+                <button onClick={() => handleTabSwitch("video")}>
                   Upload Video →
                 </button>
               </div>
             </div>
 
-            <div className="action-card" onClick={() => setCurrentTab("performance")} style={{ cursor: "pointer" }}>
+            <div className="action-card" onClick={() => handleTabSwitch("performance")} style={{ cursor: "pointer" }}>
               <div className="action-icon green-bg">📈</div>
               <div className="action-content">
                 <h3>Record Performance</h3>
                 <p>Add your latest training score and track longitudinal progress.</p>
-                <button onClick={() => setCurrentTab("performance")}>
+                <button onClick={() => handleTabSwitch("performance")}>
                   Add Performance →
                 </button>
               </div>
             </div>
 
-            <div className="action-card" onClick={() => setCurrentTab("recommendations")} style={{ cursor: "pointer" }}>
+            <div className="action-card" onClick={() => handleTabSwitch("recommendations")} style={{ cursor: "pointer" }}>
               <div className="action-icon orange-bg">💡</div>
               <div className="action-content">
                 <h3>View Recommendations</h3>
                 <p>Access customized injury prevention drills and recovery guidance.</p>
-                <button onClick={() => setCurrentTab("recommendations")}>
+                <button onClick={() => handleTabSwitch("recommendations")}>
                   View Recommendations →
                 </button>
               </div>
@@ -450,7 +455,7 @@ function Dashboard({ athleteData, onNavigate, onLogout }) {
               </div>
               <button
                 className="view-button"
-                onClick={() => setCurrentTab("video")}
+                onClick={() => handleTabSwitch("video")}
                 style={{ padding: "6px 14px", fontSize: "0.82rem", cursor: "pointer" }}
               >
                 + Analyze Video →
@@ -465,7 +470,7 @@ function Dashboard({ athleteData, onNavigate, onLogout }) {
                 <p style={{ margin: 0, fontSize: "0.9rem", color: "#64748b" }}>No video analyses recorded yet.</p>
                 <button
                   className="primary-button"
-                  onClick={() => setCurrentTab("video")}
+                  onClick={() => handleTabSwitch("video")}
                   style={{ marginTop: "12px", fontSize: "0.82rem" }}
                 >
                   Upload Your First Video →

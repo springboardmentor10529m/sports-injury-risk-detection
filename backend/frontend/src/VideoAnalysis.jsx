@@ -56,18 +56,19 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
 
   // Helper to load analysis results from an item into active state
   const loadHistoryItem = (item) => {
-    if (!item.analysis) return;
+    if (!item) return;
     setSelectedHistoryId(item.video_id);
     localStorage.setItem("active_video_id", item.video_id);
+    if (item.video_url) {
+      setVideoPreviewUrl(`${API_BASE}${item.video_url}`);
+    }
+    if (!item.analysis) return;
     setViewingHistory(true);
     setErrorMsg("");
     setSuccessMsg("");
     setPipelineError("");
     setProcessing(false);
     setPipelineStage(8); // Mark all stages completed for past result
-    if (item.video_url) {
-      setVideoPreviewUrl(`${API_BASE}${item.video_url}`);
-    }
 
     const kv = item.analysis.knee_valgus || 12.0;
     const hs = item.analysis.hip_stability || 80.0;
@@ -238,6 +239,10 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
         throw new Error(uploadData.detail || uploadData.message || "Video upload failed. Check file format and size.");
       }
       const videoId = uploadData.video_id;
+      localStorage.setItem("active_video_id", videoId);
+      if (uploadData.video_url) {
+        setVideoPreviewUrl(`${API_BASE}${uploadData.video_url}`);
+      }
 
       // ── STAGES 2 to 5: Run video analysis on backend ─────────────
       setPipelineStage(2);
@@ -600,9 +605,22 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
                   </form>
                 )}
 
-                {/* When viewing a history item — show its video thumbnail */}
+                {/* When viewing a history item — show its video player & summary */}
                 {viewingHistory && analysisResult && (
                   <div style={{ padding: "12px 0" }}>
+                    {videoPreviewUrl && (
+                      <div style={{ marginBottom: "12px" }}>
+                        <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                          📹 Video Recording
+                        </div>
+                        <video
+                          src={videoPreviewUrl}
+                          controls
+                          muted
+                          style={{ width: "100%", borderRadius: "8px", maxHeight: "200px", background: "#000" }}
+                        />
+                      </div>
+                    )}
                     <div style={{
                       background: "#f8fafc", borderRadius: "8px", padding: "12px",
                       fontSize: "0.82rem", color: "#475569"
@@ -612,7 +630,7 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
                         Activity: <strong>{analysisResult.detected_activity || "—"}</strong>
                       </div>
                       <div>
-                        Risk: <strong style={{ color: riskColour(analysisResult.risk_level) }}>
+                        Overall Risk: <strong style={{ color: riskColour(analysisResult.risk_level) }}>
                           {analysisResult.risk_level} ({analysisResult.overall_risk_score}/100)
                         </strong>
                       </div>
@@ -844,12 +862,19 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
                     </div>
 
                     {/* Prior Injury Notes */}
-                    {analysisResult.history_notes && analysisResult.history_notes.length > 0 && (
-                      <div style={{ marginTop: "0.75rem", background: "#fefce8", border: "1px solid #fde68a", borderRadius: "8px", padding: "8px 12px", fontSize: "0.75rem", color: "#92400e" }}>
+                    {analysisResult.history_notes && analysisResult.history_notes.length > 0 ? (
+                      <div style={{ marginTop: "0.75rem", background: "#fefce8", border: "1px solid #fde68a", borderRadius: "8px", padding: "10px 14px", fontSize: "0.78rem", color: "#92400e" }}>
                         🩹 <strong>Recorded Prior Injury Information Applied:</strong>
+                        <div style={{ fontSize: "0.72rem", color: "#78350f", marginTop: "2px", marginBottom: "4px" }}>
+                          (Retrieved from athlete medical record profile — not visually inferred from video)
+                        </div>
                         <ul style={{ margin: "4px 0 0 0", paddingLeft: "16px" }}>
                           {analysisResult.history_notes.map((h, hIdx) => (<li key={hIdx}>{h}</li>))}
                         </ul>
+                      </div>
+                    ) : (
+                      <div style={{ marginTop: "0.75rem", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "10px 14px", fontSize: "0.78rem", color: "#64748b" }}>
+                        ℹ️ <strong>Previous Injury History:</strong> No prior injuries recorded for this athlete profile. Current risk scores reflect pure video kinematic indicators without historical injury weighting.
                       </div>
                     )}
                   </div>
@@ -890,6 +915,26 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
                         ⚙️ <strong>Position Effect:</strong> {predictionResult.position_applied_msg}
                       </div>
                     )}
+
+                    {/* Machine Learning Model & Biomechanical Rule Engine Distinction */}
+                    <div style={{
+                      background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px",
+                      padding: "10px 14px", marginBottom: "12px", fontSize: "0.78rem"
+                    }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px", flexWrap: "wrap", gap: "6px" }}>
+                        <strong style={{ color: "#166534" }}>🤖 Machine Learning &amp; Biomechanical Rules Integration</strong>
+                        {predictionResult.ml_probability != null && (
+                          <span style={{ background: "#dcfce7", color: "#15803d", fontWeight: 700, padding: "2px 8px", borderRadius: "6px", fontSize: "0.75rem" }}>
+                            Tabular ML Risk Probability: {Math.round(predictionResult.ml_probability * 100)}%
+                          </span>
+                        )}
+                      </div>
+                      <p style={{ margin: 0, color: "#14532d", fontSize: "0.74rem", lineHeight: "1.4" }}>
+                        <strong>Tabular ML Model:</strong> Random Forest classifier trained on <code>Project-Injury-Dataset.csv</code> provides baseline overall probability.
+                        <br />
+                        <strong>Anatomical Rule Engine:</strong> Deterministic validated kinematic thresholds evaluate the 6 specific joint injury risks below, factoring in recorded prior injury history.
+                      </p>
+                    </div>
 
                     {/* Risk Classification Legend */}
                     <div style={{
