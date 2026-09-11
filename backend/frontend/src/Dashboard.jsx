@@ -453,13 +453,6 @@ function Dashboard({ athleteData, onNavigate, onLogout }) {
                   Previous training videos and biomechanical risk assessments saved in database
                 </p>
               </div>
-              <button
-                className="view-button"
-                onClick={() => handleTabSwitch("video")}
-                style={{ padding: "6px 14px", fontSize: "0.82rem", cursor: "pointer" }}
-              >
-                + Analyze Video →
-              </button>
             </div>
 
             {loadingVideoHistory ? (
