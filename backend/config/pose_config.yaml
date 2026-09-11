@@ -1,0 +1,12 @@
+pose:
+  model: rtmpose-m
+  confidence_threshold: 0.35
+  analysis_fps: 15
+  smoothing: one_euro
+
+tracking:
+  enabled: true
+  iou_threshold: 0.3
+
+output:
+  processed_directory: "./uploads/processed"

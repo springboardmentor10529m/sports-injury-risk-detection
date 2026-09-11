@@ -204,3 +204,137 @@ The **Sports Injury Risk Detection API** is built with FastAPI and strictly foll
 | `403 Forbidden` | Insufficient role permissions | Switch role or contact administrator |
 | `404 Not Found` | Requested entity (athlete/video/report) does not exist | Verify UUID primary keys |
 | `500 Internal Error` | Unexpected processing failure | Inspect MongoDB `ai_logs` collection |
+
+---
+
+## 🏃 Pose Analysis & Biomechanics Endpoints (`/api/analysis`)
+
+### 1. Queue Pose & Movement Analysis
+- **Endpoint**: `POST /api/analysis/videos/{video_id}/analyse`
+- **Headers**: `Authorization: Bearer <access_token>`
+- **Response** (`202 Accepted`):
+```json
+{
+  "analysis_id": "anl_job_991823",
+  "status": "queued",
+  "message": "Pose analysis job queued successfully."
+}
+```
+
+### 2. Poll Job Status
+- **Endpoint**: `GET /api/analysis/{analysis_id}/status`
+- **Headers**: `Authorization: Bearer <access_token>`
+- **Response** (`200 OK`):
+```json
+{
+  "analysis_id": "anl_job_991823",
+  "video_id": "vid_401",
+  "status": "biomechanics",
+  "stage": "Calculating biomechanics",
+  "progress": 72.5
+}
+```
+
+### 3. Fetch 17-Keypoint Frame Sequence
+- **Endpoint**: `GET /api/analysis/{analysis_id}/keypoints`
+- **Headers**: `Authorization: Bearer <access_token>`
+
+### 4. Fetch Joint Angles & Biomechanics Frame Sequence
+- **Endpoint**: `GET /api/analysis/{analysis_id}/biomechanics`
+- **Headers**: `Authorization: Bearer <access_token>`
+
+### 5. Fetch Skeleton Video Stream
+- **Endpoint**: `GET /api/analysis/{analysis_id}/skeleton-video`
+- **Headers**: `Authorization: Bearer <access_token>`
+
+### 6. Download Keypoints (JSON / CSV)
+- **Endpoint**: `GET /api/analysis/{analysis_id}/download/keypoints?format=json` (or `csv`)
+
+### 7. Download Biomechanics CSV
+- **Endpoint**: `GET /api/analysis/{analysis_id}/download/biomechanics`
+
+### 8. Fetch Weighted Risk Breakdown
+- **Endpoint**: `GET /api/analysis/{analysis_id}/risk`
+- **Headers**: `Authorization: Bearer <access_token>`
+- **Response** (`200 OK`):
+```json
+{
+  "analysis_id": "anl_job_991823",
+  "overall_score": 62.5,
+  "risk_level": "HIGH",
+  "confidence": 0.94,
+  "movement_quality": 85.0,
+  "symmetry_score": 84.0,
+  "model_version": "2.0.0-weighted",
+  "contributors": [
+    {
+      "factor": "Knee valgus deviation (14.2° avg, 25% high-risk frames)",
+      "body_region": "knee",
+      "severity": "HIGH",
+      "impact": 16.5
+    }
+  ]
+}
+```
+
+### 9. Fetch Detected Movement Anomalies
+- **Endpoint**: `GET /api/analysis/{analysis_id}/anomalies`
+- **Headers**: `Authorization: Bearer <access_token>`
+- **Response** (`200 OK`):
+```json
+[
+  {
+    "frame": 45,
+    "timestamp": 1.5,
+    "type": "knee_valgus",
+    "score": 0.88,
+    "severity": "HIGH",
+    "body_region": "left_knee",
+    "explanation": "Knee alignment deviates significantly from baseline during landing."
+  }
+]
+```
+
+### 10. Fetch Risk Factors
+- **Endpoint**: `GET /api/analysis/{analysis_id}/risk-factors`
+- **Headers**: `Authorization: Bearer <access_token>`
+
+### 11. Fetch Personalized Recommendations
+- **Endpoint**: `GET /api/analysis/{analysis_id}/recommendations`
+- **Headers**: `Authorization: Bearer <access_token>`
+- **Response** (`200 OK`):
+```json
+{
+  "analysis_id": "anl_job_991823",
+  "disclaimer": "These recommendations are screening/support information and are not a medical diagnosis...",
+  "recommendations": [
+    {
+      "reason": "Elevated knee valgus during dynamic loading",
+      "priority": "HIGH",
+      "target_region": "knee",
+      "category": "strengthening",
+      "exercise": "Gluteus medius band walks and single-leg RDLs",
+      "suggested_frequency": "3-4 sessions/week",
+      "suggested_sets_reps": "3 sets x 12 reps per leg",
+      "expected_objective": "Strengthen hip abductors to stabilize frontal plane knee alignment."
+    }
+  ]
+}
+```
+
+### 12. Fetch Complete Consolidated Report
+- **Endpoint**: `GET /api/analysis/{analysis_id}/complete-report`
+- **Headers**: `Authorization: Bearer <access_token>`
+- Returns consolidated JSON containing analysis status, video metadata, weighted risk, 6-category injury probabilities, biomechanical summary, anomalies, and recommendations.
+
+### 13. Download Clinical PDF Report
+- **Endpoint**: `GET /api/analysis/{analysis_id}/download/pdf`
+- **Headers**: `Authorization: Bearer <access_token>` (or `?token=...` query param)
+- **Response**: `application/pdf` binary stream.
+
+### 14. Download Analytical Excel Workbook
+- **Endpoint**: `GET /api/analysis/{analysis_id}/download/excel`
+- **Headers**: `Authorization: Bearer <access_token>` (or `?token=...` query param)
+- **Response**: `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` stream.
+
+

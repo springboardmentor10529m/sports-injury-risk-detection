@@ -1,17 +1,20 @@
-# System Architecture & Design Document
+# AthleteGuard - System Architecture & Design Document
 
-This document outlines the software architecture, design principles, data pipelines, and component relationships of the **Sports Injury Risk Detection System**.
+**AthleteGuard: AI Sports Biomechanics & Injury Prevention**
+
+> **IMPORTANT MEDICAL & REGULATORY DISCLAIMER**  
+> *AthleteGuard provides AI-assisted video biomechanical screening and injury-risk estimation. It is strictly an informational and athletic performance screening tool, NOT a medical device or clinical diagnostic system. No clinical diagnosis or medical prescription is provided.*
 
 ---
 
 ## 🏛️ System Overview
 
-The application follows a modern, decoupled microservices-ready architecture:
+AthleteGuard uses a modular, high-throughput microservices-ready architecture:
 
 ```
 +-------------------------------------------------------------------+
 |                        Client Web Browser                         |
-|        (React 19 + Vite SPA, Tailwind CSS, Chart.js, Canvas)      |
+|    (React 19 + Vite SPA, Tailwind CSS, Lucide Icons, Canvas)      |
 +-------------------------------------------------------------------+
                                  |  HTTPS / REST API
                                  v
@@ -23,80 +26,154 @@ The application follows a modern, decoupled microservices-ready architecture:
                                  v
 +-------------------------------------------------------------------+
 |                      FastAPI Application Server                   |
-|  - Auth Router (JWT Authentication)                               |
+|  - Auth Router (JWT, RBAC: Athlete, Coach, Physio, Scientist, Admin)|
 |  - Athlete Router (Profile & Physical Assessment Management)      |
-|  - Video Router (Async Upload, CV Processing, AI Pipeline)        |
+|  - Video Router (Upload, Security Checks, Metadata Extraction)    |
+|  - Analysis Router (Risk, Anomalies, Biomechanics, Reports)       |
 +-------------------------------------------------------------------+
-           |                                         |
-           v                                         v
-+-----------------------+                 +-----------------------+
-|  PostgreSQL Database  |                 |   MongoDB Database    |
-| (Relational Entities) |                 | (Pose Data & AI Logs) |
-+-----------------------+                 +-----------------------+
+           |                     |                      |
+           v                     v                      v
++--------------------+ +--------------------+ +--------------------+
+| SQLite / Postgres  | |     Pose Cache     | |   Video Storage    |
+| (Relational Data)  | |  (Zero Re-infer)   | |  (Local / S3 Stub) |
++--------------------+ +--------------------+ +--------------------+
 ```
 
 ---
 
-## 🔬 AI Biomechanical Analysis Pipeline
-
-When a user uploads a video clip, the backend processes it through a multi-stage computer vision and risk classification pipeline:
+## 🔬 End-to-End ML & Biomechanical Screening Pipeline
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as User / Coach
-    participant FE as React Frontend
-    participant API as FastAPI Backend
-    participant CV as OpenCV / MediaPipe
-    participant SQL as PostgreSQL
-    participant Mongo as MongoDB
+    actor Athlete as Athlete / Coach
+    participant FE as React 19 Frontend
+    participant API as FastAPI Router
+    participant Worker as BackgroundTask (pose_analysis_service)
+    participant Pose as RTMPose-M (COCO 17-Keypoint)
+    participant Feat as Feature Engineering (20 2D Metrics)
+    participant Temp as Temporal Aggregator
+    participant Anom as Isolation Forest (Anomaly Detector)
+    participant Risk as Weighted Risk Engine (35/20/20/15/10)
+    participant Rec as Recommendation Engine
+    participant SQL as Database (SQLite / PostgreSQL)
 
-    User->>FE: Upload Movement Video (MP4/MOV)
-    FE->>API: POST /videos/upload (Multipart Form)
-    API->>SQL: Save video metadata (status: "processing")
+    Athlete->>FE: Upload Video & Start Analysis
+    FE->>API: POST /api/analysis/videos/{video_id}/analyse
+    API->>SQL: Queue AnalysisJob
+    API-->>FE: Return Job ID (Queued)
+    API->>Worker: Dispatch run_pose_analysis_job
     
-    API->>CV: Extract Video Frames & Sample Keypoints
-    CV-->>API: Return 33 2D/3D Pose Landmarks
-    
-    API->>Mongo: Store raw keypoints payload in pose_data collection
-    API->>Mongo: Log model execution metrics in ai_logs collection
+    loop Frame Extraction (15 FPS Sampling)
+        Worker->>Pose: Detect 17 Keypoints (Cached in memory)
+        Worker->>Feat: Extract 20 standardized 2D Biomechanical Features
+        Worker->>SQL: Persist PoseFrame & BiomechanicsFrame records
+    end
 
-    API->>API: Calculate Biomechanical Joint Metrics<br/>(Knee Valgus, Hip Stability, Trunk Lean, Symmetry)
-    API->>SQL: Insert analysis_results record
+    Worker->>Worker: Render Annotated Skeleton Video from Cached Poses
+    Worker->>Temp: Aggregate Sequence (mean, std, percentiles, trend, % high risk)
+    Worker->>Anom: Fit Isolation Forest & Detect Movement Anomalies
+    Worker->>Risk: Compute Weighted Risk (Biomechanical 35%, History 20%, Asymmetry 20%, Load 15%, Fatigue 10%)
+    Worker->>Rec: Generate Prioritized Conditioning & Prevention Recommendations
+    Worker->>SQL: Persist AnalysisResult, InjuryPrediction, RiskFactor, MovementAnomaly, Recommendation
+    Worker->>SQL: Mark Job COMPLETE (100%)
     
-    API->>API: Run ML Risk Classifier (ACL, Hamstring, Ankle, Overuse)
-    API->>SQL: Insert injury_predictions record
-    API->>SQL: Insert recommendations record
-    
-    API->>SQL: Update video status to "done"
-    API-->>FE: Return complete Analysis & AI Risk Payload
-    FE->>User: Display Skeleton Overlay & Interactive Risk Gauges
+    FE->>API: GET /api/analysis/{analysis_id}/complete-report
+    FE-->>Athlete: Interactive Video Player, Anomaly Timeline, Risk Gauge & Recommendations
 ```
 
-### Biomechanical Metrics Calculations
-1. **Dynamic Knee Valgus**: Computes the 3D interior angle between Hip-Knee-Ankle keypoints. An inward collapse angle exceeding 12° triggers high ACL strain alerts.
-2. **Hip Stability Index**: Evaluates pelvic tilt variation across landing frames (0–100 stability score).
-3. **Lateral Trunk Lean**: Measures degrees of coronal plane trunk deviation relative to vertical axis during cutting maneuvers.
-4. **Bilateral Symmetry**: Compares peak ground reaction loading and joint displacement between Left and Right limbs (0.0 to 1.0 ratio).
+---
+
+## 📐 20 Reliable 2D Biomechanical Features (Phase 1)
+
+All calculations operate strictly in 2D image coordinates and plane projections:
+
+1. **Knee Valgus Angle**: 2D frontal plane medial collapse angle deviation (degrees).
+2. **Left Knee Angle**: 3-point interior angle (hip-knee-ankle, degrees).
+3. **Right Knee Angle**: 3-point interior angle (hip-knee-ankle, degrees).
+4. **Left Hip Angle**: 3-point interior angle (shoulder-hip-knee, degrees).
+5. **Right Hip Angle**: 3-point interior angle (shoulder-hip-knee, degrees).
+6. **Left Ankle Angle**: 3-point ankle dorsiflexion angle (knee-ankle-foot, degrees).
+7. **Right Ankle Angle**: 3-point ankle dorsiflexion angle (knee-ankle-foot, degrees).
+8. **Trunk Lean**: Angle of torso segment relative to true vertical axis (degrees).
+9. **Hip Stability**: Pelvic tilt angle relative to horizontal axis (degrees).
+10. **Bilateral Knee Asymmetry**: Absolute difference between left and right knee flexion (degrees).
+11. **Bilateral Hip Asymmetry**: Absolute difference between left and right hip flexion (degrees).
+12. **Bilateral Ankle Asymmetry**: Absolute difference between left and right ankle angles (degrees).
+13. **Shoulder Asymmetry**: Alignment tilt of shoulder line relative to horizontal (degrees).
+14. **Range of Motion**: Dynamic envelope of joint angular displacement over sequence (degrees).
+15. **Joint-Angle Velocity**: Angular rate of change frame-to-frame (deg/sec).
+16. **Joint-Angle Acceleration**: Angular acceleration frame-to-frame (deg/sec²).
+17. **Movement Variability**: Windowed standard deviation of lower-limb kinematics (degrees_std).
+18. **Postural Stability**: Center-of-mass sway and trunk oscillation stability score (0–100).
+19. **Landing/Deceleration Indicator**: High-speed flexion deceleration spike indicator (binary/index).
+20. **Keypoint Confidence & Movement Quality**: Mean detector confidence and combined composite score (0–100).
 
 ---
 
-## 🔐 Authentication & Role-Based Access Control (RBAC)
+## 📊 Temporal Feature Aggregation (Phase 2)
 
-Authentication uses stateless **JSON Web Tokens (JWT)** with HTTP Bearer authentication headers.
-
-### System Roles & Permissions
-- **Athlete**: Can view their own profile, uploaded videos, injury predictions, and prescribed AI recommendations.
-- **Coach**: Full access to assign training modifications, view team-wide risk distributions, log injury histories, and generate squad comparison reports.
-- **Admin**: System-wide administrative permissions, access to raw MongoDB `ai_logs`, user account management, and schema overrides.
-- **Viewer**: Read-only guest access to public metrics and sample demonstration videos.
+Features are aggregated across the full video sequence:
+- **Central Tendency**: Mean, Median
+- **Dispersion**: Standard Deviation, Minimum, Maximum, Percentiles (P5, P25, P75, P95)
+- **Kinematic Trends**: Linear regression slope across temporal timeline
+- **Variability**: Coefficient of variation (CV)
+- **Threshold Excursions**: Percentage of frames exceeding clinical risk thresholds (e.g. knee valgus > 12°, trunk lean > 10°, knee asymmetry > 15°)
 
 ---
 
-## 📦 Database Selection Rationale
+## 🚨 Movement Anomaly Detection (Phase 3)
 
-| Requirement | Selected Database | Rationale |
+Implemented with an unsupervised **Isolation Forest** paired with statistical z-score and biomechanical threshold attribution:
+- Detects outlier frames across sequence
+- Outputs structured events: `{frame, timestamp, type, score, severity, body_region, explanation}`
+- Categorized as: `knee_valgus`, `excessive_trunk_lean`, `bilateral_asymmetry`, `abnormal_hip_movement`, `abnormal_ankle_movement`, `excessive_movement_variability`, `low_movement_confidence`
+
+---
+
+## ⚖️ Weighted Risk Scoring Engine (Phase 5)
+
+Replaces simplistic heuristics with an explainable multi-component formula:
+
+| Component | Weight | Key Drivers |
 |---|---|---|
-| Core User Profiles, Athletes, Injury Histories, Reports | **PostgreSQL 16** | Strict relational integrity, foreign key CASCADE deletes, ACID transactions, and structured indexing. |
-| Frame-by-Frame Keypoint Landmarks (30–120 FPS) | **MongoDB 7.0** | High-throughput, schema-flexible document storage designed for large JSON arrays. |
-| AI Inference Latency & Debug Logs | **MongoDB 7.0** | Unstructured log storage with TTL expiration indexes to clean logs older than 90 days. |
+| **Biomechanical Deviations** | **35%** | Knee valgus excursions, excessive trunk lean, pelvic drop |
+| **Historical Injury Factors** | **20%** | Prior injury counts, severity (Severe/Moderate/Mild), unresolved recovery |
+| **Movement Asymmetry** | **20%** | Bilateral knee, hip, and ankle discrepancies |
+| **Training Load Indicators** | **15%** | Athlete training load exposure & repetition intensity |
+| **Fatigue Indicators** | **10%** | Temporal trend slopes (worsening asymmetry/valgus over time) |
+
+**Risk Levels**:
+- `0 – 34`: **LOW**
+- `35 – 59`: **MODERATE**
+- `60 – 79`: **HIGH**
+- `80 – 100`: **CRITICAL**
+
+---
+
+## 🎯 Personalized Recommendations (Phase 7)
+
+Generates targeted, actionable drills categorized into:
+- **Strengthening**: Hip abductor band walks, Nordic hamstring curls, single-leg RDLs
+- **Mobility**: Thoracic spine mobilizations, ankle dorsiflexion knee-to-wall drills
+- **Exercise**: Controlled drop landings, multi-directional stability drills
+- **Recovery**: Active recovery protocols, contrast baths
+- **Training Modification**: De-loading maximal impact plyometrics when asymmetry or valgus is high
+
+Every recommendation includes: `reason`, `priority`, `target_region`, `target_biomechanical_problem`, `exercise`, `suggested_frequency`, `suggested_sets_reps`, `expected_objective`, and the standard screening disclaimer.
+
+---
+
+## 📑 Report Generation (Phase 12)
+
+- **PDF Reports**: Generated using ReportLab with 9 standardized clinical sections (Athlete Profile, Analysis Information, Overall Risk, Injury Risk Breakdown, Biomechanical Summary, Movement Anomalies, Risk Factors, Recommendations, Regulatory Disclaimer).
+- **Excel Reports**: Multi-sheet analytical workbooks generated via OpenPyXL (Summary, Frame Data, Biomechanics, Injury Risk, Anomalies, Recommendations).
+
+---
+
+## 🔐 Security & RBAC (Phases 14 & 15)
+
+- JWT authentication with enforced `JWT_SECRET` in production.
+- Reusable RBAC dependency `require_role("ATHLETE", "COACH", "PHYSIOTHERAPIST", "SPORTS_SCIENTIST", "ADMIN")`.
+- Video upload validation: MIME type check, 100MB file size limit, 300s maximum duration, UUID disk naming preventing path traversal.
+- Strict ownership verification on all analysis resources and reports.

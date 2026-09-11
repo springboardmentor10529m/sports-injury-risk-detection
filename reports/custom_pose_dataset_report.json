@@ -1,0 +1,10 @@
+{
+  "dataset_path": "C:\\Users\\saketh\\Downloads\\archive (3).zip\\PoseEstimation",
+  "total_images": 0,
+  "valid_pairs": 0,
+  "missing_pairs": 0,
+  "image_dimensions": "Variable / Dynamic",
+  "annotation_availability": false,
+  "status": "Qualitative validation dataset",
+  "note": "Pretrained RTMPose-M model used for inference; no synthetic ground-truth fabricated."
+}

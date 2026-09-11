@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
 import { VideoCard } from './VideoCard';
+import { PerformanceRing3D } from './3d/PerformanceRing3D';
+import { AnimatedNumber } from './ui/AnimatedNumber';
+import { LoadingState } from './ui/LoadingState';
 import { 
   User, Activity, Dumbbell, HeartPulse, Scale, 
   Ruler, Edit3, Save, X, RefreshCw, CheckCircle2, 
-  ShieldCheck, FileText, Video, Sparkles, Layers
+  ShieldCheck, FileText, Video, Sparkles, Layers, Award, Zap
 } from 'lucide-react';
 
 export const AthleteDashboard = () => {
@@ -41,7 +44,6 @@ export const AthleteDashboard = () => {
     setLoading(true);
     setError('');
     try {
-      // 1. Fetch Athlete Profile
       const athleteData = await api.get('/api/athletes/profile');
       setAthlete(athleteData);
 
@@ -61,7 +63,6 @@ export const AthleteDashboard = () => {
         });
       }
 
-      // 2. Fetch Athlete Personal Videos
       const videoData = await api.get('/api/videos/my-videos');
       setMyVideos(videoData || []);
     } catch (err) {
@@ -78,7 +79,7 @@ export const AthleteDashboard = () => {
     try {
       const updated = await api.put('/api/athletes/profile', editForm);
       setAthlete(updated);
-      setSaveSuccess('Athlete profile & physical assessment saved successfully!');
+      setSaveSuccess('Athlete profile & biomechanical ratings saved successfully!');
       setIsEditing(false);
       await fetchCurrentUser();
     } catch (err) {
@@ -93,88 +94,87 @@ export const AthleteDashboard = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-24 text-cyan-400 space-y-4">
-        <div className="w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-xs font-bold tracking-widest uppercase text-slate-400">Loading Athlete Details...</p>
-      </div>
-    );
+    return <LoadingState message="SYNCHRONIZING ATHLETE BIOMETRICS..." subtext="Accessing PostgreSQL profile records & kinematics index" />;
   }
 
   const ath = athlete || {};
+  const flexVal = ath.flexibility || 75.0;
+  const strVal = ath.strength || 82.0;
+  const balVal = ath.balance || 78.0;
+  const endVal = ath.endurance || 85.0;
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-8 animate-fadeIn">
+    <div className="w-full max-w-7xl mx-auto space-y-8 animate-fadeIn font-sans pb-12">
       
-      {/* Save Toast Notification */}
+      {/* Toast Notification */}
       {saveSuccess && (
-        <div className="p-4 rounded-2xl bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 text-xs font-semibold flex items-center justify-between shadow-lg">
+        <div className="p-4 rounded-2xl bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 text-xs font-mono font-semibold flex items-center justify-between shadow-lg">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
             <span>{saveSuccess}</span>
           </div>
-          <button onClick={() => setSaveSuccess('')} className="text-emerald-400 hover:text-white">✕</button>
+          <button onClick={() => setSaveSuccess('')} className="text-emerald-400 hover:text-white cursor-pointer">✕</button>
         </div>
       )}
 
-      {/* Top Athlete Header Banner */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900 to-cyan-950/60 border border-cyan-500/30 shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
-        <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      {/* TOP: ATHLETE PERFORMANCE OVERVIEW */}
+      <div className="p-6 sm:p-8 rounded-3xl bg-slate-950/90 border border-slate-800/90 shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+        <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="flex items-center gap-5">
           <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-cyan-500 via-teal-400 to-indigo-600 p-1 flex-shrink-0 shadow-xl shadow-cyan-500/20">
-            <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center font-extrabold text-white text-3xl">
+            <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center font-black text-white text-3xl font-mono">
               {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
             </div>
           </div>
 
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 text-xs font-bold text-cyan-400 bg-cyan-950 border border-cyan-800 rounded-full uppercase">
-                ATHLETE PROFILE & DASHBOARD
+              <span className="px-3 py-1 text-[10px] font-mono font-bold text-cyan-400 bg-cyan-950/90 border border-cyan-800 rounded-full uppercase tracking-wider">
+                ATHLETE PERFORMANCE OVERVIEW
               </span>
-              <span className="px-2 py-0.5 text-[10px] font-bold text-slate-400 bg-slate-800 rounded-full uppercase">
+              <span className="px-2.5 py-0.5 text-[10px] font-mono font-bold text-slate-400 bg-slate-800 rounded-full uppercase">
                 {user?.role || 'ATHLETE'}
               </span>
             </div>
 
-            <h1 className="text-3xl font-extrabold text-white">
-              {user?.name || 'Athlete Name'}
+            <h1 className="text-3xl font-black text-white tracking-tight">
+              {user?.name || 'Marcus Vance'}
             </h1>
 
-            <p className="text-xs text-slate-400 flex items-center gap-3 font-medium">
-              <span>Sport: <strong className="text-white">{ath.sport || 'General Sports'}</strong></span>
+            <p className="text-xs text-slate-400 flex flex-wrap items-center gap-2 font-mono">
+              <span>Sport: <strong className="text-white">{ath.sport || 'Basketball'}</strong></span>
               <span>•</span>
-              <span>Position: <strong className="text-cyan-400">{ath.position || 'Athlete'}</strong></span>
+              <span>Position: <strong className="text-cyan-400">{ath.position || 'Point Guard'}</strong></span>
               <span>•</span>
-              <span>Email: <strong className="text-slate-300">{user?.email}</strong></span>
+              <span>ID: <code className="text-slate-400 font-mono text-[11px]">{ath.athlete_id?.slice(0, 8) || 'ATH-001'}</code></span>
             </p>
           </div>
         </div>
 
         <button
           onClick={() => setIsEditing(!isEditing)}
-          className="flex items-center gap-2 px-5 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-white font-bold text-xs rounded-xl shadow-lg shadow-cyan-500/20 transition-all whitespace-nowrap self-start md:self-auto"
+          className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 hover:border-cyan-500/50 text-white font-mono font-bold text-xs rounded-xl shadow-lg transition-all whitespace-nowrap self-start md:self-auto cursor-pointer"
         >
-          {isEditing ? <X className="w-4 h-4" /> : <Edit3 className="w-4 h-4" />}
-          {isEditing ? 'Cancel Edit' : 'Edit Athlete Details'}
+          {isEditing ? <X className="w-4 h-4 text-rose-400" /> : <Edit3 className="w-4 h-4 text-cyan-400" />}
+          {isEditing ? 'Cancel Edit' : 'Edit Physical Bio'}
         </button>
       </div>
 
-      {/* Edit Form Drawer */}
+      {/* Edit Form Modal Drawer */}
       {isEditing && (
-        <form onSubmit={handleSaveProfile} className="p-6 sm:p-8 rounded-3xl bg-slate-900 border border-cyan-500/40 shadow-2xl space-y-6 animate-fadeIn">
+        <form onSubmit={handleSaveProfile} className="p-6 sm:p-8 rounded-3xl bg-slate-900/95 border border-cyan-500/40 shadow-2xl space-y-6 animate-fadeIn font-mono">
           <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <Edit3 className="w-5 h-5 text-cyan-400" />
-              Update Athlete Assessment & Profile Details
+            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <Edit3 className="w-4 h-4 text-cyan-400" />
+              UPDATE ATHLETE ASSESSMENT & BIOMETRIC PROFILES
             </h3>
-            <span className="text-xs text-slate-400">Database: SQLAlchemy PostgreSQL</span>
+            <span className="text-[11px] text-slate-500">Persisted in PostgreSQL</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Primary Sport</label>
+              <label className="block text-slate-400 font-semibold mb-1">Sport</label>
               <input
                 type="text"
                 value={editForm.sport}
@@ -184,7 +184,7 @@ export const AthleteDashboard = () => {
             </div>
 
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Position / Sub-discipline</label>
+              <label className="block text-slate-400 font-semibold mb-1">Position</label>
               <input
                 type="text"
                 value={editForm.position}
@@ -194,7 +194,7 @@ export const AthleteDashboard = () => {
             </div>
 
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Age (Years)</label>
+              <label className="block text-slate-400 font-semibold mb-1">Age (Years)</label>
               <input
                 type="number"
                 value={editForm.age}
@@ -204,7 +204,7 @@ export const AthleteDashboard = () => {
             </div>
 
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Height (cm)</label>
+              <label className="block text-slate-400 font-semibold mb-1">Height (cm)</label>
               <input
                 type="number"
                 step="0.1"
@@ -215,7 +215,7 @@ export const AthleteDashboard = () => {
             </div>
 
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Weight (kg)</label>
+              <label className="block text-slate-400 font-semibold mb-1">Weight (kg)</label>
               <input
                 type="number"
                 step="0.1"
@@ -226,7 +226,7 @@ export const AthleteDashboard = () => {
             </div>
 
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Flexibility (0-100)</label>
+              <label className="block text-slate-400 font-semibold mb-1">Flexibility (0-100)</label>
               <input
                 type="number"
                 value={editForm.flexibility}
@@ -236,7 +236,7 @@ export const AthleteDashboard = () => {
             </div>
 
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Strength Rating (0-100)</label>
+              <label className="block text-slate-400 font-semibold mb-1">Strength (0-100)</label>
               <input
                 type="number"
                 value={editForm.strength}
@@ -246,7 +246,7 @@ export const AthleteDashboard = () => {
             </div>
 
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">Endurance Rating (0-100)</label>
+              <label className="block text-slate-400 font-semibold mb-1">Endurance (0-100)</label>
               <input
                 type="number"
                 value={editForm.endurance}
@@ -257,199 +257,191 @@ export const AthleteDashboard = () => {
           </div>
 
           <div>
-            <label className="block text-slate-300 font-semibold mb-1 text-xs">Coach / Clinical Notes</label>
+            <label className="block text-slate-400 font-semibold mb-1 text-xs">Coach / Clinical Notes</label>
             <textarea
               rows="3"
               value={editForm.coach_notes}
               onChange={(e) => setEditForm({ ...editForm, coach_notes: e.target.value })}
-              placeholder="Enter training notes or movement observations..."
+              placeholder="Clinical observation or training history..."
               className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white"
-            ></textarea>
+            />
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={() => setIsEditing(false)}
-              className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl"
+              className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="px-6 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-white text-xs font-bold rounded-xl shadow-lg shadow-cyan-500/20 flex items-center gap-2"
+              className="px-6 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-black rounded-xl shadow-lg shadow-cyan-500/20 flex items-center gap-2 cursor-pointer"
             >
               {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              Save Changes
+              SAVE PROFILE
             </button>
           </div>
         </form>
       )}
 
-      {/* Primary Athlete Physical Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      {/* CENTRAL 3D PERFORMANCE INTELLIGENCE SHOWCASE */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
         
-        {/* Physical Bio 1: Age / DOB */}
-        <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
-          <div className="flex justify-between items-center text-slate-400 text-xs font-semibold">
-            <span>Age & Bio</span>
-            <User className="w-4 h-4 text-cyan-400" />
-          </div>
-          <div className="text-3xl font-extrabold text-white">
-            {ath.age || 20} <span className="text-sm font-normal text-slate-400">years</span>
-          </div>
-          <p className="text-[11px] text-slate-400">Registered Athlete Bio</p>
-        </div>
-
-        {/* Physical Bio 2: Height */}
-        <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
-          <div className="flex justify-between items-center text-slate-400 text-xs font-semibold">
-            <span>Height</span>
-            <Ruler className="w-4 h-4 text-teal-400" />
-          </div>
-          <div className="text-3xl font-extrabold text-teal-400">
-            {ath.height || 175} <span className="text-sm font-normal text-slate-400">cm</span>
-          </div>
-          <p className="text-[11px] text-slate-400">Stature measurement</p>
-        </div>
-
-        {/* Physical Bio 3: Weight */}
-        <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
-          <div className="flex justify-between items-center text-slate-400 text-xs font-semibold">
-            <span>Body Weight</span>
-            <Scale className="w-4 h-4 text-indigo-400" />
-          </div>
-          <div className="text-3xl font-extrabold text-indigo-400">
-            {ath.weight || 70} <span className="text-sm font-normal text-slate-400">kg</span>
-          </div>
-          <p className="text-[11px] text-slate-400">Mass metric</p>
-        </div>
-
-        {/* Physical Bio 4: Weekly Training Load */}
-        <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
-          <div className="flex justify-between items-center text-slate-400 text-xs font-semibold">
-            <span>Weekly Workload</span>
-            <Activity className="w-4 h-4 text-amber-400" />
-          </div>
-          <div className="text-3xl font-extrabold text-amber-400">
-            {ath.training_load || 50} <span className="text-sm font-normal text-slate-400">Score</span>
-          </div>
-          <p className="text-[11px] text-slate-400">Training load index</p>
-        </div>
-
-      </div>
-
-      {/* Physical Assessment Progress Gauges */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        <div className="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 space-y-6 lg:col-span-2 shadow-xl">
-          <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-            <div>
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Dumbbell className="w-5 h-5 text-cyan-400" />
-                Physical Assessment Metrics
-              </h3>
-              <p className="text-xs text-slate-400">Neuromuscular ratings and mobility progress (0 to 100 scale)</p>
+        {/* LEFT COLUMN: Athlete Profile Bio */}
+        <div className="lg:col-span-3 space-y-4">
+          <div className="p-5 rounded-2xl bg-slate-950/80 border border-slate-800/90 space-y-4 font-mono">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+              <span className="text-xs font-bold text-white uppercase">Athlete Profile</span>
+              <User className="w-4 h-4 text-cyan-400" />
             </div>
-            <span className="px-3 py-1 bg-cyan-950 text-cyan-400 border border-cyan-800 rounded-full text-xs font-bold">
-              Active Assessment
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <span className="text-[10px] text-slate-500 uppercase block">Sport & Discipline</span>
+                <span className="text-white font-bold">{ath.sport || 'Basketball'}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-500 uppercase block">Field Position</span>
+                <span className="text-cyan-400 font-bold">{ath.position || 'Point Guard'}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-900">
+                <div>
+                  <span className="text-[10px] text-slate-500 uppercase block">Age</span>
+                  <span className="text-white font-bold">{ath.age || 22} yrs</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 uppercase block">Stature</span>
+                  <span className="text-teal-400 font-bold">{ath.height || 180} cm</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-900">
+                <div>
+                  <span className="text-[10px] text-slate-500 uppercase block">Mass</span>
+                  <span className="text-indigo-400 font-bold">{ath.weight || 75} kg</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 uppercase block">Load Index</span>
+                  <span className="text-amber-400 font-bold">{ath.training_load || 65} pts</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Coach Notes snippet */}
+          <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-2 text-xs">
+            <span className="text-[10px] font-mono font-bold text-slate-500 uppercase flex items-center gap-1">
+              <FileText className="w-3 h-3 text-cyan-400" />
+              Coach Remarks
             </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs">
-            
-            {/* Gauge 1: Flexibility */}
-            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
-              <div className="flex justify-between font-bold">
-                <span className="text-slate-300">Flexibility Score</span>
-                <span className="text-cyan-400">{ath.flexibility || 75} / 100</span>
-              </div>
-              <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden">
-                <div className="bg-cyan-500 h-full rounded-full transition-all duration-500" style={{ width: `${ath.flexibility || 75}%` }}></div>
-              </div>
-              <p className="text-[10px] text-slate-500">Joint range of motion & hamstrings elasticity</p>
-            </div>
-
-            {/* Gauge 2: Strength */}
-            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
-              <div className="flex justify-between font-bold">
-                <span className="text-slate-300">Strength Rating</span>
-                <span className="text-emerald-400">{ath.strength || 80} / 100</span>
-              </div>
-              <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden">
-                <div className="bg-emerald-500 h-full rounded-full transition-all duration-500" style={{ width: `${ath.strength || 80}%` }}></div>
-              </div>
-              <p className="text-[10px] text-slate-500">Peak quadriceps & gluteus max force output</p>
-            </div>
-
-            {/* Gauge 3: Balance & Stability */}
-            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
-              <div className="flex justify-between font-bold">
-                <span className="text-slate-300">Balance & Stability</span>
-                <span className="text-amber-400">{ath.balance || 70} / 100</span>
-              </div>
-              <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden">
-                <div className="bg-amber-500 h-full rounded-full transition-all duration-500" style={{ width: `${ath.balance || 70}%` }}></div>
-              </div>
-              <p className="text-[10px] text-slate-500">Single-leg balance & pelvic control index</p>
-            </div>
-
-            {/* Gauge 4: Endurance */}
-            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
-              <div className="flex justify-between font-bold">
-                <span className="text-slate-300">Endurance Level</span>
-                <span className="text-indigo-400">{ath.endurance || 75} / 100</span>
-              </div>
-              <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden">
-                <div className="bg-indigo-500 h-full rounded-full transition-all duration-500" style={{ width: `${ath.endurance || 75}%` }}></div>
-              </div>
-              <p className="text-[10px] text-slate-500">Aerobic capacity & fatigue resistance</p>
-            </div>
-
+            <p className="text-slate-300 italic text-[11px] leading-relaxed">
+              {ath.coach_notes ? `"${ath.coach_notes}"` : 'No clinical training notes attached yet.'}
+            </p>
           </div>
         </div>
 
-        {/* Coach / Clinical Notes Box */}
-        <div className="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 space-y-4 flex flex-col justify-between shadow-xl">
-          <div>
-            <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-3">
-              <FileText className="w-5 h-5 text-cyan-400" />
-              Coach & Training Notes
-            </h3>
+        {/* CENTER COLUMN: 3D Performance Ring */}
+        <div className="lg:col-span-6">
+          <PerformanceRing3D
+            flexibility={flexVal}
+            strength={strVal}
+            balance={balVal}
+            endurance={endVal}
+          />
+        </div>
 
-            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 text-xs text-slate-300 leading-relaxed italic">
-              {ath.coach_notes ? (
-                `"${ath.coach_notes}"`
-              ) : (
-                'No coach notes added yet. Click "Edit Athlete Details" above to add remarks.'
-              )}
+        {/* RIGHT COLUMN: Performance Intelligence Radial Gauges */}
+        <div className="lg:col-span-3 space-y-3 font-mono">
+          
+          {/* Gauge 1: Flexibility */}
+          <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800/90 space-y-2">
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-400 font-bold uppercase">Flexibility</span>
+              <span className="text-cyan-400 font-black">
+                <AnimatedNumber value={flexVal} duration={800} suffix="%" />
+              </span>
             </div>
+            <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-800">
+              <div
+                className="bg-cyan-500 h-full rounded-full transition-all duration-700 shadow-[0_0_8px_rgba(6,182,212,0.6)]"
+                style={{ width: `${flexVal}%` }}
+              />
+            </div>
+            <span className="text-[10px] text-slate-500 block">Joint Mobility & Elasticity</span>
           </div>
 
-          <div className="p-4 rounded-2xl bg-cyan-950/40 border border-cyan-800/60 text-xs text-cyan-300 space-y-1">
-            <span className="font-bold text-white block">Athlete ID:</span>
-            <code className="font-mono text-[11px] text-cyan-400">{ath.athlete_id || 'N/A'}</code>
+          {/* Gauge 2: Strength */}
+          <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800/90 space-y-2">
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-400 font-bold uppercase">Strength</span>
+              <span className="text-emerald-400 font-black">
+                <AnimatedNumber value={strVal} duration={800} suffix="%" />
+              </span>
+            </div>
+            <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-800">
+              <div
+                className="bg-emerald-500 h-full rounded-full transition-all duration-700 shadow-[0_0_8px_rgba(16,185,129,0.6)]"
+                style={{ width: `${strVal}%` }}
+              />
+            </div>
+            <span className="text-[10px] text-slate-500 block">Peak Force Transmission</span>
           </div>
+
+          {/* Gauge 3: Balance */}
+          <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800/90 space-y-2">
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-400 font-bold uppercase">Balance</span>
+              <span className="text-amber-400 font-black">
+                <AnimatedNumber value={balVal} duration={800} suffix="%" />
+              </span>
+            </div>
+            <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-800">
+              <div
+                className="bg-amber-500 h-full rounded-full transition-all duration-700 shadow-[0_0_8px_rgba(245,158,11,0.6)]"
+                style={{ width: `${balVal}%` }}
+              />
+            </div>
+            <span className="text-[10px] text-slate-500 block">Proprioception & Pelvic Control</span>
+          </div>
+
+          {/* Gauge 4: Endurance */}
+          <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800/90 space-y-2">
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-400 font-bold uppercase">Endurance</span>
+              <span className="text-violet-400 font-black">
+                <AnimatedNumber value={endVal} duration={800} suffix="%" />
+              </span>
+            </div>
+            <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-800">
+              <div
+                className="bg-violet-500 h-full rounded-full transition-all duration-700 shadow-[0_0_8px_rgba(139,92,246,0.6)]"
+                style={{ width: `${endVal}%` }}
+              />
+            </div>
+            <span className="text-[10px] text-slate-500 block">Fatigue & Strain Resistance</span>
+          </div>
+
         </div>
 
       </div>
 
-      {/* Personal Video Upload Summary Feed */}
-      <div className="space-y-4 pt-4 border-t border-slate-900">
+      {/* PERSONAL VIDEO LIBRARY FEED */}
+      <div className="space-y-4 pt-6 border-t border-slate-900">
         <div className="flex justify-between items-center">
           <div>
-            <h3 className="text-xl font-bold text-white flex items-center gap-2">
-              <Video className="w-5 h-5 text-cyan-400" />
-              My Uploaded Videos ({myVideos.length})
+            <h3 className="text-lg font-mono font-bold text-white flex items-center gap-2">
+              <Video className="w-4 h-4 text-cyan-400" />
+              MY UPLOADED MOVEMENT SEQUENCES ({myVideos.length})
             </h3>
-            <p className="text-xs text-slate-400">Strictly personal video library uploaded by this account</p>
+            <p className="text-xs text-slate-400">Strictly private video library linked to this athlete profile</p>
           </div>
         </div>
 
         {myVideos.length === 0 ? (
-          <div className="p-8 rounded-2xl bg-slate-900/50 border border-slate-800 text-center space-y-2 text-xs text-slate-400">
-            <p>No uploaded videos yet.</p>
+          <div className="p-10 rounded-2xl bg-slate-950/60 border border-slate-800 text-center space-y-2 text-xs text-slate-400 font-mono">
+            <p>No video sequences uploaded yet. Navigate to Movement Studio to upload your first clip.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

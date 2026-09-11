@@ -89,6 +89,20 @@ class VideoOut(BaseModel):
     quality_score: float
     processing_status: str
     uploaded_at: datetime
+    processed_video_path: Optional[str] = None
+    processed_video_url: Optional[str] = None
+    pose_model: Optional[str] = "RTMPose-M"
+    pose_confidence: Optional[float] = 0.0
+    processed_frames: Optional[int] = 0
+    valid_pose_frames: Optional[int] = 0
+    tracked_frames: Optional[int] = 0
+    analysis_fps: Optional[float] = 0.0
+    analysis_status: Optional[str] = "UPLOADED"
+    pose_status: Optional[str] = "PENDING"
+    processing_error: Optional[str] = None
+    analysis_completed_at: Optional[datetime] = None
+    latest_analysis_id: Optional[str] = None
+    latest_analysis_status: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -105,16 +119,60 @@ class AnalysisResultBase(BaseModel):
     movement_quality: Optional[float] = 0.0
     overall_risk_score: Optional[float] = 0.0
     risk_level: Optional[str] = "LOW"
+    confidence: Optional[float] = 0.95
+    bilateral_symmetry: Optional[float] = 0.0
+    biomechanical_summary: Optional[str] = None
+    model_version: Optional[str] = "2.0.0-weighted"
 
 class AnalysisResultCreate(AnalysisResultBase):
     video_id: str
     athlete_id: str
+
+# --- Risk Factor Schemas ---
+class RiskFactorBase(BaseModel):
+    factor: str
+    body_region: str
+    severity: str
+    contribution: float = 0.0
+    timestamp: Optional[float] = None
+    frame: Optional[int] = None
+
+class RiskFactorCreate(RiskFactorBase):
+    analysis_id: str
+
+class RiskFactorOut(RiskFactorBase):
+    id: str
+    analysis_id: str
+
+    class Config:
+        from_attributes = True
+
+# --- Movement Anomaly Schemas ---
+class MovementAnomalyBase(BaseModel):
+    frame: int
+    timestamp: float
+    type: str
+    score: float = 0.0
+    severity: str
+    body_region: str
+    explanation: str
+
+class MovementAnomalyCreate(MovementAnomalyBase):
+    analysis_id: str
+
+class MovementAnomalyOut(MovementAnomalyBase):
+    id: str
+    analysis_id: str
+
+    class Config:
+        from_attributes = True
 
 class AnalysisResultOut(AnalysisResultBase):
     analysis_id: str
     video_id: str
     athlete_id: str
     created_at: datetime
+    risk_factors: Optional[List[RiskFactorOut]] = []
 
     class Config:
         from_attributes = True
@@ -145,6 +203,7 @@ class RecommendationBase(BaseModel):
     strengthening: Optional[str] = None
     recovery: Optional[str] = None
     training_modification: Optional[str] = None
+    detailed_json: Optional[str] = None
 
 class RecommendationCreate(RecommendationBase):
     prediction_id: str
@@ -223,3 +282,46 @@ class AILogSchema(BaseModel):
     inference_time: float
     confidence: float
     output: Any
+
+# --- Pose Pipeline & Biomechanics Schemas ---
+class PoseFrameOut(BaseModel):
+    id: str
+    analysis_id: str
+    frame_number: int
+    timestamp: float
+    person_id: int
+    average_confidence: float
+    keypoints_json: Any
+    smoothed_keypoints_json: Any
+
+    class Config:
+        from_attributes = True
+
+class BiomechanicsFrameOut(BaseModel):
+    id: str
+    analysis_id: str
+    frame_number: int
+    timestamp: float
+    joint_angles_json: Any
+    kinematics_json: Any
+    symmetry_json: Any
+
+    class Config:
+        from_attributes = True
+
+class AnalysisJobOut(BaseModel):
+    id: str
+    video_id: str
+    user_id: str
+    status: str
+    progress: float
+    stage: str
+    created_at: datetime
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    error_message: Optional[str] = None
+    skeleton_video_url: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+

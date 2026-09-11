@@ -86,6 +86,20 @@ class Video(Base):
     processing_status = Column(String, default="UPLOADED") # UPLOADED, PROCESSING, COMPLETED, FAILED
     uploaded_at = Column(DateTime, default=datetime.utcnow)
 
+    # Pose Video Processing Pipeline Fields
+    processed_video_path = Column(String, nullable=True)
+    processed_video_url = Column(String, nullable=True)
+    pose_model = Column(String, default="RTMPose-M")
+    pose_confidence = Column(Float, default=0.0)
+    processed_frames = Column(Integer, default=0)
+    valid_pose_frames = Column(Integer, default=0)
+    tracked_frames = Column(Integer, default=0)
+    analysis_fps = Column(Float, default=0.0)
+    analysis_status = Column(String, default="UPLOADED") # UPLOADED, PROCESSING, POSE_DETECTING, POSE_TRACKING, GENERATING_VIDEO, VALIDATING_VIDEO, COMPLETE, FAILED
+    pose_status = Column(String, default="PENDING")
+    processing_error = Column(Text, nullable=True)
+    analysis_completed_at = Column(DateTime, nullable=True)
+
     user = relationship("User", back_populates="videos")
     athlete = relationship("Athlete", back_populates="videos")
     analysis_results = relationship("AnalysisResult", back_populates="video", cascade="all, delete-orphan")
@@ -106,12 +120,17 @@ class AnalysisResult(Base):
     fatigue_score = Column(Float, default=0.0)
     movement_quality = Column(Float, default=0.0)
     overall_risk_score = Column(Float, default=0.0)
-    risk_level = Column(String, default="LOW") # LOW, MODERATE, HIGH
+    risk_level = Column(String, default="LOW") # LOW, MODERATE, HIGH, CRITICAL
+    confidence = Column(Float, default=0.95)
+    bilateral_symmetry = Column(Float, default=0.0)
+    biomechanical_summary = Column(Text, nullable=True)
+    model_version = Column(String, default="2.0.0-weighted")
     created_at = Column(DateTime, default=datetime.utcnow)
 
     video = relationship("Video", back_populates="analysis_results")
     athlete = relationship("Athlete", back_populates="analysis_results")
     injury_prediction = relationship("InjuryPrediction", back_populates="analysis", uselist=False, cascade="all, delete-orphan")
+    risk_factors = relationship("RiskFactor", back_populates="analysis", cascade="all, delete-orphan")
 
 # 6. injury_predictions
 class InjuryPrediction(Base):
@@ -140,6 +159,7 @@ class Recommendation(Base):
     strengthening = Column(Text, nullable=True)
     recovery = Column(Text, nullable=True)
     training_modification = Column(Text, nullable=True)
+    detailed_json = Column(Text, nullable=True)
 
     prediction = relationship("InjuryPrediction", back_populates="recommendation")
 
@@ -183,3 +203,87 @@ class PerformanceRecord(Base):
     recorded_at = Column(DateTime, default=datetime.utcnow)
 
     athlete = relationship("Athlete", back_populates="performance_records")
+
+# 11. analysis_jobs
+class AnalysisJob(Base):
+    __tablename__ = "analysis_jobs"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    video_id = Column(String, ForeignKey("videos.video_id"), nullable=False)
+    user_id = Column(String, ForeignKey("users.user_id"), nullable=False)
+    status = Column(String, default="queued") # queued, processing, pose_estimation, tracking, biomechanics, rendering, completed, failed
+    progress = Column(Float, default=0.0)
+    stage = Column(String, default="Queued")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    started_at = Column(DateTime, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
+    error_message = Column(Text, nullable=True)
+    skeleton_video_url = Column(Text, nullable=True)
+
+    video = relationship("Video")
+    user = relationship("User")
+    pose_frames = relationship("PoseFrame", back_populates="analysis", cascade="all, delete-orphan")
+    biomechanics_frames = relationship("BiomechanicsFrame", back_populates="analysis", cascade="all, delete-orphan")
+    movement_anomalies = relationship("MovementAnomaly", back_populates="analysis", cascade="all, delete-orphan")
+
+# 12. pose_frames
+class PoseFrame(Base):
+    __tablename__ = "pose_frames"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    analysis_id = Column(String, ForeignKey("analysis_jobs.id"), nullable=False)
+    frame_number = Column(Integer, nullable=False)
+    timestamp = Column(Float, nullable=False)
+    person_id = Column(Integer, default=1)
+    average_confidence = Column(Float, default=0.0)
+    keypoints_json = Column(Text, nullable=False)
+    smoothed_keypoints_json = Column(Text, nullable=False)
+
+    analysis = relationship("AnalysisJob", back_populates="pose_frames")
+
+# 13. biomechanics_frames
+class BiomechanicsFrame(Base):
+    __tablename__ = "biomechanics_frames"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    analysis_id = Column(String, ForeignKey("analysis_jobs.id"), nullable=False)
+    frame_number = Column(Integer, nullable=False)
+    timestamp = Column(Float, nullable=False)
+    joint_angles_json = Column(Text, nullable=False)
+    kinematics_json = Column(Text, nullable=False)
+    symmetry_json = Column(Text, nullable=False)
+
+    analysis = relationship("AnalysisJob", back_populates="biomechanics_frames")
+
+# 14. risk_factors
+class RiskFactor(Base):
+    __tablename__ = "risk_factors"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    analysis_id = Column(String, ForeignKey("analysis_results.analysis_id"), nullable=False)
+    factor = Column(String, nullable=False)
+    body_region = Column(String, nullable=False)
+    severity = Column(String, nullable=False) # LOW, MODERATE, HIGH, CRITICAL
+    contribution = Column(Float, default=0.0)
+    timestamp = Column(Float, nullable=True)
+    frame = Column(Integer, nullable=True)
+
+    analysis = relationship("AnalysisResult", back_populates="risk_factors")
+
+# 15. movement_anomalies
+class MovementAnomaly(Base):
+    __tablename__ = "movement_anomalies"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    analysis_id = Column(String, ForeignKey("analysis_jobs.id"), nullable=False)
+    frame = Column(Integer, nullable=False)
+    timestamp = Column(Float, nullable=False)
+    type = Column(String, nullable=False)
+    score = Column(Float, default=0.0)
+    severity = Column(String, nullable=False) # LOW, MODERATE, HIGH, CRITICAL
+    body_region = Column(String, nullable=False)
+    explanation = Column(Text, nullable=False)
+
+    analysis = relationship("AnalysisJob", back_populates="movement_anomalies")
+
+

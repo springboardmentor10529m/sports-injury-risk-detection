@@ -6,8 +6,11 @@ from sqlalchemy.orm import sessionmaker
 
 load_dotenv()
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+SQLITE_DB_PATH = os.path.join(BASE_DIR, "sports_injury.db")
+
 # Default to SQLite if DATABASE_URL is not set
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./sports_injury.db")
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{SQLITE_DB_PATH}")
 
 connect_args = {}
 if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
@@ -20,8 +23,8 @@ try:
         pass
 except Exception as e:
     # Graceful fallback to SQLite for zero-downtime local development
-    print(f"[Database Warning] Failed to connect to '{SQLALCHEMY_DATABASE_URL}'. Falling back to local SQLite database.")
-    SQLALCHEMY_DATABASE_URL = "sqlite:///./sports_injury.db"
+    print(f"[Database Warning] Failed to connect to '{SQLALCHEMY_DATABASE_URL}'. Falling back to local SQLite database at {SQLITE_DB_PATH}.")
+    SQLALCHEMY_DATABASE_URL = f"sqlite:///{SQLITE_DB_PATH}"
     connect_args = {"check_same_thread": False}
     engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args=connect_args)
 

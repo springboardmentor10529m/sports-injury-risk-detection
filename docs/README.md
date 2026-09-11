@@ -8,10 +8,12 @@ Welcome to the documentation for **Sports Injury Risk Detection System**, a full
 
 | Document | Description |
 |---|---|
-| 🗄️ [**Database Schema Specification**](file:///c:/Users/saketh/Msme_Backend/docs/DATABASE_SCHEMA.md) | Complete reference for 10 PostgreSQL tables & 2 MongoDB collections |
+| 🏃 [**Pose & Biomechanics Pipeline**](file:///c:/Users/saketh/Msme_Backend/docs/POSE_PIPELINE.md) | Technical guide for RTMPose-M, COCO 17 keypoints, smoothing & joint angles |
+| 🗄️ [**Database Schema Specification**](file:///c:/Users/saketh/Msme_Backend/docs/DATABASE_SCHEMA.md) | Complete reference for PostgreSQL tables & MongoDB collections |
 | 🏗️ [**System Architecture**](file:///c:/Users/saketh/Msme_Backend/docs/ARCHITECTURE.md) | High-level system design, AI processing pipeline, & auth model |
 | 🔌 [**API Documentation**](file:///c:/Users/saketh/Msme_Backend/docs/API_DOCUMENTATION.md) | Comprehensive REST API endpoints, schemas, and request/response payloads |
 | 🐳 [**Deployment & Operations Guide**](file:///c:/Users/saketh/Msme_Backend/docs/DEPLOYMENT_GUIDE.md) | Docker Compose setup, environment variables, and production deployment |
+
 
 ---
 

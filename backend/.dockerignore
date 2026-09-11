@@ -13,3 +13,6 @@ uploads/*
 .git/
 .gitignore
 .vscode/
+.pytest_cache/
+models_cache/
+*.log

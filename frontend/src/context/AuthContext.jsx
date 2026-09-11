@@ -9,10 +9,12 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('[AUTH] initializing');
     if (token) {
       fetchCurrentUser();
     } else {
       setLoading(false);
+      console.log('[AUTH] authentication complete (unauthenticated)');
     }
   }, [token]);
 
@@ -21,6 +23,7 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       const userData = await api.get('/api/auth/me');
       setUser(userData);
+      console.log('[AUTH] authentication complete (authenticated as ' + (userData?.email || 'user') + ')');
     } catch (err) {
       console.error('Failed to fetch current user:', err);
       logout();

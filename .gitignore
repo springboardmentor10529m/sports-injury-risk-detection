@@ -56,3 +56,16 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+all_code_dump.txt
+
+# Archives & Large artifacts
+*.zip
+.zip
+*.tar.gz
+*.tgz
+
+# Testing & Cache
+.pytest_cache/
+backend/.pytest_cache/
+models_cache/
+backend/models_cache/

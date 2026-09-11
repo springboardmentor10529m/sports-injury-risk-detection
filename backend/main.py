@@ -1,16 +1,23 @@
 import os
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+)
+
 import database, models
-from routers import auth_router, athlete_router, video_router
+from routers import auth_router, athlete_router, video_router, pose_router, analysis_router
 
 # Create database tables
 models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI(
-    title="sportsinjuryanalyser",
-    description="Backend service for user authentication, athlete profile management, video uploading, and metadata storage.",
+    title="AthleteGuard",
+    description="Backend service for AthleteGuard - AI Sports Biomechanics & Injury Prevention.",
     version="1.0.0",
 )
 
@@ -32,13 +39,16 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 app.include_router(auth_router.router)
 app.include_router(athlete_router.router)
 app.include_router(video_router.router)
+app.include_router(pose_router.router)
+app.include_router(analysis_router.router)
+
 
 @app.get("/")
 def read_root():
     return {
         "status": "online",
-        "service": "sportsinjuryanalyser",
-        "phase": "Video Storage & Athlete Profile System",
+        "service": "AthleteGuard",
+        "phase": "Pose Estimation Engine & Athlete Profile System",
         "docs": "/docs"
     }
 

@@ -6,7 +6,19 @@ python-jose[cryptography]>=3.3.0
 passlib[bcrypt]>=1.7.4
 bcrypt==4.0.1
 python-multipart>=0.0.6
-opencv-python-headless>=4.8.0
 email-validator>=2.0.0
 pymongo>=4.5.0
 psycopg2-binary>=2.9.0
+python-dotenv>=1.0.0
+
+# Scientific & Machine Learning
+numpy>=1.24.0
+scipy>=1.11.0
+scikit-learn>=1.3.0
+opencv-python-headless>=4.8.0
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Document & Report Generation
+reportlab>=4.0.0
+openpyxl>=3.1.0

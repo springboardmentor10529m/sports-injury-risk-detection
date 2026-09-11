@@ -199,6 +199,57 @@ MongoDB Collections:
 
 ---
 
+### 11. `analysis_jobs`
+**Purpose**: Tracks computer-vision movement pose estimation and biomechanics processing pipeline jobs.
+
+| Column Name | Data Type | Constraints | Description / Notes |
+|---|---|---|---|
+| `id` | `UUID` | **PK** | Primary key |
+| `video_id` | `UUID` | **FK** (`videos.video_id`), `NOT NULL` | Target video |
+| `user_id` | `UUID` | **FK** (`users.user_id`), `NOT NULL` | User owner |
+| `status` | `VARCHAR(30)` | `NOT NULL` | `queued` \| `processing` \| `pose_estimation` \| `tracking` \| `biomechanics` \| `rendering` \| `completed` \| `failed` |
+| `progress` | `FLOAT` | `NOT NULL`, Default `0.0` | Job completion percentage (0.0 to 100.0) |
+| `stage` | `VARCHAR(60)` | `NOT NULL` | Human-readable progress stage |
+| `created_at` | `TIMESTAMP` | `NOT NULL`, Default `NOW()` | Job creation time |
+| `started_at` | `TIMESTAMP` | Optional | Job execution start time |
+| `completed_at` | `TIMESTAMP` | Optional | Job completion time |
+| `error_message` | `TEXT` | Optional | Failure message if job failed |
+| `skeleton_video_url` | `TEXT` | Optional | Relative URL path to generated skeleton MP4 video |
+
+---
+
+### 12. `pose_frames`
+**Purpose**: Stores frame-by-frame 17 COCO keypoints trajectories for tracked primary athletes.
+
+| Column Name | Data Type | Constraints | Description / Notes |
+|---|---|---|---|
+| `id` | `UUID` | **PK** | Primary key |
+| `analysis_id` | `UUID` | **FK** (`analysis_jobs.id`), `NOT NULL` | Target analysis job |
+| `frame_number` | `INT` | `NOT NULL` | Video frame index |
+| `timestamp` | `FLOAT` | `NOT NULL` | Frame timestamp in seconds |
+| `person_id` | `INT` | Default `1` | Tracked primary athlete ID |
+| `average_confidence` | `FLOAT` | Default `0.0` | Mean keypoint detection confidence score |
+| `keypoints_json` | `TEXT` | `NOT NULL` | Raw 17 COCO keypoint coordinates JSON |
+| `smoothed_keypoints_json` | `TEXT` | `NOT NULL` | One Euro Filter smoothed 17 COCO keypoint coordinates JSON |
+
+---
+
+### 13. `biomechanics_frames`
+**Purpose**: Stores frame-by-frame 3-point joint angles, kinematics, and symmetry metrics.
+
+| Column Name | Data Type | Constraints | Description / Notes |
+|---|---|---|---|
+| `id` | `UUID` | **PK** | Primary key |
+| `analysis_id` | `UUID` | **FK** (`analysis_jobs.id`), `NOT NULL` | Target analysis job |
+| `frame_number` | `INT` | `NOT NULL` | Video frame index |
+| `timestamp` | `FLOAT` | `NOT NULL` | Frame timestamp in seconds |
+| `joint_angles_json` | `TEXT` | `NOT NULL` | Left/Right knee, hip, ankle, elbow, shoulder angles & trunk lean JSON |
+| `kinematics_json` | `TEXT` | `NOT NULL` | Angular velocity, angular acceleration, and relative velocity JSON |
+| `symmetry_json` | `TEXT` | `NOT NULL` | Bilateral Left vs Right angle deltas & lower limb asymmetry index JSON |
+
+
+---
+
 ## SECTION 4 — Unstructured Data (MongoDB Collections)
 
 ### 11. `pose_data` Collection
