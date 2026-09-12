@@ -70,7 +70,7 @@ def run_e2e_tests():
     print("  [OK] Injury history saved, ID:", inj.json()["injury_id"])
 
     print("\n--- Step 4: Upload Video 1 (Running) ---")
-    sample_vid = os.path.join("uploads", "0ba29524-53b8-47a2-8eda-62e10addf959.mp4")
+    sample_vid = os.path.join(os.path.dirname(__file__), "uploads", "0ba29524-53b8-47a2-8eda-62e10addf959.mp4")
     assert os.path.exists(sample_vid), f"Sample video missing: {sample_vid}"
     with open(sample_vid, "rb") as f:
         up1 = client.post("/video/upload", data={"athlete_id": athlete_id, "activity": "Running"}, files={"video": ("run_test.mp4", f, "video/mp4")})

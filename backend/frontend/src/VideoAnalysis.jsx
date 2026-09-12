@@ -736,17 +736,6 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
               </div>
             </div>
 
-            {/* Single primary button at bottom to start another analysis */}
-            <div style={{ textAlign: "center", margin: "10px 0 30px" }}>
-              <button
-                className="btn btn-primary"
-                onClick={handleResetAnalysis}
-                style={{ padding: "12px 28px", fontSize: "0.95rem", fontWeight: 700 }}
-              >
-                + Analyze New Video
-              </button>
-            </div>
-
           </div>
         )}
 

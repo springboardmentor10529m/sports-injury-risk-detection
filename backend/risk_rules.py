@@ -66,34 +66,8 @@ def calculate_injury_predictions(
         0.2 * (100.0 - movement_quality)
     )
 
-    # PRIOR INJURY HISTORY WEIGHTING
+    # Pure kinematic movement calculations (No prior injury weighting applied to risk score)
     history_notes: List[str] = []
-    if prior_injuries:
-        for inj in prior_injuries:
-            part = str(inj.get("body_part", "")).lower()
-            itype = str(inj.get("injury_type", "")).lower()
-            recovered = int(inj.get("fully_recovered", 1))
-            mult = 1.40 if recovered == 0 else 1.25
-
-            if any(k in part or k in itype for k in ["knee", "acl", "meniscus", "patell"]):
-                acl_base *= mult
-                history_notes.append(f"Recorded prior Knee/ACL injury applied (+{int((mult-1)*100)}% ACL risk weighting).")
-            if "hamstring" in part or "hamstring" in itype:
-                hamstring_base *= mult
-                history_notes.append(f"Recorded prior Hamstring strain applied (+{int((mult-1)*100)}% Hamstring risk weighting).")
-            if "ankle" in part or "ankle" in itype:
-                ankle_base *= mult
-                history_notes.append(f"Recorded prior Ankle sprain applied (+{int((mult-1)*100)}% Ankle risk weighting).")
-            if "shoulder" in part or "shoulder" in itype:
-                shoulder_base *= mult
-                history_notes.append(f"Recorded prior Shoulder issue applied (+{int((mult-1)*100)}% Shoulder risk weighting).")
-            if any(k in part or k in itype for k in ["back", "spine", "lumbar"]):
-                lower_back_base *= mult
-                history_notes.append(f"Recorded prior Lower Back issue applied (+{int((mult-1)*100)}% Lower Back risk weighting).")
-
-        if len(prior_injuries) >= 2:
-            overuse_base *= 1.20
-            history_notes.append(f"Multiple cumulative recorded prior injuries ({len(prior_injuries)}) applied +20% Overuse risk weighting.")
 
     # POSITION PARAMETER ADJUSTMENT
     pos_lower = (athlete_position or "").lower().strip()
