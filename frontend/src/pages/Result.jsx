@@ -4,9 +4,9 @@ import { useParams } from "react-router-dom";
 import {
   Activity, AlertTriangle, Bone, CheckCircle2, Gauge, HeartPulse, Loader2, Move, Scale,
 } from "lucide-react";
-import { getPoseFrames, getVideo } from "../api/client";
+import { getPoseFrames, getVideo, invalidateDataCache } from "../api/client";
 import RiskGauge from "../components/RiskGauge";
-import Pose3DViewer from "../components/Pose3DViewer";
+import VideoPoseOverlay from "../components/VideoPoseOverlay";
 import { RecoList } from "./Dashboard";
 
 const PIPELINE_STAGES = [
@@ -33,6 +33,7 @@ export default function Result() {
   const [error, setError] = useState("");
   const [showProcessing, setShowProcessing] = useState(true);
   const pollRef = useRef(null);
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     if (!id || !video || (video.status !== "running_pose" && video.status !== "analyzing_biomechanics" && video.status !== "scoring_risk" && video.status !== "generating_recommendations")) {
@@ -55,30 +56,41 @@ export default function Result() {
   }, [id, video?.status]);
 
   useEffect(() => {
+    let active = true;
+    let observedProcessing = false;
+    let dismissTimer;
     async function poll() {
       try {
         const res = await getVideo(id);
+        if (!active) return;
         const nextVideo = res.data;
         const status = String(nextVideo?.status ?? "");
 
         setVideo(nextVideo);
         if (["completed", "failed", "insufficient_data"].includes(status)) {
-          clearInterval(pollRef.current);
+          invalidateDataCache();
           if (status === "completed") {
-            window.setTimeout(() => setShowProcessing(false), 4600);
+            if (observedProcessing) {
+              setSuccess(true);
+              dismissTimer = setTimeout(() => setSuccess(false), 6000);
+            }
+            setShowProcessing(false);
           } else {
             setShowProcessing(false);
           }
+        } else {
+          observedProcessing = true;
+          pollRef.current = setTimeout(poll, 1500);
         }
       } catch (err) {
+        if (!active) return;
         setError(err.response?.data?.detail || err.message || "Could not load this analysis.");
         clearInterval(pollRef.current);
       }
     }
 
     poll();
-    pollRef.current = setInterval(poll, 1500);
-    return () => clearInterval(pollRef.current);
+    return () => { active = false; clearTimeout(pollRef.current); clearTimeout(dismissTimer); };
   }, [id]);
 
   useEffect(() => {
@@ -137,12 +149,27 @@ export default function Result() {
   return (
     <div>
       <div className="eyebrow" style={{ marginBottom: 6 }}>Analysis Report</div>
+      {success && <div role="status" className="card" style={{ position: "fixed", top: 20, right: 20, zIndex: 1000, maxWidth: "min(360px, 90vw)", border: "1px solid var(--accent)" }}>
+        <strong>Analysis completed successfully</strong>
+        <button className="btn" onClick={() => setSuccess(false)} aria-label="Dismiss success message" style={{ marginLeft: 12 }}>Close</button>
+      </div>}
+      {["HIGH", "CRITICAL"].includes(String(risk.risk_category).toUpperCase()) &&
+        <div role="alert" className="card" style={{ border: "1px solid var(--risk-high)", marginBottom: 20 }}>
+          <strong>{risk.risk_category} risk assessment</strong>
+          <p>Review the movement findings and recommendations below. This assessment is not a medical diagnosis.</p>
+        </div>}
       <h1 style={{ fontSize: 26, marginBottom: 4, textTransform: "capitalize" }}>{video.activity_type} Analysis</h1>
       <p style={{ color: "var(--text-dim)", marginBottom: 28 }}>
         {video.original_filename} · {new Date(video.created_at).toLocaleString()}
       </p>
 
-      <Pose3DViewer poseFrames={completedPoseFrames} />
+      {bio.activity_check?.status === "possible_mismatch" && (
+        <div className="card" role="alert" style={{ marginBottom: 20 }}>
+          <strong>Check selected activity</strong>
+          <p>{bio.activity_check.message}</p>
+        </div>
+      )}
+      <VideoPoseOverlay key={id} videoId={id} frames={completedPoseFrames} />
       <p style={{ color: "var(--text-dim)", marginBottom: 20 }}>
         This score is a rule-based movement assessment, not a medical diagnosis or a validated
         probability of future injury. Recommendations are general guidance; discuss pain or injury with a qualified clinician.
@@ -251,12 +278,12 @@ function ProcessingView({ video, poseFrames = [] }) {
         <div>
           <div style={{ marginBottom: 18 }}>
             {hasLivePose ? (
-              <Pose3DViewer poseFrames={normalizedPoseFrames} compact />
+              <VideoPoseOverlay key={video.id} videoId={video.id} frames={normalizedPoseFrames} />
             ) : (
               <div className="card animate-in" style={{ minHeight: 260, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-dim)", textAlign: "center", padding: 24 }}>
               <div>
                   <div style={{ fontWeight: 600, marginBottom: 6 }}>{status === "completed" ? "Pose view ready" : "Waiting for pose landmarks"}</div>
-                  <div style={{ color: "var(--text-faint)", fontSize: 13 }}>The 3D movement view appears here when the backend returns valid body landmarks.</div>
+                  <div style={{ color: "var(--text-faint)", fontSize: 13 }}>Video with pose overlay appears here when body landmarks are available.</div>
               </div>
               </div>
             )}

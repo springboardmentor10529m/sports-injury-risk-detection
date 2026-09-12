@@ -1,16 +1,23 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceArea } from "recharts";
-import { getRiskHistory } from "../api/client";
+import { getRiskHistory, peekData } from "../api/client";
 
 export default function History() {
-  const [data, setData] = useState(null);
+  const [data, setData] = useState(() => peekData("/api/analysis/risk-history") ?? null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    getRiskHistory().then((res) => setData(res.data));
+    let active = true;
+    const refresh = () => getRiskHistory().then((res) => {
+      if (active) { setData(res.data); setError(""); }
+    }).catch(() => { if (active) setError("Could not refresh history. Please retry shortly."); });
+    refresh();
+    const timer = setInterval(refresh, 15000);
+    return () => { active = false; clearInterval(timer); };
   }, []);
 
-  if (!data) return <p style={{ color: "var(--text-dim)" }}>Loading...</p>;
+  if (!data) return <p style={{ color: "var(--text-dim)" }}>{error || "Loading..."}</p>;
 
   if (data.length === 0) {
     return (
@@ -33,6 +40,7 @@ export default function History() {
   return (
     <div>
       <h1 style={{ fontSize: 24, marginBottom: 20 }}>Risk History</h1>
+      {error && <p role="alert">{error}</p>}
 
       <div className="card" style={{ marginBottom: 20, height: 320 }}>
         <ResponsiveContainer width="100%" height="100%">

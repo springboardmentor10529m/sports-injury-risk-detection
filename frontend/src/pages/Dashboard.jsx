@@ -3,30 +3,44 @@ import { Link } from "react-router-dom";
 import {
   Activity, ArrowRight, Gauge, HeartPulse, Scale, Sparkles, Video, Zap,
 } from "lucide-react";
-import { getDashboardSummary, listVideos } from "../api/client";
+import { getDashboardSummary, listVideos, peekData } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import RiskGauge from "../components/RiskGauge";
 import StatCard from "../components/StatCard";
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const [summary, setSummary] = useState(null);
-  const [videos, setVideos] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [summary, setSummary] = useState(() => peekData("/api/analysis/dashboard-summary") ?? null);
+  const [videos, setVideos] = useState(() => peekData("/api/videos") ?? []);
+  const [loading, setLoading] = useState(() => !peekData("/api/analysis/dashboard-summary"));
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    Promise.all([getDashboardSummary(), listVideos()])
+    let active = true;
+    const refresh = () => Promise.all([getDashboardSummary(), listVideos()])
       .then(([s, v]) => {
+        if (!active) return;
         setSummary(s.data);
         setVideos(v.data);
+        setError("");
       })
-      .finally(() => setLoading(false));
+      .catch(() => { if (active) setError("Could not refresh your data. Please retry shortly."); })
+      .finally(() => { if (active) setLoading(false); });
+    refresh();
+    const timer = setInterval(refresh, 15000);
+    return () => { active = false; clearInterval(timer); };
   }, []);
 
   if (loading) return <p style={{ color: "var(--text-dim)" }}>Loading your movement data...</p>;
 
   return (
     <div>
+      {error && <p role="alert">{error}</p>}
+      {["HIGH", "CRITICAL"].includes(String(summary?.current_risk_category).toUpperCase()) &&
+        <div role="alert" className="card" style={{ border: "1px solid var(--risk-high)", marginBottom: 20 }}>
+          <strong>Your latest assessment shows {summary.current_risk_category} risk.</strong>
+          <p>Review your latest analysis and recommendations. This is not a medical diagnosis.</p>
+        </div>}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 28 }}>
         <div>
           <div className="eyebrow" style={{ marginBottom: 6 }}>Overview</div>

@@ -139,9 +139,9 @@ export default function Layout() {
       </aside>
 
       <main style={{ flex: 1, padding: "36px 44px", maxWidth: 1240 }}>
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 20 }}>
+        {user?.role !== "athlete" && <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 20 }}>
           <NotificationBell />
-        </div>
+        </div>}
         <Outlet />
       </main>
     </div>

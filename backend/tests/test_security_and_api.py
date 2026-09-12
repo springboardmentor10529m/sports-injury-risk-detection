@@ -91,11 +91,20 @@ def test_registration_login_upload_history_and_ownership(client):
     assert response.status_code == 201, response.text
     item = response.json()
     assert item["status"] == "uploaded"
+    original = client.get(f"/api/videos/{item['id']}/original", headers=first)
+    assert original.status_code == 200
+    assert original.content == b"test"
+    assert original.headers["cache-control"] == "private, no-store"
+    assert client.get(f"/api/videos/{item['id']}/original", headers=second).status_code == 404
+    assert client.get(f"/api/videos/{item['id']}/original").status_code == 401
     assert len(client.get("/api/videos", headers=first).json()) == 1
     assert client.get("/api/videos", headers=second).json() == []
     assert client.get(f"/api/videos/{item['id']}", headers=second).status_code == 404
     assert client.get(f"/api/videos/{item['id']}/pose-frames", headers=second).status_code == 404
     assert client.get("/api/videos").status_code == 401
+    for uploaded in settings.upload_path.iterdir():
+        uploaded.unlink()
+    assert client.get(f"/api/videos/{item['id']}/original", headers=first).status_code == 404
 
 
 def test_auth_throttle_and_closed_registration(client):

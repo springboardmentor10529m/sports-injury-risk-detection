@@ -74,8 +74,10 @@ Compose file with `docker-compose.yml`; development containers and volumes are s
 - One dedicated worker, one subprocess per video, ten-minute timeout. The worker
   takes a PostgreSQL advisory lock so another worker cannot consume the same queue.
   Interrupted nonterminal jobs are cleared and reprocessed after restart.
-- Production raw uploads are removed after a terminal outcome. Pose data and
-  reports remain in PostgreSQL. Failed clips must be uploaded again to retry.
+- Production raw uploads are retained for authenticated video/pose-overlay playback.
+  Monitor storage and back up these videos along with the database. Setting
+  `DELETE_PROCESSED_UPLOADS=true` removes terminal uploads and disables their playback.
+  Previously deleted videos must be uploaded again; reports remain in PostgreSQL.
 - Storage is capped at admission (2 GB plus disk free-space reserve). Container
   memory/CPU and log rotation limits are defined in the production Compose file.
 - Authentication endpoints share 30 POST attempts per minute in the single API

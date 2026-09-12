@@ -1,4 +1,12 @@
 import axios from "axios";
+import { createCache } from "./cache";
+
+const cache = createCache();
+const token = () => localStorage.getItem("injuryguard_token");
+export const clearDataCache = () => cache.clear();
+export const invalidateDataCache = () => cache.invalidate();
+export const peekData = (path) => cache.peek(token(), path)?.data;
+const cachedGet = (path) => cache.get(token(), path, () => api.get(path));
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? "/" : "http://127.0.0.1:8001");
 
@@ -11,12 +19,16 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (response.config.method !== "get") invalidateDataCache();
+    return response;
+  },
   (error) => {
     if (Array.isArray(error.response?.data?.detail)) {
       error.response.data.detail = error.response.data.detail.map((item) => item.msg).join("; ");
     }
     if (error.response?.status === 401) {
+      clearDataCache();
       localStorage.removeItem("injuryguard_token");
       if (window.location.pathname !== "/login") {
         window.location.href = "/login";
@@ -35,7 +47,7 @@ export const login = (email, password) => api.post("/api/auth/login-json", { ema
 export const getMe = () => api.get("/api/auth/me");
 
 // ---- Athlete profile ----
-export const getProfile = () => api.get("/api/athlete/profile");
+export const getProfile = () => cachedGet("/api/athlete/profile");
 export const updateProfile = (payload) => api.patch("/api/athlete/profile", payload);
 
 // ---- Videos / pipeline ----
@@ -49,14 +61,14 @@ export const uploadVideo = (file, activityType, onUploadProgress) => {
     timeout: 180000,
   });
 };
-export const getUploadLimits = () => api.get("/api/videos/limits");
-export const listVideos = () => api.get("/api/videos");
+export const getUploadLimits = () => cachedGet("/api/videos/limits");
+export const listVideos = () => cachedGet("/api/videos");
 export const getVideo = (id) => api.get(`/api/videos/${id}`);
 export const getPoseFrames = (id) => api.get(`/api/videos/${id}/pose-frames`);
 
 // ---- Analysis / dashboard ----
-export const getDashboardSummary = () => api.get("/api/analysis/dashboard-summary");
-export const getRiskHistory = () => api.get("/api/analysis/risk-history");
+export const getDashboardSummary = () => cachedGet("/api/analysis/dashboard-summary");
+export const getRiskHistory = () => cachedGet("/api/analysis/risk-history");
 
 // ---- Coach ----
 export const getCoachTeam = () => api.get("/api/coach/team");

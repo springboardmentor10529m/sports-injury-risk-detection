@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { getMe, login as loginApi } from "../api/client";
+import { getMe, login as loginApi, clearDataCache } from "../api/client";
 
 const AuthContext = createContext(null);
 
@@ -20,6 +20,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   async function login(email, password) {
+    clearDataCache();
     const res = await loginApi(email, password);
     localStorage.setItem("injuryguard_token", res.data.access_token);
     const me = await getMe();
@@ -28,6 +29,7 @@ export function AuthProvider({ children }) {
   }
 
   function logout() {
+    clearDataCache();
     localStorage.removeItem("injuryguard_token");
     setUser(null);
   }

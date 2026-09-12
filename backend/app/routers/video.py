@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
@@ -114,3 +115,12 @@ def get_pose_frames(video_id: str, current_user: User = Depends(require_athlete)
     if video.pose_frames is None:
         raise HTTPException(status_code=404, detail="Pose frames not available yet")
     return video.pose_frames
+
+
+@router.get("/{video_id}/original")
+def get_original_video(video_id: str, current_user: User = Depends(require_athlete), db: Session = Depends(get_db)):
+    video = get_video(video_id, current_user, db)
+    path = Path(video.stored_path).resolve()
+    if path.parent != settings.upload_path.resolve() or not path.is_file():
+        raise HTTPException(404, "Original video is no longer available. Upload it again for playback.")
+    return FileResponse(path, headers={"Cache-Control": "private, no-store"})

@@ -383,3 +383,8 @@ button, input, select, textarea {
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+/* Upload controls and recording guidance share the available page width. */
+.analyze-layout { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr); gap: 24px; align-items: start; }
+.analyze-guide { display: grid; gap: 18px; min-width: 0; }
+@media (max-width: 1100px) { .analyze-layout { grid-template-columns: minmax(0, 1fr); } }

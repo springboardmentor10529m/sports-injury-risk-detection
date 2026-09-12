@@ -19,6 +19,7 @@ services:
   backend:
     build: ./backend
     environment:
+      PROCESSING_MODE: worker
       DATABASE_HOST: postgres
       DATABASE_USER: postgres
       DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
@@ -35,6 +36,26 @@ services:
       - ./backend:/app
       - uploads_data:/app/uploads
       
+
+  worker:
+    build: ./backend
+    command: ["python", "-m", "app.worker"]
+    environment:
+      PROCESSING_MODE: worker
+      DATABASE_HOST: postgres
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_NAME: injury_guard
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+    init: true
+    stop_grace_period: 20s
+    volumes:
+      - ./backend:/app
+      - uploads_data:/app/uploads
 
   frontend:
     build: ./frontend

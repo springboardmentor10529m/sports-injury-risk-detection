@@ -14,6 +14,7 @@ from app.services import biomechanics as biomech_svc
 from app.services import notifications as notif_svc
 from app.services import recommendations as reco_svc
 from app.services import risk_scoring
+from app.services.activity_check import check_activity
 from app.services.pose_estimation import PoseEstimator, frame_pose_to_json
 from app.video_processing.frame_extractor import extract_frames, VideoReadError
 
@@ -68,6 +69,7 @@ def run_pipeline(video_id: str, db_session_factory) -> None:
             biomechanics_summary = biomech_svc.aggregate_biomechanics(
                 per_frame_metrics, video.activity_type.value
             )
+            biomechanics_summary["activity_check"] = check_activity(per_frame_metrics, video.activity_type.value)
             video.biomechanics = biomechanics_summary
             db.commit()
 
