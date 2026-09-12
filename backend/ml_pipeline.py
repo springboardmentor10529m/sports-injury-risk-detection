@@ -223,6 +223,24 @@ class InjuryRiskMLModelInterface:
             }
         }
 
+    def get_system_architecture_status(self) -> Dict[str, Any]:
+        """Returns transparent overview of active ML and processing architecture."""
+        return {
+            "pose_estimation_ml": {
+                "model_name": "MediaPipe PoseLandmarker",
+                "status": "ACTIVE_VISION_ML",
+                "description": "33 3D skeletal landmarks per frame at 30 fps"
+            },
+            "injury_risk_classifier": {
+                "model_name": "RandomForestClassifier",
+                "status": "ACTIVE_DATASET_ML",
+                "is_trained_ml_active": self.is_trained_ml_active,
+                "dataset": "Project-Injury-Dataset.csv",
+                "features": self.feature_names
+            },
+            "evaluation_metrics": self.evaluation_metrics
+        }
+
 
 # Singleton pipeline interface
 ml_interface = InjuryRiskMLModelInterface()

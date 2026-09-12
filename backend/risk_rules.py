@@ -94,27 +94,19 @@ def calculate_injury_predictions(
     lower_back_risk = round(float(np.clip(lower_back_base, 5.0, 95.0)), 1)
     overuse_risk = round(float(np.clip(overuse_base, 5.0, 95.0)), 1)
 
-    # Overall Risk Score Aggregation
-    all_risks = [acl_risk, hamstring_risk, ankle_risk, shoulder_risk, lower_back_risk, overuse_risk]
-    max_risk = max(all_risks)
-    mean_risk = float(np.mean(all_risks))
-
-    overall_risk_score = round(
-        float(
-            np.clip(
-                0.35 * max_risk + 0.35 * mean_risk + 0.30 * (100.0 - movement_quality),
-                5.0, 95.0
-            )
-        ),
-        1
-    )
-
-    if overall_risk_score < 34.0:
-        risk_level = "Low"
-    elif overall_risk_score < 67.0:
-        risk_level = "Moderate"
-    else:
-        risk_level = "High"
+    # Final Overall Injury Risk Classification and Score generated directly by trained Random Forest ML model
+    from ml_pipeline import ml_interface
+    ml_res = ml_interface.predict_risk({
+        "knee_valgus_angle_deg": knee_valgus,
+        "hip_stability_score": hip_stability,
+        "trunk_lateral_flexion_deg": trunk_lean,
+        "range_of_motion_deg": rom,
+        "bilateral_symmetry_pct": symmetry,
+        "movement_smoothness_score": movement_quality,
+        "rpe_fatigue_score": (fatigue / 10.0) if fatigue else 5.0
+    })
+    overall_risk_score = ml_res["predicted_risk_score"]
+    risk_level = ml_res["risk_level"].capitalize()
 
     # Per-Injury Triggered Factors ("Why?" explanations)
     injury_factors = {

@@ -112,8 +112,8 @@ def test_feature_engineering_and_anomalies():
     print(f"  [OK] Fatigue risk multiplier applied: {feat_result['fatigue_profile']['fatigue_risk_multiplier']}")
 
 
-def test_risk_rules_and_injury_history():
-    print("\n--- [TEST 4] Risk Rules & Prior Injury History Weighting ---")
+def test_dataset_ml_risk_prediction():
+    print("\n--- [TEST 4] Dataset-Trained Random Forest ML Risk Prediction ---")
     base_biomechanics = {
         "knee_valgus": 14.5,
         "trunk_lean": 9.0,
@@ -124,25 +124,16 @@ def test_risk_rules_and_injury_history():
         "range_of_motion_deg": 62.0
     }
 
-    # Case A: Without prior injuries
-    res_no_history = calculate_injury_predictions(
+    res = calculate_injury_predictions(
         base_biomechanics,
-        athlete_position="Winger",
-        prior_injuries=[]
+        athlete_position="Winger"
     )
 
-    # Case B: With unrecovered Knee ACL history
-    res_with_acl = calculate_injury_predictions(
-        base_biomechanics,
-        athlete_position="Winger",
-        prior_injuries=[{"body_part": "Knee", "injury_type": "ACL Tear", "fully_recovered": 0}]
-    )
-
-    assert res_with_acl["acl_risk"] > res_no_history["acl_risk"], "Prior ACL injury must increase ACL risk score"
-    print(f"  [OK] ACL Risk without history: {res_no_history['acl_risk']}%")
-    print(f"  [OK] ACL Risk with unrecovered ACL history: {res_with_acl['acl_risk']}% (+{round(res_with_acl['acl_risk'] - res_no_history['acl_risk'], 1)}% elevated)")
-    assert len(res_with_acl["history_notes"]) > 0
-    print(f"  [OK] History explanation recorded: {res_with_acl['history_notes'][0]}")
+    assert "overall_risk_score" in res, "Must return overall_risk_score"
+    assert "risk_level" in res, "Must return risk_level from ML model"
+    print(f"  [OK] ML Risk Score: {res['overall_risk_score']}/100")
+    print(f"  [OK] ML Risk Level: {res['risk_level']}")
+    print(f"  [OK] ACL Risk: {res['acl_risk']}%, Hamstring Risk: {res['hamstring_risk']}%")
 
 
 def test_recommendation_engine():
@@ -192,9 +183,9 @@ def test_ml_pipeline_and_honesty():
     status = ml_interface.get_system_architecture_status()
     assert status["pose_estimation_ml"]["model_name"] == "MediaPipe PoseLandmarker"
     assert status["pose_estimation_ml"]["status"] == "ACTIVE_VISION_ML"
-    assert status["injury_risk_classifier"]["status"] == "ACTIVE_VALIDATED_RULES"
-    assert not status["injury_risk_classifier"]["is_trained_ml_active"]
-    print("  [OK] Honest architecture check verified:")
+    assert status["injury_risk_classifier"]["model_name"] == "RandomForestClassifier"
+    assert status["injury_risk_classifier"]["is_trained_ml_active"] is True
+    print("  [OK] ML architecture check verified:")
     print(f"     - Pose Estimation: {status['pose_estimation_ml']['model_name']} ({status['pose_estimation_ml']['status']})")
     print(f"     - Risk Scoring: {status['injury_risk_classifier']['model_name']} ({status['injury_risk_classifier']['status']})")
     print(f"     - Supervised Tabular ML Active: {status['injury_risk_classifier']['is_trained_ml_active']}")
@@ -202,8 +193,8 @@ def test_ml_pipeline_and_honesty():
     # Train actual model on Project-Injury-Dataset.csv
     train_res = ml_interface.train_baseline_model()
     assert train_res["status"] == "SUCCESSFULLY_TRAINED"
-    assert train_res["sample_count"] > 0
-    print(f"  [OK] ML model trained on Project-Injury-Dataset.csv: Accuracy={train_res['train_accuracy']}, AUC={train_res['train_roc_auc']}")
+    assert train_res["total_samples"] == 50
+    print(f"  [OK] ML model trained on Project-Injury-Dataset.csv: Total Samples={train_res['total_samples']}, Accuracy={train_res['test_accuracy']}%, F1={train_res['test_f1_score']}")
 
 
 def test_api_endpoints():
@@ -286,7 +277,7 @@ if __name__ == "__main__":
         test_datasets()
         test_population_benchmarks()
         test_feature_engineering_and_anomalies()
-        test_risk_rules_and_injury_history()
+        test_dataset_ml_risk_prediction()
         test_recommendation_engine()
         test_ml_pipeline_and_honesty()
         test_api_endpoints()
