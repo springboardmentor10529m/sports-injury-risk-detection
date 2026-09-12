@@ -32,6 +32,7 @@ export default function Dashboard() {
   }, []);
 
   if (loading) return <p style={{ color: "var(--text-dim)" }}>Loading your movement data...</p>;
+  const recommendationSource = videos.find((item) => item.id === summary?.latest_video_id);
 
   return (
     <div>
@@ -99,7 +100,12 @@ export default function Dashboard() {
 
           {summary.recommendations && (
             <div className="card animate-in" style={{ marginBottom: 20 }}>
-              <div className="card-title"><HeartPulse size={15} color="var(--accent)" /> Today's recommendations</div>
+              <div className="card-title"><HeartPulse size={15} color="var(--accent)" /> Recommendations from your latest analysis</div>
+              {recommendationSource && <p style={{ color: "var(--text-dim)", fontSize: 13, marginBottom: 16 }}>
+                <span style={{ textTransform: "capitalize" }}>{recommendationSource.activity_type}</span>
+                {recommendationSource.completed_at && <> · Completed {new Date(recommendationSource.completed_at).toLocaleString()}</>}
+                {" · "}<Link to={`/analysis/${recommendationSource.id}`} style={{ color: "var(--accent)" }}>View analysis</Link>
+              </p>}
               <RecoList recommendations={summary.recommendations} />
             </div>
           )}
