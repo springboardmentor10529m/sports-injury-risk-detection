@@ -1,0 +1,27 @@
+{
+  "dataset_id": "sports_workload_swathikiran",
+  "dataset_name": "Swathikiran Sports Workload and Injury Outcome Dataset",
+  "publication": "Sports Injury Analysis (2021)",
+  "license": "MIT / Open Research",
+  "description": "Athlete daily game workloads, hip mobility, groin squeeze physical screening metrics, and injury dates.",
+  "subjects": 30,
+  "prediction_target": "injury_dates (incidence events)",
+  "files": [
+    {
+      "filename": "injuries.csv",
+      "size_bytes": 1895,
+      "status": "verified"
+    },
+    {
+      "filename": "game_workload.csv",
+      "size_bytes": 42529,
+      "status": "verified"
+    },
+    {
+      "filename": "metrics.csv",
+      "size_bytes": 1429240,
+      "status": "verified"
+    }
+  ],
+  "status": "complete"
+}

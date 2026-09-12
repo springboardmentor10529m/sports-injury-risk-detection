@@ -1,0 +1,22 @@
+{
+  "dataset_id": "fukuchi_running_biomechanics_rbds",
+  "dataset_name": "Fukuchi et al. Running Biomechanics Dataset (RBDS)",
+  "publication": "PeerJ (2017) / Scientific Data",
+  "license": "CC-BY 4.0",
+  "description": "Lower extremity 3D kinematics and kinetics from 28 regular runners across 3 running speeds.",
+  "subjects": 28,
+  "prediction_target": "normative_biomechanics_kinematics",
+  "files": [
+    {
+      "filename": "BMC_RIC_dataset.txt",
+      "size_bytes": 18681777,
+      "status": "verified"
+    },
+    {
+      "filename": "metadata.txt",
+      "size_bytes": 87665,
+      "status": "verified"
+    }
+  ],
+  "status": "complete"
+}

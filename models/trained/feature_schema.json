@@ -1,0 +1,34 @@
+{
+  "feature_names": [
+    "total_distance_km",
+    "max_distance_day_km",
+    "nr_sessions",
+    "nr_rest_days",
+    "nr_tough_sessions",
+    "nr_strength_sessions",
+    "high_intensity_km",
+    "moderate_intensity_km",
+    "avg_exertion",
+    "max_exertion",
+    "avg_recovery",
+    "min_recovery",
+    "acute_chronic_workload_ratio",
+    "workload_spike_2week",
+    "fatigue_index",
+    "movement_asymmetry_proxy",
+    "knee_valgus_proxy",
+    "hip_stability_index",
+    "trunk_lean_proxy"
+  ],
+  "feature_count": 19,
+  "target_name": "injury_label",
+  "supported_injuries": {
+    "overuse_running_injury": "Trained & Calibrated (L\u00f6vdal et al. cohort)",
+    "lower_limb_strain": "Trained (Swathikiran cohort)",
+    "acl_knee_ligament_tear": "Unavailable for pure supervised classification - Clinical ground-truth MRI/surgical cohort required (Stanford MRNet access required)",
+    "hamstring_tear": "Estimated via sprint load proxy - Labeled clinical ultrasound cohort required",
+    "ankle_sprain": "Estimated via asymmetry proxy - Labeled clinical cohort required"
+  },
+  "model_version": "2.0.0-supervised",
+  "scaler_used": "StandardScaler"
+}

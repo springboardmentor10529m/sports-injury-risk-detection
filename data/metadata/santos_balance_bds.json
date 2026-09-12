@@ -1,0 +1,17 @@
+{
+  "dataset_id": "santos_balance_bds",
+  "dataset_name": "Santos & Duarte (2016) Balance Evaluations Dataset (BDS)",
+  "publication": "PeerJ (2016) 4:e2648",
+  "license": "CC-BY 4.0",
+  "description": "Human balance and posturography evaluations across 163 subjects with force platform center of pressure (COP) and Mini-BESTest scores.",
+  "subjects": 163,
+  "prediction_target": "balance_and_postural_stability",
+  "files": [
+    {
+      "filename": "BDSinfo.txt",
+      "size_bytes": 714253,
+      "status": "verified"
+    }
+  ],
+  "status": "complete"
+}

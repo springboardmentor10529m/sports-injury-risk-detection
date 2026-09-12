@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import shutil
 import cv2
 import yaml
 from datetime import datetime
@@ -20,6 +21,7 @@ from ml.injury_prediction.baseline_model import BaselineInjuryRiskModel
 from ml.risk_engine import RiskScoringEngine
 from services.recommendation_engine import PersonalizedRecommendationEngine
 from services.notification_service import NotificationService
+from services.ml_injury_service import get_ml_predictor
 
 logger = logging.getLogger(__name__)
 
@@ -84,8 +86,8 @@ def run_pose_analysis_job(analysis_id: str):
         db.close()
         return
 
-    # Skeleton video destination
-    output_filename = f"{job.video_id}_pose.mp4"
+    # Skeleton video destination (job-specific to avoid Windows file locks on re-analysis)
+    output_filename = f"{job.video_id}_{job.id[:8]}_pose.mp4"
     output_path = os.path.abspath(os.path.join(PROCESSED_DIR, output_filename))
 
     try:
@@ -216,8 +218,15 @@ def run_pose_analysis_job(analysis_id: str):
         video.analysis_fps = proc_stats.get("analysis_fps", 15.0)
         video.analysis_completed_at = datetime.utcnow()
 
+        # Update legacy fallback video file safely without throwing if locked
+        legacy_path = os.path.abspath(os.path.join(PROCESSED_DIR, f"{job.video_id}_pose.mp4"))
+        try:
+            shutil.copy2(output_path, legacy_path)
+        except Exception as copy_err:
+            logger.debug(f"[POSE_SERVICE] Note: legacy file copy deferred: {copy_err}")
+
         # Stage 3: Movement Anomaly Detection, Weighted Risk Scoring & Personalized Recommendations
-        compute_and_save_analysis_summary(db, job, video, sequence_features, frame_timestamps, frame_indices)
+        compute_and_save_analysis_summary(db, job, video, sequence_features, frame_timestamps, frame_indices, pipeline=pipeline)
 
         job.status = "completed"
         job.stage = "Analysis Complete"
@@ -246,7 +255,8 @@ def compute_and_save_analysis_summary(
     video: Video,
     sequence_features: Optional[list] = None,
     frame_timestamps: Optional[list] = None,
-    frame_indices: Optional[list] = None
+    frame_indices: Optional[list] = None,
+    pipeline: Optional[Any] = None
 ):
     """
     Aggregates BiomechanicsFrame data, runs Movement Anomaly Detection (Isolation Forest),
@@ -357,11 +367,18 @@ def compute_and_save_analysis_summary(
         else:
             athlete_id = "default_athlete"
 
-        # 5. Injury Risk Prediction Model (Phase 4)
+        # 5. Injury Risk Prediction Model
+        # A. Baseline / Heuristic multi-joint prediction for screening engine
         risk_model = BaselineInjuryRiskModel()
         injury_probs = risk_model.predict_proba(aggregated, athlete_dict)
 
-        # 6. Weighted Risk Scoring Engine (Phase 5)
+        # B. Supervised ML Injury Predictor (Trained on Lövdal & Swathikiran cohorts)
+        ml_predictor = get_ml_predictor()
+        ml_prediction = ml_predictor.predict(aggregated, athlete_dict)
+        calibrated_prob = float(ml_prediction.get("calibrated_probability", 0.05))
+        ml_model_name = str(ml_prediction.get("model_name", "Calibrated-XGBoost"))
+
+        # 6. Weighted Risk Scoring Engine (Phase 5) - 5-factor screening score
         risk_report = RiskScoringEngine.calculate(
             aggregated_features=aggregated,
             athlete_profile=athlete_dict,
@@ -375,8 +392,11 @@ def compute_and_save_analysis_summary(
         movement_quality = round(max(30.0, min(99.0, 100.0 - overall_risk_score * 0.65)), 1)
         bilateral_sym = round(max(20.0, min(100.0, 100.0 - (aggregated.get("bilateral_knee_asymmetry", {}).get("mean", 6.0) * 2.0))), 1)
 
+        active_pose_backend = getattr(getattr(pipeline, "pose_estimator", None), "active_backend", "rtmpose-m-onnx") if pipeline else "rtmpose-m-onnx"
+        pose_model_name = "RTMPose-M (ONNX)" if "rtm" in str(active_pose_backend).lower() else "Keypoint R-CNN"
+
         # 7. Persist or Update AnalysisResult
-        result = db.query(AnalysisResult).filter(AnalysisResult.video_id == video.video_id).first()
+        result = db.query(AnalysisResult).filter(AnalysisResult.analysis_id == job.id).first()
         if not result:
             result = AnalysisResult(
                 analysis_id=job.id,
@@ -396,11 +416,19 @@ def compute_and_save_analysis_summary(
                 bilateral_symmetry=bilateral_sym,
                 biomechanical_summary=json.dumps(aggregated),
                 model_version=risk_report["model_version"],
+                dataset_version="1.0.0-unified",
+                pose_model=pose_model_name,
+                pose_model_version="1.0.0-simcc",
+                feature_version="2.0.0-kinematics",
+                ml_model_version="2.0.0-supervised",
+                calibrated_ml_probability=round(calibrated_prob, 4),
+                screening_risk_score=overall_risk_score,
                 created_at=datetime.utcnow()
             )
             db.add(result)
         else:
             result.analysis_id = job.id
+            result.athlete_id = athlete_id
             result.knee_valgus = round(aggregated.get("knee_valgus_angle", {}).get("mean", 4.0), 1)
             result.hip_stability = round(max(10.0, 100.0 - aggregated.get("hip_stability", {}).get("mean", 4.0) * 4.0), 1)
             result.trunk_lean = round(aggregated.get("trunk_lean", {}).get("mean", 4.0), 1)
@@ -412,6 +440,13 @@ def compute_and_save_analysis_summary(
             result.bilateral_symmetry = bilateral_sym
             result.biomechanical_summary = json.dumps(aggregated)
             result.model_version = risk_report["model_version"]
+            result.dataset_version = "1.0.0-unified"
+            result.pose_model = pose_model_name
+            result.pose_model_version = "1.0.0-simcc"
+            result.feature_version = "2.0.0-kinematics"
+            result.ml_model_version = "2.0.0-supervised"
+            result.calibrated_ml_probability = round(calibrated_prob, 4)
+            result.screening_risk_score = overall_risk_score
 
         db.flush()
 
@@ -445,7 +480,9 @@ def compute_and_save_analysis_summary(
                 ankle_risk=ankle_val,
                 shoulder_risk=shoulder_val,
                 lower_back_risk=lower_back_val,
-                overuse_risk=overuse_val
+                overuse_risk=overuse_val,
+                calibrated_probability=round(calibrated_prob, 4),
+                ml_model_name=ml_model_name
             )
             db.add(prediction)
         else:
@@ -455,6 +492,8 @@ def compute_and_save_analysis_summary(
             prediction.shoulder_risk = shoulder_val
             prediction.lower_back_risk = lower_back_val
             prediction.overuse_risk = overuse_val
+            prediction.calibrated_probability = round(calibrated_prob, 4)
+            prediction.ml_model_name = ml_model_name
         db.flush()
 
         # 10. Personalized Recommendations (Phase 7)

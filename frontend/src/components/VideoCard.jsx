@@ -5,9 +5,10 @@ import {
   Tag, Activity, CheckCircle2, Eye, RotateCw, AlertTriangle, Film
 } from 'lucide-react';
 
-export const VideoCard = ({ video, isPersonal, onDeleteSuccess, onAnalyseMovement }) => {
+export const VideoCard = ({ video, isPersonal, onDeleteSuccess, onAnalyseMovement, onReanalyseMovement }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [isReanalysing, setIsReanalysing] = useState(false);
   const cardRef = useRef(null);
   const [tiltStyle, setTiltStyle] = useState({ transform: 'perspective(800px) rotateX(0deg) rotateY(0deg)' });
 
@@ -55,6 +56,26 @@ export const VideoCard = ({ video, isPersonal, onDeleteSuccess, onAnalyseMovemen
       alert(err.message || 'Failed to delete video');
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleReanalyse = async (e) => {
+    e.stopPropagation();
+    if (isReanalysing) return;
+    setIsReanalysing(true);
+    try {
+      if (onReanalyseMovement) {
+        await onReanalyseMovement(video);
+      } else if (onAnalyseMovement) {
+        await onAnalyseMovement(video, null, true);
+      } else {
+        await api.post(`/api/analysis/videos/${video.video_id}/reanalyse`);
+        alert('Re-analysis queued! Please refresh or open the Analysis Hub.');
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to trigger re-analysis');
+    } finally {
+      setIsReanalysing(false);
     }
   };
 
@@ -149,24 +170,47 @@ export const VideoCard = ({ video, isPersonal, onDeleteSuccess, onAnalyseMovemen
           </div>
         </div>
 
-        {/* Action Button */}
-        <div className="pt-2">
+        {/* Action Buttons */}
+        <div className="pt-2 space-y-2">
           {hasAnalysis ? (
-            <button
-              onClick={() => onAnalyseMovement && onAnalyseMovement(video, video.latest_analysis_id)}
-              className="w-full py-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-mono font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Activity className="w-3.5 h-3.5 text-cyan-300" />
-              <span>OPEN 3D ANALYSIS LAB</span>
-            </button>
+            <>
+              <button
+                onClick={() => onAnalyseMovement && onAnalyseMovement(video, video.latest_analysis_id)}
+                className="w-full py-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-mono font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Activity className="w-3.5 h-3.5 text-cyan-300" />
+                <span>OPEN 3D ANALYSIS LAB</span>
+              </button>
+
+              <button
+                onClick={handleReanalyse}
+                disabled={isReanalysing}
+                className="w-full py-2 bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-cyan-400 border border-slate-700/80 hover:border-cyan-500/50 font-mono font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                title="Force a new pose estimation and injury screening run on this video"
+              >
+                <RotateCw className={`w-3.5 h-3.5 ${isReanalysing ? 'animate-spin text-cyan-400' : 'text-slate-400'}`} />
+                <span>{isReanalysing ? 'QUEUING RE-ANALYSIS...' : 'RE-ANALYSE VIDEO'}</span>
+              </button>
+            </>
           ) : (
-            <button
-              onClick={() => onAnalyseMovement && onAnalyseMovement(video, null)}
-              className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-cyan-400 hover:text-white border border-cyan-500/30 font-mono font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Zap className="w-3.5 h-3.5" />
-              <span>RUN AI POSE EXTRACTION</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onAnalyseMovement && onAnalyseMovement(video, null)}
+                className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 text-cyan-400 hover:text-white border border-cyan-500/30 font-mono font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Zap className="w-3.5 h-3.5" />
+                <span>RUN AI POSE EXTRACTION</span>
+              </button>
+
+              <button
+                onClick={handleReanalyse}
+                disabled={isReanalysing}
+                className="p-2.5 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-cyan-400 border border-slate-800 rounded-xl transition-colors cursor-pointer"
+                title="Force Re-analyse Video"
+              >
+                <RotateCw className={`w-3.5 h-3.5 ${isReanalysing ? 'animate-spin text-cyan-400' : ''}`} />
+              </button>
+            </div>
           )}
         </div>
       </div>

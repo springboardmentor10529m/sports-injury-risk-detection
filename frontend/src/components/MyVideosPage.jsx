@@ -46,6 +46,10 @@ export const MyVideosPage = ({ onNavigateToUpload }) => {
       return;
     }
 
+    if (forceRerun) {
+      return handleReanalyseMovement(video);
+    }
+
     setStartingAnalysisId(video.video_id);
     try {
       const response = await api.post(`/api/analysis/videos/${video.video_id}/analyse`);
@@ -57,6 +61,23 @@ export const MyVideosPage = ({ onNavigateToUpload }) => {
       }
     } catch (err) {
       alert(err.message || 'Failed to start movement analysis job.');
+    } finally {
+      setStartingAnalysisId(null);
+    }
+  };
+
+  const handleReanalyseMovement = async (video) => {
+    setStartingAnalysisId(video.video_id);
+    try {
+      const response = await api.post(`/api/analysis/videos/${video.video_id}/reanalyse`);
+      if (response && response.analysis_id) {
+        setActiveAnalysis({
+          analysisId: response.analysis_id,
+          video: video
+        });
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to re-analyse movement video.');
     } finally {
       setStartingAnalysisId(null);
     }
@@ -177,6 +198,7 @@ export const MyVideosPage = ({ onNavigateToUpload }) => {
               isPersonal={true}
               onDeleteSuccess={handleVideoDeleted}
               onAnalyseMovement={handleAnalyseMovement}
+              onReanalyseMovement={handleReanalyseMovement}
             />
           ))}
         </div>

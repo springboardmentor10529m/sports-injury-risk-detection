@@ -1,0 +1,111 @@
+{
+  "dataset_name": "AthleteGuard Unified Sports Injury & Biomechanics ML Dataset",
+  "version": "1.0.0",
+  "records_count": 45198,
+  "subjects_count": 104,
+  "injury_prevalence": 0.01575290942077083,
+  "columns": [
+    {
+      "name": "subject_id",
+      "dtype": "str"
+    },
+    {
+      "name": "session_id",
+      "dtype": "str"
+    },
+    {
+      "name": "activity",
+      "dtype": "str"
+    },
+    {
+      "name": "source_dataset",
+      "dtype": "str"
+    },
+    {
+      "name": "total_distance_km",
+      "dtype": "float64"
+    },
+    {
+      "name": "max_distance_day_km",
+      "dtype": "float64"
+    },
+    {
+      "name": "nr_sessions",
+      "dtype": "float64"
+    },
+    {
+      "name": "nr_rest_days",
+      "dtype": "float64"
+    },
+    {
+      "name": "nr_tough_sessions",
+      "dtype": "float64"
+    },
+    {
+      "name": "nr_strength_sessions",
+      "dtype": "float64"
+    },
+    {
+      "name": "high_intensity_km",
+      "dtype": "float64"
+    },
+    {
+      "name": "moderate_intensity_km",
+      "dtype": "float64"
+    },
+    {
+      "name": "avg_exertion",
+      "dtype": "float64"
+    },
+    {
+      "name": "max_exertion",
+      "dtype": "float64"
+    },
+    {
+      "name": "avg_recovery",
+      "dtype": "float64"
+    },
+    {
+      "name": "min_recovery",
+      "dtype": "float64"
+    },
+    {
+      "name": "acute_chronic_workload_ratio",
+      "dtype": "float64"
+    },
+    {
+      "name": "workload_spike_2week",
+      "dtype": "float64"
+    },
+    {
+      "name": "fatigue_index",
+      "dtype": "float64"
+    },
+    {
+      "name": "movement_asymmetry_proxy",
+      "dtype": "float64"
+    },
+    {
+      "name": "knee_valgus_proxy",
+      "dtype": "float64"
+    },
+    {
+      "name": "hip_stability_index",
+      "dtype": "float64"
+    },
+    {
+      "name": "trunk_lean_proxy",
+      "dtype": "float64"
+    },
+    {
+      "name": "injury_label",
+      "dtype": "int64"
+    },
+    {
+      "name": "injury_type",
+      "dtype": "str"
+    }
+  ],
+  "subject_grouping_column": "subject_id",
+  "target_column": "injury_label"
+}

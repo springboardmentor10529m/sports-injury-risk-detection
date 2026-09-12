@@ -10,7 +10,7 @@ logging.basicConfig(
 )
 
 import database, models
-from routers import auth_router, athlete_router, video_router, pose_router, analysis_router
+from routers import auth_router, athlete_router, video_router, pose_router, analysis_router, ml_catalog_router
 
 # Create database tables
 models.Base.metadata.create_all(bind=database.engine)
@@ -41,6 +41,7 @@ app.include_router(athlete_router.router)
 app.include_router(video_router.router)
 app.include_router(pose_router.router)
 app.include_router(analysis_router.router)
+app.include_router(ml_catalog_router.router)
 
 
 @app.get("/")

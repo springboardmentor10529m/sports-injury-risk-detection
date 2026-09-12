@@ -5,7 +5,7 @@ import {
   FileSpreadsheet, FileText, Film, Play, Trash2, Calendar, Clock, 
   ChevronRight, BarChart2, Eye, Download, Search, Filter, 
   RefreshCw, Zap, TrendingUp, CheckCircle2, ArrowLeft, Video as VideoIcon, 
-  Sparkles, X
+  Sparkles, X, RotateCw
 } from 'lucide-react';
 
 export const AnalysesOverviewDashboard = ({ onOpenAnalysis, onNavigateToUpload }) => {
@@ -16,6 +16,7 @@ export const AnalysesOverviewDashboard = ({ onOpenAnalysis, onNavigateToUpload }
   const [riskFilter, setRiskFilter] = useState('ALL'); // ALL, LOW, MODERATE, HIGH
   const [previewVideoUrl, setPreviewVideoUrl] = useState(null);
   const [previewTitle, setPreviewTitle] = useState('');
+  const [reanalysingId, setReanalysingId] = useState(null);
 
   useEffect(() => {
     fetchAnalyses();
@@ -35,7 +36,7 @@ export const AnalysesOverviewDashboard = ({ onOpenAnalysis, onNavigateToUpload }
   };
 
   const handleDeleteAnalysis = async (analysisId, e) => {
-    e.stopPropagation();
+    if (e) e.stopPropagation();
     if (!window.confirm('Are you sure you want to delete this analysis report and its telemetry data?')) {
       return;
     }
@@ -44,6 +45,32 @@ export const AnalysesOverviewDashboard = ({ onOpenAnalysis, onNavigateToUpload }
       setAnalyses((prev) => prev.filter((a) => a.analysis_id !== analysisId));
     } catch (err) {
       alert(err.message || 'Failed to delete analysis');
+    }
+  };
+
+  const handleReanalyse = async (analysis, e) => {
+    if (e) e.stopPropagation();
+    const vidId = analysis.video_id || analysis.video?.video_id;
+    if (!vidId) return;
+    setReanalysingId(analysis.analysis_id);
+    try {
+      const res = await api.post(`/api/analysis/videos/${vidId}/reanalyse`);
+      if (res && res.analysis_id) {
+        if (onOpenAnalysis) {
+          onOpenAnalysis({
+            analysis_id: res.analysis_id,
+            video_id: vidId,
+            video: analysis.video,
+            status: 'queued'
+          });
+        } else {
+          fetchAnalyses();
+        }
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to re-analyse video');
+    } finally {
+      setReanalysingId(null);
     }
   };
 
@@ -88,9 +115,10 @@ export const AnalysesOverviewDashboard = ({ onOpenAnalysis, onNavigateToUpload }
   const handleWatchSkeleton = (analysis, e) => {
     e.stopPropagation();
     const token = localStorage.getItem('token');
+    const vStamp = analysis.completed_at ? encodeURIComponent(analysis.completed_at) : Date.now();
     if (analysis.skeleton_video_url) {
       const url = `${api.baseUrl}${analysis.skeleton_video_url}${
-        token ? `?token=${encodeURIComponent(token)}` : ''
+        token ? `?token=${encodeURIComponent(token)}&_v=${vStamp}` : `?_v=${vStamp}`
       }`;
       setPreviewVideoUrl(url);
       setPreviewTitle(analysis.video?.filename || 'Annotated Skeleton Video');
@@ -522,14 +550,26 @@ export const AnalysesOverviewDashboard = ({ onOpenAnalysis, onNavigateToUpload }
                   </button>
 
                   <div className="flex items-center justify-between gap-2 pt-1 text-xs">
-                    <button
-                      onClick={(e) => handleWatchSkeleton(analysis, e)}
-                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 font-semibold flex items-center gap-1.5 transition-colors"
-                      title="Watch Annotated Skeleton Video"
-                    >
-                      <Film className="w-3.5 h-3.5 text-cyan-400" />
-                      Skeleton Video
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={(e) => handleWatchSkeleton(analysis, e)}
+                        className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 font-semibold flex items-center gap-1.5 transition-colors text-[11px]"
+                        title="Watch Annotated Skeleton Video"
+                      >
+                        <Film className="w-3.5 h-3.5 text-cyan-400" />
+                        Skeleton
+                      </button>
+
+                      <button
+                        onClick={(e) => handleReanalyse(analysis, e)}
+                        disabled={reanalysingId === analysis.analysis_id}
+                        className="px-2.5 py-1.5 bg-slate-800/80 hover:bg-slate-700 text-cyan-300 rounded-lg border border-cyan-800/60 font-semibold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 text-[11px]"
+                        title="Force fresh AI pose estimation & injury screening on this video"
+                      >
+                        <RotateCw className={`w-3.5 h-3.5 ${reanalysingId === analysis.analysis_id ? 'animate-spin text-cyan-400' : 'text-cyan-400'}`} />
+                        <span>{reanalysingId === analysis.analysis_id ? 'Queuing...' : 'Re-analyse'}</span>
+                      </button>
+                    </div>
 
                     <div className="flex items-center gap-1">
                       <button

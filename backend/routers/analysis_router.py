@@ -31,6 +31,7 @@ def verify_analysis_owner(analysis: models.AnalysisJob, current_user: models.Use
 def queue_analysis_job(
     video_id: str,
     background_tasks: BackgroundTasks,
+    force: bool = Query(False, description="Force a new analysis even if an analysis was previously created"),
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
@@ -44,26 +45,38 @@ def queue_analysis_job(
     if video.user_id != current_user.user_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Unauthorized access to this video.")
 
-    # Check if active job already running or existing job present
-    existing_job = db.query(models.AnalysisJob).filter(
-        models.AnalysisJob.video_id == video_id,
-        models.AnalysisJob.user_id == current_user.user_id,
-        models.AnalysisJob.status.in_(["queued", "processing", "pose_estimation", "tracking", "biomechanics", "rendering"])
-    ).first()
+    # Check if active job already running
+    if not force:
+        existing_job = db.query(models.AnalysisJob).filter(
+            models.AnalysisJob.video_id == video_id,
+            models.AnalysisJob.user_id == current_user.user_id,
+            models.AnalysisJob.status.in_(["queued", "processing", "pose_estimation", "tracking", "biomechanics", "rendering"])
+        ).first()
 
-    if existing_job:
-        return {
-            "analysis_id": existing_job.id,
-            "status": existing_job.status,
-            "message": "Analysis job already in progress."
-        }
+        if existing_job:
+            return {
+                "analysis_id": existing_job.id,
+                "status": existing_job.status,
+                "message": "Analysis job already in progress."
+            }
+    else:
+        # Mark stale active jobs as superseded
+        stale_jobs = db.query(models.AnalysisJob).filter(
+            models.AnalysisJob.video_id == video_id,
+            models.AnalysisJob.user_id == current_user.user_id,
+            models.AnalysisJob.status.in_(["queued", "processing", "pose_estimation", "tracking", "biomechanics", "rendering"])
+        ).all()
+        for sj in stale_jobs:
+            sj.status = "superseded"
+            sj.error_message = "Superseded by user re-analysis request."
+        db.flush()
 
     # Create new AnalysisJob
     job = models.AnalysisJob(
         video_id=video_id,
         user_id=current_user.user_id,
         status="queued",
-        stage="Queued",
+        stage="Queued for Analysis" if force else "Queued",
         progress=0.0
     )
     db.add(job)
@@ -77,6 +90,60 @@ def queue_analysis_job(
         "analysis_id": job.id,
         "status": job.status,
         "message": "Pose analysis job queued successfully."
+    }
+
+
+@router.post("/videos/{video_id}/reanalyse", status_code=status.HTTP_202_ACCEPTED)
+def reanalyse_video(
+    video_id: str,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    """
+    Forces a fresh re-analysis job for a video, even if a previous analysis exists.
+    Cancels any stale running jobs, resets video status, and queues a new RTMPose-M & ML screening pass.
+    """
+    video = db.query(models.Video).filter(models.Video.video_id == video_id).first()
+    if not video:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Video not found.")
+
+    if video.user_id != current_user.user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Unauthorized access to this video.")
+
+    # Mark any stale running jobs as superseded
+    stale_jobs = db.query(models.AnalysisJob).filter(
+        models.AnalysisJob.video_id == video_id,
+        models.AnalysisJob.user_id == current_user.user_id,
+        models.AnalysisJob.status.in_(["queued", "processing", "pose_estimation", "tracking", "biomechanics", "rendering"])
+    ).all()
+    for sj in stale_jobs:
+        sj.status = "superseded"
+        sj.error_message = "Superseded by user re-analysis request."
+
+    video.processing_status = "QUEUED"
+    db.flush()
+
+    # Create new AnalysisJob
+    job = models.AnalysisJob(
+        video_id=video_id,
+        user_id=current_user.user_id,
+        status="queued",
+        stage="Queued for Re-analysis",
+        progress=0.0
+    )
+    db.add(job)
+    db.commit()
+    db.refresh(job)
+
+    # Schedule non-blocking background task
+    background_tasks.add_task(run_pose_analysis_job, job.id)
+
+    return {
+        "analysis_id": job.id,
+        "video_id": video_id,
+        "status": job.status,
+        "message": "Video re-analysis queued successfully."
     }
 
 
@@ -97,6 +164,8 @@ def get_my_analyses(
     for job in jobs:
         video = db.query(models.Video).filter(models.Video.video_id == job.video_id).first()
         result = db.query(models.AnalysisResult).filter(models.AnalysisResult.analysis_id == job.id).first()
+        if not result and video:
+            result = db.query(models.AnalysisResult).filter(models.AnalysisResult.video_id == video.video_id).order_by(models.AnalysisResult.created_at.desc()).first()
         prediction = None
         recommendation = None
         if result:
@@ -132,9 +201,14 @@ def get_my_analyses(
             } if video else None,
             "result": {
                 "overall_risk_score": result.overall_risk_score,
+                "screening_risk_score": result.screening_risk_score or result.overall_risk_score,
+                "calibrated_ml_probability": result.calibrated_ml_probability or 0.0,
                 "risk_level": result.risk_level,
                 "confidence": result.confidence or 0.95,
                 "model_version": result.model_version or "2.0.0-weighted",
+                "pose_model": result.pose_model or "RTMPose-M (ONNX)",
+                "ml_model_version": result.ml_model_version or "2.0.0-supervised",
+                "dataset_version": result.dataset_version or "1.0.0-unified",
                 "symmetry_score": result.symmetry_score,
                 "movement_quality": result.movement_quality,
                 "knee_valgus": result.knee_valgus,
@@ -148,6 +222,8 @@ def get_my_analyses(
                 "shoulder_risk": prediction.shoulder_risk,
                 "lower_back_risk": prediction.lower_back_risk,
                 "overuse_risk": prediction.overuse_risk,
+                "calibrated_probability": prediction.calibrated_probability or 0.0,
+                "ml_model_name": prediction.ml_model_name or "Calibrated-XGBoost",
             } if prediction else None,
             "recommendation": {
                 "exercise": recommendation.exercise,
@@ -310,6 +386,8 @@ def get_skeleton_video_file(
     
     from services.pose_video_processor import PROCESSED_DIR
     candidate_paths.extend([
+        os.path.join(PROCESSED_DIR, f"{job.video_id}_{job.id[:8]}_pose.mp4"),
+        os.path.join(PROCESSED_DIR, f"{job.video_id}_{job.id}_pose.mp4"),
         os.path.join(PROCESSED_DIR, f"{job.video_id}_pose.mp4"),
         os.path.join(PROCESSED_DIR, f"{job.video_id}_skeleton.mp4")
     ])
@@ -457,18 +535,27 @@ def get_analysis_risk(
 
     result = db.query(models.AnalysisResult).filter(models.AnalysisResult.analysis_id == analysis_id).first()
     if not result:
+        result = db.query(models.AnalysisResult).filter(models.AnalysisResult.video_id == job.video_id).order_by(models.AnalysisResult.created_at.desc()).first()
+    if not result:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Risk scoring not yet computed for this analysis.")
 
     factors = db.query(models.RiskFactor).filter(models.RiskFactor.analysis_id == result.analysis_id).order_by(models.RiskFactor.contribution.desc()).all()
 
+    final_screening_score = result.screening_risk_score if (result.screening_risk_score and result.screening_risk_score > 0) else (result.overall_risk_score or 0.0)
+
     return {
         "analysis_id": analysis_id,
-        "overall_score": result.overall_risk_score,
+        "overall_score": final_screening_score,
+        "screening_risk_score": final_screening_score,
+        "calibrated_ml_probability": result.calibrated_ml_probability or 0.0,
         "risk_level": result.risk_level,
         "confidence": result.confidence or 0.95,
         "movement_quality": result.movement_quality,
         "symmetry_score": result.symmetry_score,
         "model_version": result.model_version or "2.0.0-weighted",
+        "pose_model": result.pose_model or "RTMPose-M (ONNX)",
+        "ml_model_version": result.ml_model_version or "2.0.0-supervised",
+        "dataset_version": result.dataset_version or "1.0.0-unified",
         "contributors": [
             {
                 "factor": rf.factor,
@@ -613,10 +700,15 @@ def get_complete_analysis_report(
 
     video = db.query(models.Video).filter(models.Video.video_id == job.video_id).first()
     result = db.query(models.AnalysisResult).filter(models.AnalysisResult.analysis_id == analysis_id).first()
+    if not result and video:
+        result = db.query(models.AnalysisResult).filter(models.AnalysisResult.video_id == video.video_id).order_by(models.AnalysisResult.created_at.desc()).first()
+
     prediction = db.query(models.InjuryPrediction).filter(models.InjuryPrediction.analysis_id == result.analysis_id).first() if result else None
     recommendation = db.query(models.Recommendation).filter(models.Recommendation.prediction_id == prediction.prediction_id).first() if prediction else None
 
     anomalies = db.query(models.MovementAnomaly).filter(models.MovementAnomaly.analysis_id == analysis_id).order_by(models.MovementAnomaly.timestamp.asc()).all()
+    if not anomalies and result:
+        anomalies = db.query(models.MovementAnomaly).filter(models.MovementAnomaly.analysis_id == result.analysis_id).order_by(models.MovementAnomaly.timestamp.asc()).all()
     risk_factors = db.query(models.RiskFactor).filter(models.RiskFactor.analysis_id == result.analysis_id).order_by(models.RiskFactor.contribution.desc()).all() if result else []
 
     bio_summary = {}
@@ -634,6 +726,8 @@ def get_complete_analysis_report(
             pass
 
     from services.recommendation_engine import RECOMMENDATION_DISCLAIMER
+
+    final_screening_score = (result.screening_risk_score if (result and result.screening_risk_score and result.screening_risk_score > 0) else (result.overall_risk_score if result else 0.0))
 
     return {
         "analysis": {
@@ -658,12 +752,17 @@ def get_complete_analysis_report(
             "processed_video_url": video.processed_video_url if video else None
         } if video else None,
         "risk": {
-            "overall_score": result.overall_risk_score if result else 0.0,
+            "overall_score": final_screening_score,
+            "screening_risk_score": final_screening_score,
+            "calibrated_ml_probability": result.calibrated_ml_probability if result else 0.0,
             "risk_level": result.risk_level if result else "LOW",
             "confidence": result.confidence if result else 0.95,
             "movement_quality": result.movement_quality if result else 0.0,
             "symmetry_score": result.symmetry_score if result else 0.0,
-            "model_version": result.model_version if result else "2.0.0-weighted"
+            "model_version": result.model_version if result else "2.0.0-weighted",
+            "pose_model": result.pose_model if result else "RTMPose-M (ONNX)",
+            "ml_model_version": result.ml_model_version if result else "2.0.0-supervised",
+            "dataset_version": result.dataset_version if result else "1.0.0-unified"
         } if result else None,
         "injury_prediction": {
             "acl": prediction.acl_risk if prediction else 0.0,
@@ -671,7 +770,9 @@ def get_complete_analysis_report(
             "ankle": prediction.ankle_risk if prediction else 0.0,
             "shoulder": prediction.shoulder_risk if prediction else 0.0,
             "lower_back": prediction.lower_back_risk if prediction else 0.0,
-            "overuse": prediction.overuse_risk if prediction else 0.0
+            "overuse": prediction.overuse_risk if prediction else 0.0,
+            "calibrated_probability": prediction.calibrated_probability if prediction else 0.0,
+            "ml_model_name": prediction.ml_model_name if prediction else "Calibrated-XGBoost"
         } if prediction else {},
         "biomechanics": bio_summary,
         "anomalies": [
@@ -706,6 +807,50 @@ def get_complete_analysis_report(
             "training_modification": recommendation.training_modification if recommendation else None
         } if recommendation else None,
         "disclaimer": RECOMMENDATION_DISCLAIMER
+    }
+
+
+@router.get("/{analysis_id}/explainability")
+def get_analysis_explainability(
+    analysis_id: str,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    """
+    Returns explainability insights: feature contributions, clinical screening breakdowns,
+    and model attribution for the supervised injury predictor.
+    """
+    job = db.query(models.AnalysisJob).filter(models.AnalysisJob.id == analysis_id).first()
+    if not job:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Analysis job not found.")
+    verify_analysis_owner(job, current_user)
+
+    result = db.query(models.AnalysisResult).filter(models.AnalysisResult.analysis_id == analysis_id).first()
+    if not result:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Analysis result not ready.")
+
+    prediction = db.query(models.InjuryPrediction).filter(models.InjuryPrediction.analysis_id == analysis_id).first()
+
+    bio_summary = {}
+    if result.biomechanical_summary:
+        try:
+            bio_summary = json.loads(result.biomechanical_summary)
+        except Exception:
+            pass
+
+    from services.ml_injury_service import get_ml_predictor
+    predictor = get_ml_predictor()
+    ml_res = predictor.predict(bio_summary, athlete_profile={"training_load": 50.0})
+
+    return {
+        "analysis_id": analysis_id,
+        "model_name": prediction.ml_model_name if prediction else "Calibrated-XGBoost",
+        "model_version": result.ml_model_version or "2.0.0-supervised",
+        "calibrated_probability": result.calibrated_ml_probability or 0.0,
+        "screening_risk_score": result.screening_risk_score or result.overall_risk_score,
+        "contributions": ml_res.get("contributions", []),
+        "breakdowns": ml_res.get("breakdowns", {}),
+        "disclaimer": "Supervised ML model trained on Lövdal (2021) and Swathikiran (2021) athlete cohorts using subject-level grouped validation. Monocular video keypoints provide screening kinematic proxies, not 3D clinical gait kinematics."
     }
 
 

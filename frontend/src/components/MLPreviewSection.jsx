@@ -6,30 +6,34 @@ export const MLPreviewSection = ({ onUploadClick }) => {
     {
       id: '01',
       title: 'Pose Estimation Engine',
-      tech: 'MediaPipe / MoveNet / OpenPose',
-      desc: 'Detects 33 body keypoints across frame sequences to create 3D skeleton models of knee joints, ankles, hips, and shoulders.',
-      badge: 'Step 1'
+      tech: 'RTMPose-M ONNX (SimCC • 17 COCO Keypoints)',
+      desc: 'Tracks 17 anatomical keypoints at high speed using coordinate classification and One-Euro temporal filtering.',
+      badge: 'Step 1',
+      status: 'LIVE (RTMPose-M)'
     },
     {
       id: '02',
-      title: 'Biomechanical Analysis',
-      tech: 'OpenCV + Biomechanics Math',
-      desc: 'Computes knee valgus angle, hip stability index, trunk lean, joint alignment, and stride asymmetry scores.',
-      badge: 'Step 2'
+      title: 'Biomechanical Kinematics Engine',
+      tech: '20 Standardized Kinematic Features',
+      desc: 'Computes knee valgus angle, hip stability index, trunk lean, joint alignment, and bilateral asymmetry scores.',
+      badge: 'Step 2',
+      status: 'LIVE'
     },
     {
       id: '03',
-      title: 'Movement Anomaly & Injury Risk',
-      tech: 'XGBoost & PyTorch Neural Models',
-      desc: 'Evaluates biomechanical deviations + training load + injury history to calculate ACL, Hamstring & Ankle risk probabilities.',
-      badge: 'Step 3'
+      title: 'Supervised Injury Predictor',
+      tech: 'Calibrated XGBoost (Platt Scaling)',
+      desc: 'Evaluates 19 workload & kinematic proxy features trained on Lövdal & Swathikiran cohorts (AUC 0.814, Brier 0.051).',
+      badge: 'Step 3',
+      status: 'TRAINED & CALIBRATED'
     },
     {
       id: '04',
-      title: 'AI Corrective Recommendations',
-      tech: 'LLM & Physiotherapist Engine',
-      desc: 'Generates customized corrective mobility routines, strengthening exercises, and recovery protocols.',
-      badge: 'Step 4'
+      title: 'Evidence-Based Recommendations',
+      tech: 'Clinical Screening & Corrective Engine',
+      desc: 'Generates targeted corrective mobility routines, strengthening exercises, and training workload modifications.',
+      badge: 'Step 4',
+      status: 'OPERATIONAL'
     }
   ];
 
@@ -43,15 +47,15 @@ export const MLPreviewSection = ({ onUploadClick }) => {
         <div className="relative z-10 max-w-3xl space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-950/80 border border-purple-800 text-purple-300 text-xs font-semibold">
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            Phase 2 Integration Pipeline
+            Production AI & Biomechanics Screening System
           </div>
 
           <h2 className="text-3xl font-extrabold text-white">
-            Downstream AI & Computer Vision Architecture
+            Integrated Computer Vision & Supervised ML Architecture
           </h2>
 
           <p className="text-sm text-slate-300 leading-relaxed">
-            All videos uploaded through Phase 1 are stored in high quality and indexed with OpenCV metadata (FPS, resolution, duration). In Phase 2, our Machine Learning models will process these stored videos to predict injury risks automatically.
+            Athlete videos are processed frame-by-frame using the OpenMMLab RTMPose-M deep learning model. Extracted kinematic proxies and workload metrics feed into our Calibrated XGBoost classifier (trained on 45,000+ authentic athlete records with subject-level cross-validation) alongside our 5-factor screening engine.
           </p>
 
           <button
@@ -86,8 +90,8 @@ export const MLPreviewSection = ({ onUploadClick }) => {
 
             <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-bold text-slate-500">
               <span>STATUS</span>
-              <span className="text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/60">
-                Phase 2 Ready
+              <span className="text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60">
+                {step.status}
               </span>
             </div>
           </div>

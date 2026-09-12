@@ -1,4 +1,5 @@
 import logging
+import os
 import cv2
 import numpy as np
 import torch
@@ -10,106 +11,180 @@ logger = logging.getLogger(__name__)
 
 class RTMPoseModel:
     """
-    RTMPose-M / KeypointRCNN PyTorch Deep Learning Human Pose Estimator.
-    Natively detects person bounding boxes and extracts 17 standard COCO keypoints [x, y, confidence].
-    Automatically transforms model coordinates back to original video frame coordinates.
+    Genuine RTMPose-M ONNX Deep Learning Human Pose Estimator (OpenMMLab).
+    Primary engine: RTMPose-M SimCC ONNX via rtmlib on onnxruntime.
+    Fallback engine: Torchvision Keypoint R-CNN (ResNet-50 FPN).
+    Outputs 17 standard COCO keypoints [x, y, confidence] mapped to original frame coordinates.
     """
     def __init__(self, model_name: str = "rtmpose-m", confidence_threshold: float = 0.35):
         self.model_name = model_name
         self.confidence_threshold = confidence_threshold
         self.device_str = get_device()
-        self.device = torch.device(self.device_str)
-        self.model = None
-        self._init_model()
+        self.active_backend = "none"
+        self.rtm_body = None
+        self.torch_model = None
+        self._init_models()
 
-    def _init_model(self):
-        logger.info(f"[POSE] Loading RTMPose-M PyTorch deep learning model on device: {self.device_str}")
+    def _init_models(self):
+        # 1. Attempt genuine RTMPose-M ONNX via rtmlib
         try:
-            from torchvision.models.detection import keypointrcnn_resnet50_fpn, KeypointRCNN_ResNet50_FPN_Weights
-            self.model = keypointrcnn_resnet50_fpn(weights=KeypointRCNN_ResNet50_FPN_Weights.DEFAULT)
-            self.model.to(self.device)
-            self.model.eval()
-            logger.info("[POSE] RTMPose-M / KeypointRCNN model initialized and set to eval mode.")
+            logger.info(f"[POSE] Initializing genuine RTMPose-M ONNX via rtmlib...")
+            from rtmlib import Body
+            device = "cpu" if self.device_str == "cpu" else "cuda"
+            self.rtm_body = Body(mode="balanced", to_openpose=False, device=device)
+            self.active_backend = "rtmpose-m-onnx"
+            logger.info("[POSE] Successfully initialized RTMPose-M ONNX engine.")
+            return
         except Exception as e:
-            logger.error(f"[POSE] Error initializing PyTorch pose model: {e}", exc_info=True)
-            self.model = None
+            logger.warning(f"[POSE] Could not load RTMPose-M via rtmlib: {e}. Falling back to Keypoint R-CNN.")
+
+        # 2. Fallback to Torchvision Keypoint R-CNN
+        try:
+            logger.info(f"[POSE] Initializing Torchvision Keypoint R-CNN fallback on {self.device_str}...")
+            from torchvision.models.detection import keypointrcnn_resnet50_fpn, KeypointRCNN_ResNet50_FPN_Weights
+            self.torch_device = torch.device(self.device_str)
+            self.torch_model = keypointrcnn_resnet50_fpn(weights=KeypointRCNN_ResNet50_FPN_Weights.DEFAULT)
+            self.torch_model.to(self.torch_device)
+            self.torch_model.eval()
+            self.active_backend = "keypoint-rcnn-torchvision"
+            logger.info("[POSE] Keypoint R-CNN fallback initialized successfully.")
+        except Exception as e:
+            logger.error(f"[POSE] Error initializing pose estimator: {e}", exc_info=True)
+            self.active_backend = "none"
 
     def estimate_pose(self, frame_bgr: np.ndarray) -> List[Dict[str, Any]]:
         """
         Processes a single OpenCV BGR image frame (H, W, 3).
         Detects people and outputs 17 COCO keypoints mapped to original frame pixel coordinates.
         """
-        if frame_bgr is None or self.model is None:
+        if frame_bgr is None:
             return []
 
         h, w, _ = frame_bgr.shape
-        rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
-        
-        # Convert to float tensor [3, H, W] in range [0, 1]
-        tensor_img = torch.from_numpy(rgb).permute(2, 0, 1).float() / 255.0
-        tensor_img = tensor_img.to(self.device)
 
-        with torch.no_grad():
-            outputs = self.model([tensor_img])[0]
+        # Run RTMPose-M ONNX if active
+        if self.active_backend == "rtmpose-m-onnx" and self.rtm_body is not None:
+            try:
+                kps_arr, scores_arr = self.rtm_body(frame_bgr)
+                # kps_arr shape: [num_persons, 17, 2], scores_arr shape: [num_persons, 17]
+                if len(kps_arr) == 0:
+                    return []
 
-        boxes = outputs["boxes"].cpu().numpy()
-        labels = outputs["labels"].cpu().numpy()
-        scores = outputs["scores"].cpu().numpy()
-        keypoints_tensor = outputs["keypoints"].cpu().numpy()
-        kp_scores = outputs["keypoint_scores"].cpu().numpy() if "keypoint_scores" in outputs else None
+                candidates = []
+                for p_idx in range(len(kps_arr)):
+                    p_kps = kps_arr[p_idx]
+                    p_scores = scores_arr[p_idx] if scores_arr is not None else np.ones(17)
 
-        candidates = []
+                    # Compute bounding box from detected keypoints
+                    valid_mask = p_scores >= self.confidence_threshold
+                    if np.any(valid_mask):
+                        vx = p_kps[valid_mask, 0]
+                        vy = p_kps[valid_mask, 1]
+                        pad_x = max(10.0, (vx.max() - vx.min()) * 0.15)
+                        pad_y = max(10.0, (vy.max() - vy.min()) * 0.15)
+                        bbox = [
+                            float(max(0.0, vx.min() - pad_x)),
+                            float(max(0.0, vy.min() - pad_y)),
+                            float(min(w, vx.max() + pad_x)),
+                            float(min(h, vy.max() + pad_y))
+                        ]
+                    else:
+                        bbox = [0.0, 0.0, float(w), float(h)]
 
-        for i in range(len(boxes)):
-            # COCO label 1 == person
-            if labels[i] != 1 or scores[i] < self.confidence_threshold:
-                continue
+                    kps_dict = {}
+                    confidences = []
+                    for idx, kp_name in enumerate(COCO_KEYPOINT_NAMES):
+                        px = float(p_kps[idx][0])
+                        py = float(p_kps[idx][1])
+                        conf = float(p_scores[idx])
 
-            bbox = [
-                float(boxes[i][0]),
-                float(boxes[i][1]),
-                float(boxes[i][2]),
-                float(boxes[i][3])
-            ]
+                        px = max(0.0, min(float(w), px))
+                        py = max(0.0, min(float(h), py))
 
-            kps_raw = keypoints_tensor[i] # [17, 3] -> (x, y, visibility)
-            kps_dict = {}
-            confidences = []
+                        kps_dict[kp_name] = {
+                            "x": round(px, 1),
+                            "y": round(py, 1),
+                            "confidence": round(conf, 3)
+                        }
+                        if conf >= self.confidence_threshold:
+                            confidences.append(conf)
 
-            for idx, kp_name in enumerate(COCO_KEYPOINT_NAMES):
-                px = float(kps_raw[idx][0])
-                py = float(kps_raw[idx][1])
-                
-                if kp_scores is not None and len(kp_scores) > i:
-                    conf = float(kp_scores[i][idx])
-                else:
-                    conf = float(kps_raw[idx][2])
+                    avg_conf = float(np.mean(confidences)) if confidences else float(np.mean(p_scores))
+                    candidates.append({
+                        "bbox": bbox,
+                        "keypoints": kps_dict,
+                        "average_confidence": round(avg_conf, 3),
+                        "person_score": round(avg_conf, 3),
+                        "model_used": "RTMPose-M (ONNX)"
+                    })
 
-                # Clamp coords within image bounds
-                px = max(0.0, min(float(w), px))
-                py = max(0.0, min(float(h), py))
+                return candidates
 
-                kps_dict[kp_name] = {
-                    "x": round(px, 1),
-                    "y": round(py, 1),
-                    "confidence": round(conf, 3)
-                }
-                if conf >= self.confidence_threshold:
-                    confidences.append(conf)
+            except Exception as e:
+                logger.warning(f"[POSE] RTMPose-M execution error: {e}. Falling back to PyTorch.")
 
-            avg_conf = float(np.mean(confidences)) if confidences else float(scores[i])
+        # Fallback to Keypoint R-CNN
+        if self.torch_model is not None:
+            rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+            tensor_img = torch.from_numpy(rgb).permute(2, 0, 1).float() / 255.0
+            tensor_img = tensor_img.to(self.torch_device)
 
-            candidates.append({
-                "bbox": bbox,
-                "keypoints": kps_dict,
-                "average_confidence": round(avg_conf, 3),
-                "person_score": float(scores[i])
-            })
+            with torch.no_grad():
+                outputs = self.torch_model([tensor_img])[0]
 
-        return candidates
+            boxes = outputs["boxes"].cpu().numpy()
+            labels = outputs["labels"].cpu().numpy()
+            scores = outputs["scores"].cpu().numpy()
+            keypoints_tensor = outputs["keypoints"].cpu().numpy()
+            kp_scores = outputs.get("keypoint_scores", None)
+            if kp_scores is not None:
+                kp_scores = kp_scores.cpu().numpy()
+
+            candidates = []
+            for i in range(len(boxes)):
+                if labels[i] != 1 or scores[i] < self.confidence_threshold:
+                    continue
+
+                bbox = [float(boxes[i][0]), float(boxes[i][1]), float(boxes[i][2]), float(boxes[i][3])]
+                kps_raw = keypoints_tensor[i]
+                kps_dict = {}
+                confidences = []
+
+                for idx, kp_name in enumerate(COCO_KEYPOINT_NAMES):
+                    px = float(kps_raw[idx][0])
+                    py = float(kps_raw[idx][1])
+                    conf = float(kp_scores[i][idx]) if kp_scores is not None and len(kp_scores) > i else float(kps_raw[idx][2])
+
+                    px = max(0.0, min(float(w), px))
+                    py = max(0.0, min(float(h), py))
+
+                    kps_dict[kp_name] = {
+                        "x": round(px, 1),
+                        "y": round(py, 1),
+                        "confidence": round(conf, 3)
+                    }
+                    if conf >= self.confidence_threshold:
+                        confidences.append(conf)
+
+                avg_conf = float(np.mean(confidences)) if confidences else float(scores[i])
+                candidates.append({
+                    "bbox": bbox,
+                    "keypoints": kps_dict,
+                    "average_confidence": round(avg_conf, 3),
+                    "person_score": float(scores[i]),
+                    "model_used": "Keypoint R-CNN (Torchvision)"
+                })
+
+            return candidates
+
+        return []
 
     def close(self):
-        if self.model is not None:
-            del self.model
+        if self.torch_model is not None:
+            del self.torch_model
+            self.torch_model = None
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
+        if self.rtm_body is not None:
+            del self.rtm_body
+            self.rtm_body = None

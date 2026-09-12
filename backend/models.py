@@ -19,10 +19,12 @@ class User(Base):
     user_id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
-    password = Column(Text, nullable=False)
+    password = Column(Text, nullable=True)
     role = Column(String, default=UserRole.ATHLETE.value)
     phone = Column(String, nullable=True)
     profile_image = Column(Text, nullable=True)
+    google_id = Column(String, nullable=True, index=True)
+    auth_provider = Column(String, default="local")  # "local", "google"
     created_at = Column(DateTime, default=datetime.utcnow)
 
     athlete_profile = relationship("Athlete", back_populates="user", uselist=False, cascade="all, delete-orphan")
@@ -125,6 +127,13 @@ class AnalysisResult(Base):
     bilateral_symmetry = Column(Float, default=0.0)
     biomechanical_summary = Column(Text, nullable=True)
     model_version = Column(String, default="2.0.0-weighted")
+    dataset_version = Column(String, default="1.0.0-unified")
+    pose_model = Column(String, default="RTMPose-M (ONNX)")
+    pose_model_version = Column(String, default="1.0.0-simcc")
+    feature_version = Column(String, default="2.0.0-kinematics")
+    ml_model_version = Column(String, default="2.0.0-supervised")
+    calibrated_ml_probability = Column(Float, default=0.0)
+    screening_risk_score = Column(Float, default=0.0)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     video = relationship("Video", back_populates="analysis_results")
@@ -144,6 +153,8 @@ class InjuryPrediction(Base):
     shoulder_risk = Column(Float, default=0.0)
     lower_back_risk = Column(Float, default=0.0)
     overuse_risk = Column(Float, default=0.0)
+    calibrated_probability = Column(Float, default=0.0)
+    ml_model_name = Column(String, default="Calibrated-XGBoost")
 
     analysis = relationship("AnalysisResult", back_populates="injury_prediction")
     recommendation = relationship("Recommendation", back_populates="prediction", uselist=False, cascade="all, delete-orphan")

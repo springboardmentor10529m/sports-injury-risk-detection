@@ -1,0 +1,22 @@
+{
+  "dataset_id": "running_injury_lovdal",
+  "dataset_name": "L\u00f6vdal et al. (2021) Competitive Runners Injury Dataset",
+  "publication": "Frontiers in Sports and Active Living (2021)",
+  "license": "CC-BY 4.0 / Open Access",
+  "description": "Longitudinal daily and multi-week training logs from 74 competitive athletes across 7 years with ground truth injury incidence outcomes.",
+  "subjects": 74,
+  "prediction_target": "injury (binary label)",
+  "files": [
+    {
+      "filename": "week_approach_maskedID_timeseries.csv",
+      "size_bytes": 15109813,
+      "status": "verified"
+    },
+    {
+      "filename": "day_approach_maskedID_timeseries.csv",
+      "size_bytes": 13504683,
+      "status": "verified"
+    }
+  ],
+  "status": "complete"
+}

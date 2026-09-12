@@ -1,0 +1,83 @@
+{
+  "source": "Zenodo",
+  "record_id": 4610859,
+  "doi": "10.5281/zenodo.4610859",
+  "title": "IntelliRehabDS - A dataset of physical rehabilitation movements",
+  "license": "cc-by-4.0",
+  "publication_date": "2021-03-22",
+  "creators": [
+    "Alina Miron",
+    "Noureddin Sadawi",
+    "Crina Grosan",
+    "Waidah Ismail",
+    "Hafez Hussain"
+  ],
+  "files_available": [
+    {
+      "key": "SkeletonData.zip",
+      "size_bytes": 198985485,
+      "checksum": "md5:c243bcdbd1492e4928032e158accdd29",
+      "download_url": "https://zenodo.org/api/records/4610859/files/SkeletonData.zip/content"
+    },
+    {
+      "key": "DepthImages2-2.zip",
+      "size_bytes": 3714949918,
+      "checksum": "md5:d05a738784fbc041201e1584d10e895d",
+      "download_url": "https://zenodo.org/api/records/4610859/files/DepthImages2-2.zip/content"
+    },
+    {
+      "key": "DepthImages2-1.zip",
+      "size_bytes": 5535273725,
+      "checksum": "md5:ed25febf11fe893862090b33101f2fa4",
+      "download_url": "https://zenodo.org/api/records/4610859/files/DepthImages2-1.zip/content"
+    },
+    {
+      "key": "DepthImages1-2.zip",
+      "size_bytes": 2154056020,
+      "checksum": "md5:6ffd0857922d9191839bc00cb5377545",
+      "download_url": "https://zenodo.org/api/records/4610859/files/DepthImages1-2.zip/content"
+    },
+    {
+      "key": "DepthImages2-4.zip",
+      "size_bytes": 7270006538,
+      "checksum": "md5:75aaf677fb36ffd8725d0f98b69d7ca2",
+      "download_url": "https://zenodo.org/api/records/4610859/files/DepthImages2-4.zip/content"
+    },
+    {
+      "key": "DepthImages3.zip",
+      "size_bytes": 6421239306,
+      "checksum": "md5:048a37cf9ea08ca7d65cef0b2643a341",
+      "download_url": "https://zenodo.org/api/records/4610859/files/DepthImages3.zip/content"
+    },
+    {
+      "key": "DepthImages2-3.zip",
+      "size_bytes": 2722019350,
+      "checksum": "md5:5cc2f76bba13c2e55562fa86e44200e6",
+      "download_url": "https://zenodo.org/api/records/4610859/files/DepthImages2-3.zip/content"
+    },
+    {
+      "key": "DepthImages2-5.zip",
+      "size_bytes": 3677240224,
+      "checksum": "md5:f559d655ea29266e541b3e961c7122fe",
+      "download_url": "https://zenodo.org/api/records/4610859/files/DepthImages2-5.zip/content"
+    },
+    {
+      "key": "DepthImages2-6.zip",
+      "size_bytes": 3885351842,
+      "checksum": "md5:51bbe42464216bed0da4ebe9014ca7f7",
+      "download_url": "https://zenodo.org/api/records/4610859/files/DepthImages2-6.zip/content"
+    },
+    {
+      "key": "readme.txt",
+      "size_bytes": 1974,
+      "checksum": "md5:655525729cd70a00ae5b6863e98141d3",
+      "download_url": "https://zenodo.org/api/records/4610859/files/readme.txt/content"
+    },
+    {
+      "key": "DepthImages1-1.zip",
+      "size_bytes": 5822934772,
+      "checksum": "md5:d684fa817e97bb193406afce97a52330",
+      "download_url": "https://zenodo.org/api/records/4610859/files/DepthImages1-1.zip/content"
+    }
+  ]
+}

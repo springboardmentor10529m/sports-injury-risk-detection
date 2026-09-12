@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
-import { X, Lock, Mail, User as UserIcon, Phone, ShieldCheck, ArrowRight, ArrowLeft } from 'lucide-react';
+import { X, Lock, Mail, User as UserIcon, Phone, ShieldCheck, ArrowRight, ArrowLeft, Quote, CheckCircle2 } from 'lucide-react';
+import { GoogleSignInButton } from './auth/GoogleSignInButton';
 
 export const AuthModal = ({ isOpen, onClose }) => {
   const { login, register } = useAuth();
@@ -118,6 +119,12 @@ export const AuthModal = ({ isOpen, onClose }) => {
           </p>
         </div>
 
+        {/* Inspirational Biomechanical Quote Strip */}
+        <div className="mb-4 p-2.5 rounded-xl bg-cyan-950/40 border border-cyan-800/40 flex items-center gap-2.5 text-[11px] font-sans italic text-cyan-200 shadow-sm">
+          <Quote className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+          <span>“Precision in biomechanics is the ultimate armor against injury.”</span>
+        </div>
+
         {/* Form error alert */}
         {error && (
           <div className="mb-4 p-3 rounded-lg bg-rose-950/60 border border-rose-800/80 text-rose-300 text-xs">
@@ -125,22 +132,67 @@ export const AuthModal = ({ isOpen, onClose }) => {
           </div>
         )}
 
+        {/* Google OAuth Option (Step 1 only) */}
+        {(!isRegistering || step === 1) && (
+          <div className="mb-5 space-y-3">
+            <GoogleSignInButton
+              role={role}
+              isRegistering={isRegistering}
+              onSuccess={onClose}
+              onError={(errMsg) => setError(errMsg)}
+            />
+            <div className="relative flex items-center justify-center my-3">
+              <div className="border-t border-slate-800 w-full" />
+              <span className="bg-slate-900 px-3 text-[11px] font-mono text-slate-500 uppercase tracking-wider absolute">
+                or with email
+              </span>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleNextStep} className="space-y-4">
           {(!isRegistering || step === 1) && (
             <>
               {isRegistering && (
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Full Name</label>
-                  <div className="relative">
-                    <UserIcon className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
-                    <input
-                      type="text"
-                      required
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Marcus Vance"
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500"
-                    />
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">Full Name</label>
+                    <div className="relative">
+                      <UserIcon className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
+                      <input
+                        type="text"
+                        required
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Marcus Vance"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Account Role Selector */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">Account Role</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { id: 'ATHLETE', label: 'Athlete' },
+                        { id: 'COACH', label: 'Coach' },
+                        { id: 'ANALYST', label: 'Analyst' }
+                      ].map((r) => (
+                        <button
+                          key={r.id}
+                          type="button"
+                          onClick={() => setRole(r.id)}
+                          className={`py-2 px-1 text-[11px] font-mono font-bold rounded-xl border transition-all cursor-pointer ${
+                            role === r.id
+                              ? 'bg-cyan-950 border-cyan-500 text-cyan-300 shadow-[0_0_8px_rgba(6,182,212,0.3)]'
+                              : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                          }`}
+                        >
+                          {r.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
@@ -256,34 +308,71 @@ export const AuthModal = ({ isOpen, onClose }) => {
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-                <span className="font-bold text-cyan-400 block mb-1">Physical Ratings (0 to 100)</span>
+              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
+                <span className="font-bold text-cyan-400 block text-xs">Physical Ratings (0 to 100)</span>
                 
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2.5">
                   <div>
-                    <span className="text-[10px] text-slate-400 block">Flexibility: {flexibility}/100</span>
+                    <span className="text-[10px] text-slate-400 block">Flexibility: {flexibility}%</span>
                     <input
                       type="range"
                       min="0"
                       max="100"
                       value={flexibility}
-                      onChange={(e) => setFlexibility(e.target.value)}
+                      onChange={(e) => setFlexibility(Number(e.target.value))}
                       className="w-full"
                     />
                   </div>
 
                   <div>
-                    <span className="text-[10px] text-slate-400 block">Strength: {strength}/100</span>
+                    <span className="text-[10px] text-slate-400 block">Strength: {strength}%</span>
                     <input
                       type="range"
                       min="0"
                       max="100"
                       value={strength}
-                      onChange={(e) => setStrength(e.target.value)}
+                      onChange={(e) => setStrength(Number(e.target.value))}
                       className="w-full"
                     />
                   </div>
                 </div>
+
+                <div className="grid grid-cols-2 gap-2.5 pt-1.5 border-t border-slate-800/60">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">Balance: {balance}%</span>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={balance}
+                      onChange={(e) => setBalance(Number(e.target.value))}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">Endurance: {endurance}%</span>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={endurance}
+                      onChange={(e) => setEndurance(Number(e.target.value))}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Coach Remarks / Bio</label>
+                <textarea
+                  rows={2}
+                  value={coachNotes}
+                  onChange={(e) => setCoachNotes(e.target.value)}
+                  placeholder="Prior knee sprains, training schedule, or focus areas..."
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500 text-xs"
+                />
               </div>
             </div>
           )}
@@ -333,6 +422,21 @@ export const AuthModal = ({ isOpen, onClose }) => {
           >
             {isRegistering ? 'Sign In' : 'Register Account'}
           </button>
+        </div>
+
+        {/* Security & Privacy Badges */}
+        <div className="mt-3 pt-2.5 border-t border-slate-800/50 flex items-center justify-between text-[10px] font-mono text-slate-500">
+          <span className="flex items-center gap-1">
+            <Lock className="w-2.5 h-2.5 text-cyan-400/80" />
+            256-Bit Encrypted
+          </span>
+          <span>•</span>
+          <span className="flex items-center gap-1">
+            <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400/80" />
+            OAuth 2.0 Ready
+          </span>
+          <span>•</span>
+          <span>Zero Raw Passwords</span>
         </div>
       </div>
     </div>

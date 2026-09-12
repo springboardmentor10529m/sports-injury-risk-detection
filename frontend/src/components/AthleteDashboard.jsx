@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
 import { VideoCard } from './VideoCard';
+import { AnalysisDashboard } from './analysis/AnalysisDashboard';
 import { PerformanceRing3D } from './3d/PerformanceRing3D';
 import { AnimatedNumber } from './ui/AnimatedNumber';
 import { LoadingState } from './ui/LoadingState';
@@ -17,20 +18,21 @@ export const AthleteDashboard = () => {
   const [myVideos, setMyVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeAnalysis, setActiveAnalysis] = useState(null);
   
   // Edit Profile Form State
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     sport: 'General Sports',
     position: 'Athlete',
-    age: 23,
-    height: 180.0,
-    weight: 75.0,
-    training_load: 65.0,
-    flexibility: 75.0,
-    strength: 82.0,
-    balance: 78.0,
-    endurance: 85.0,
+    age: '',
+    height: '',
+    weight: '',
+    training_load: 0.0,
+    flexibility: 0.0,
+    strength: 0.0,
+    balance: 0.0,
+    endurance: 0.0,
     coach_notes: ''
   });
   const [saving, setSaving] = useState(false);
@@ -51,14 +53,14 @@ export const AthleteDashboard = () => {
         setEditForm({
           sport: athleteData.sport || 'General Sports',
           position: athleteData.position || 'Athlete',
-          age: athleteData.age || 23,
-          height: athleteData.height || 180.0,
-          weight: athleteData.weight || 75.0,
-          training_load: athleteData.training_load || 65.0,
-          flexibility: athleteData.flexibility || 75.0,
-          strength: athleteData.strength || 82.0,
-          balance: athleteData.balance || 78.0,
-          endurance: athleteData.endurance || 85.0,
+          age: athleteData.age ?? '',
+          height: athleteData.height ?? '',
+          weight: athleteData.weight ?? '',
+          training_load: athleteData.training_load ?? 0.0,
+          flexibility: athleteData.flexibility ?? 0.0,
+          strength: athleteData.strength ?? 0.0,
+          balance: athleteData.balance ?? 0.0,
+          endurance: athleteData.endurance ?? 0.0,
           coach_notes: athleteData.coach_notes || ''
         });
       }
@@ -93,15 +95,69 @@ export const AthleteDashboard = () => {
     setMyVideos((prev) => prev.filter((v) => v.video_id !== deletedId));
   };
 
+  const handleAnalyseMovement = async (video, existingAnalysisId, forceRerun = false) => {
+    if (existingAnalysisId && !forceRerun) {
+      setActiveAnalysis({
+        analysisId: existingAnalysisId,
+        video: video
+      });
+      return;
+    }
+
+    if (forceRerun) {
+      return handleReanalyseMovement(video);
+    }
+
+    try {
+      const response = await api.post(`/api/analysis/videos/${video.video_id}/analyse`);
+      if (response && response.analysis_id) {
+        setActiveAnalysis({
+          analysisId: response.analysis_id,
+          video: video
+        });
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to start movement analysis job.');
+    }
+  };
+
+  const handleReanalyseMovement = async (video) => {
+    try {
+      const response = await api.post(`/api/analysis/videos/${video.video_id}/reanalyse`);
+      if (response && response.analysis_id) {
+        setActiveAnalysis({
+          analysisId: response.analysis_id,
+          video: video
+        });
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to re-analyse movement video.');
+    }
+  };
+
+  if (activeAnalysis) {
+    return (
+      <AnalysisDashboard
+        analysisId={activeAnalysis.analysisId}
+        video={activeAnalysis.video}
+        onBack={() => {
+          setActiveAnalysis(null);
+          fetchData();
+        }}
+      />
+    );
+  }
+
   if (loading) {
     return <LoadingState message="SYNCHRONIZING ATHLETE BIOMETRICS..." subtext="Accessing PostgreSQL profile records & kinematics index" />;
   }
 
   const ath = athlete || {};
-  const flexVal = ath.flexibility || 75.0;
-  const strVal = ath.strength || 82.0;
-  const balVal = ath.balance || 78.0;
-  const endVal = ath.endurance || 85.0;
+  const flexVal = typeof ath.flexibility === 'number' ? ath.flexibility : 0.0;
+  const strVal = typeof ath.strength === 'number' ? ath.strength : 0.0;
+  const balVal = typeof ath.balance === 'number' ? ath.balance : 0.0;
+  const endVal = typeof ath.endurance === 'number' ? ath.endurance : 0.0;
+  const hasPerformanceData = Boolean(flexVal > 0 || strVal > 0 || balVal > 0 || endVal > 0);
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-8 animate-fadeIn font-sans pb-12">
@@ -288,10 +344,11 @@ export const AthleteDashboard = () => {
       )}
 
       {/* CENTRAL 3D PERFORMANCE INTELLIGENCE SHOWCASE */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+      {/* CENTRAL 3D PERFORMANCE INTELLIGENCE SHOWCASE */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         
         {/* LEFT COLUMN: Athlete Profile Bio */}
-        <div className="lg:col-span-3 space-y-4">
+        <div className="lg:col-span-3 flex flex-col justify-between gap-4">
           <div className="p-5 rounded-2xl bg-slate-950/80 border border-slate-800/90 space-y-4 font-mono">
             <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
               <span className="text-xs font-bold text-white uppercase">Athlete Profile</span>
@@ -301,37 +358,45 @@ export const AthleteDashboard = () => {
             <div className="space-y-3 text-xs">
               <div>
                 <span className="text-[10px] text-slate-500 uppercase block">Sport & Discipline</span>
-                <span className="text-white font-bold">{ath.sport || 'Basketball'}</span>
+                <span className="text-white font-bold">{ath.sport || 'General'}</span>
               </div>
               <div>
                 <span className="text-[10px] text-slate-500 uppercase block">Field Position</span>
-                <span className="text-cyan-400 font-bold">{ath.position || 'Point Guard'}</span>
+                <span className="text-cyan-400 font-bold">{ath.position || 'Athlete'}</span>
               </div>
               <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-900">
                 <div>
                   <span className="text-[10px] text-slate-500 uppercase block">Age</span>
-                  <span className="text-white font-bold">{ath.age || 22} yrs</span>
+                  <span className={ath.age ? "text-white font-bold" : "text-slate-500 italic"}>
+                    {ath.age ? `${ath.age} yrs` : 'Not Set'}
+                  </span>
                 </div>
                 <div>
                   <span className="text-[10px] text-slate-500 uppercase block">Stature</span>
-                  <span className="text-teal-400 font-bold">{ath.height || 180} cm</span>
+                  <span className={ath.height ? "text-teal-400 font-bold" : "text-slate-500 italic"}>
+                    {ath.height ? `${ath.height} cm` : 'Not Set'}
+                  </span>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-900">
                 <div>
                   <span className="text-[10px] text-slate-500 uppercase block">Mass</span>
-                  <span className="text-indigo-400 font-bold">{ath.weight || 75} kg</span>
+                  <span className={ath.weight ? "text-indigo-400 font-bold" : "text-slate-500 italic"}>
+                    {ath.weight ? `${ath.weight} kg` : 'Not Set'}
+                  </span>
                 </div>
                 <div>
                   <span className="text-[10px] text-slate-500 uppercase block">Load Index</span>
-                  <span className="text-amber-400 font-bold">{ath.training_load || 65} pts</span>
+                  <span className={ath.training_load ? "text-amber-400 font-bold" : "text-slate-500 italic"}>
+                    {ath.training_load ? `${ath.training_load} pts` : '0 pts'}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Coach Notes snippet */}
-          <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-2 text-xs">
+          <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-2 text-xs flex-1 flex flex-col justify-center">
             <span className="text-[10px] font-mono font-bold text-slate-500 uppercase flex items-center gap-1">
               <FileText className="w-3 h-3 text-cyan-400" />
               Coach Remarks
@@ -343,30 +408,32 @@ export const AthleteDashboard = () => {
         </div>
 
         {/* CENTER COLUMN: 3D Performance Ring */}
-        <div className="lg:col-span-6">
+        <div className="lg:col-span-6 flex flex-col">
           <PerformanceRing3D
+            className="flex-1"
             flexibility={flexVal}
             strength={strVal}
             balance={balVal}
             endurance={endVal}
+            hasData={hasPerformanceData}
           />
         </div>
 
         {/* RIGHT COLUMN: Performance Intelligence Radial Gauges */}
-        <div className="lg:col-span-3 space-y-3 font-mono">
+        <div className="lg:col-span-3 flex flex-col justify-between gap-3 font-mono">
           
           {/* Gauge 1: Flexibility */}
           <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800/90 space-y-2">
             <div className="flex justify-between items-center text-xs">
               <span className="text-slate-400 font-bold uppercase">Flexibility</span>
-              <span className="text-cyan-400 font-black">
-                <AnimatedNumber value={flexVal} duration={800} suffix="%" />
+              <span className={hasPerformanceData ? "text-cyan-400 font-black" : "text-slate-500 font-bold"}>
+                {hasPerformanceData ? <AnimatedNumber value={flexVal} duration={800} suffix="%" /> : '--'}
               </span>
             </div>
             <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-800">
               <div
                 className="bg-cyan-500 h-full rounded-full transition-all duration-700 shadow-[0_0_8px_rgba(6,182,212,0.6)]"
-                style={{ width: `${flexVal}%` }}
+                style={{ width: `${hasPerformanceData ? Math.min(flexVal, 100) : 0}%` }}
               />
             </div>
             <span className="text-[10px] text-slate-500 block">Joint Mobility & Elasticity</span>
@@ -376,14 +443,14 @@ export const AthleteDashboard = () => {
           <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800/90 space-y-2">
             <div className="flex justify-between items-center text-xs">
               <span className="text-slate-400 font-bold uppercase">Strength</span>
-              <span className="text-emerald-400 font-black">
-                <AnimatedNumber value={strVal} duration={800} suffix="%" />
+              <span className={hasPerformanceData ? "text-emerald-400 font-black" : "text-slate-500 font-bold"}>
+                {hasPerformanceData ? <AnimatedNumber value={strVal} duration={800} suffix="%" /> : '--'}
               </span>
             </div>
             <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-800">
               <div
                 className="bg-emerald-500 h-full rounded-full transition-all duration-700 shadow-[0_0_8px_rgba(16,185,129,0.6)]"
-                style={{ width: `${strVal}%` }}
+                style={{ width: `${hasPerformanceData ? Math.min(strVal, 100) : 0}%` }}
               />
             </div>
             <span className="text-[10px] text-slate-500 block">Peak Force Transmission</span>
@@ -393,14 +460,14 @@ export const AthleteDashboard = () => {
           <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800/90 space-y-2">
             <div className="flex justify-between items-center text-xs">
               <span className="text-slate-400 font-bold uppercase">Balance</span>
-              <span className="text-amber-400 font-black">
-                <AnimatedNumber value={balVal} duration={800} suffix="%" />
+              <span className={hasPerformanceData ? "text-amber-400 font-black" : "text-slate-500 font-bold"}>
+                {hasPerformanceData ? <AnimatedNumber value={balVal} duration={800} suffix="%" /> : '--'}
               </span>
             </div>
             <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-800">
               <div
                 className="bg-amber-500 h-full rounded-full transition-all duration-700 shadow-[0_0_8px_rgba(245,158,11,0.6)]"
-                style={{ width: `${balVal}%` }}
+                style={{ width: `${hasPerformanceData ? Math.min(balVal, 100) : 0}%` }}
               />
             </div>
             <span className="text-[10px] text-slate-500 block">Proprioception & Pelvic Control</span>
@@ -410,14 +477,14 @@ export const AthleteDashboard = () => {
           <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800/90 space-y-2">
             <div className="flex justify-between items-center text-xs">
               <span className="text-slate-400 font-bold uppercase">Endurance</span>
-              <span className="text-violet-400 font-black">
-                <AnimatedNumber value={endVal} duration={800} suffix="%" />
+              <span className={hasPerformanceData ? "text-violet-400 font-black" : "text-slate-500 font-bold"}>
+                {hasPerformanceData ? <AnimatedNumber value={endVal} duration={800} suffix="%" /> : '--'}
               </span>
             </div>
             <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-800">
               <div
                 className="bg-violet-500 h-full rounded-full transition-all duration-700 shadow-[0_0_8px_rgba(139,92,246,0.6)]"
-                style={{ width: `${endVal}%` }}
+                style={{ width: `${hasPerformanceData ? Math.min(endVal, 100) : 0}%` }}
               />
             </div>
             <span className="text-[10px] text-slate-500 block">Fatigue & Strain Resistance</span>
@@ -451,6 +518,8 @@ export const AthleteDashboard = () => {
                 video={video}
                 isPersonal={true}
                 onDeleteSuccess={handleVideoDeleted}
+                onAnalyseMovement={handleAnalyseMovement}
+                onReanalyseMovement={handleReanalyseMovement}
               />
             ))}
           </div>

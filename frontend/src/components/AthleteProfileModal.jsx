@@ -17,10 +17,10 @@ export const AthleteProfileModal = ({ isOpen, onClose }) => {
     height: 185.0,
     weight: 80.0,
     training_load: 65.0,
-    flexibility: 75.0,
-    strength: 85.0,
-    balance: 80.0,
-    endurance: 70.0,
+    flexibility: 0.0,
+    strength: 0.0,
+    balance: 0.0,
+    endurance: 0.0,
     coach_notes: '',
   });
 
@@ -37,16 +37,16 @@ export const AthleteProfileModal = ({ isOpen, onClose }) => {
       const data = await api.get('/api/athletes/profile');
       if (data) {
         setForm({
-          sport: data.sport || 'Basketball',
-          position: data.position || 'Point Guard',
-          age: data.age || 21,
-          height: data.height || 185.0,
-          weight: data.weight || 80.0,
-          training_load: data.training_load || 65.0,
-          flexibility: data.flexibility || 75.0,
-          strength: data.strength || 85.0,
-          balance: data.balance || 80.0,
-          endurance: data.endurance || 70.0,
+          sport: data.sport || 'General Sports',
+          position: data.position || 'Athlete',
+          age: data.age ?? '',
+          height: data.height ?? '',
+          weight: data.weight ?? '',
+          training_load: data.training_load ?? 0.0,
+          flexibility: data.flexibility ?? 0.0,
+          strength: data.strength ?? 0.0,
+          balance: data.balance ?? 0.0,
+          endurance: data.endurance ?? 0.0,
           coach_notes: data.coach_notes || '',
         });
       }

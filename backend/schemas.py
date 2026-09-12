@@ -18,6 +18,11 @@ class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
 
+class GoogleAuthRequest(BaseModel):
+    credential: Optional[str] = None
+    code: Optional[str] = None
+    role: Optional[str] = "ATHLETE"
+
 # --- Athlete Schemas ---
 class AthleteBase(BaseModel):
     sport: Optional[str] = "General"
@@ -49,11 +54,18 @@ class UserOut(BaseModel):
     role: str
     phone: Optional[str] = None
     profile_image: Optional[str] = None
+    auth_provider: Optional[str] = "local"
     created_at: datetime
     athlete_profile: Optional[AthleteOut] = None
 
     class Config:
         from_attributes = True
+
+class GoogleAuthResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserOut
+    is_new_user: bool = False
 
 # --- Injury History Schemas ---
 class InjuryHistoryBase(BaseModel):
@@ -123,6 +135,13 @@ class AnalysisResultBase(BaseModel):
     bilateral_symmetry: Optional[float] = 0.0
     biomechanical_summary: Optional[str] = None
     model_version: Optional[str] = "2.0.0-weighted"
+    dataset_version: Optional[str] = "1.0.0-unified"
+    pose_model: Optional[str] = "RTMPose-M (ONNX)"
+    pose_model_version: Optional[str] = "1.0.0-simcc"
+    feature_version: Optional[str] = "2.0.0-kinematics"
+    ml_model_version: Optional[str] = "2.0.0-supervised"
+    calibrated_ml_probability: Optional[float] = 0.0
+    screening_risk_score: Optional[float] = 0.0
 
 class AnalysisResultCreate(AnalysisResultBase):
     video_id: str
@@ -185,6 +204,8 @@ class InjuryPredictionBase(BaseModel):
     shoulder_risk: Optional[float] = 0.0
     lower_back_risk: Optional[float] = 0.0
     overuse_risk: Optional[float] = 0.0
+    calibrated_probability: Optional[float] = 0.0
+    ml_model_name: Optional[str] = "Calibrated-XGBoost"
 
 class InjuryPredictionCreate(InjuryPredictionBase):
     analysis_id: str

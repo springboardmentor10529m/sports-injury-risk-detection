@@ -13,10 +13,11 @@ import { LoadingState } from '../ui/LoadingState';
 import { 
   ArrowLeft, Download, ShieldCheck, ShieldAlert, FileSpreadsheet, FileJson, 
   FileText, Video, AlertCircle, Activity, TrendingUp, AlertTriangle, 
-  CheckCircle2, Target, Zap, Clock, Sparkles, Filter, ChevronRight, Eye, Layers
+  CheckCircle2, Target, Zap, Clock, Sparkles, Filter, ChevronRight, Eye, Layers, Cpu, RotateCw
 } from 'lucide-react';
 
 export const AnalysisDashboard = ({ analysisId, video, onBack }) => {
+  const [currentAnalysisId, setCurrentAnalysisId] = useState(analysisId);
   const [statusData, setStatusData] = useState(null);
   const [completeReport, setCompleteReport] = useState(null);
   const [keypointFrames, setKeypointFrames] = useState([]);
@@ -28,43 +29,62 @@ export const AnalysisDashboard = ({ analysisId, video, onBack }) => {
   const [error, setError] = useState('');
   const [currentTime, setCurrentTime] = useState(0);
   const [seekTime, setSeekTime] = useState(null);
+  const [isReanalysing, setIsReanalysing] = useState(false);
 
   // 14. Viewport Mode Toggle: 'VIDEO' vs '3D SKELETON'
   const [viewMode, setViewMode] = useState('VIDEO'); // 'VIDEO' | '3D_SKELETON'
   const [selectedJoint, setSelectedJoint] = useState('left_knee');
 
   useEffect(() => {
-    fetchJobStatus();
-    const interval = setInterval(() => {
-      fetchJobStatus();
-    }, 2500);
-
-    return () => clearInterval(interval);
+    if (analysisId && analysisId !== currentAnalysisId) {
+      setCurrentAnalysisId(analysisId);
+    }
   }, [analysisId]);
 
-  const fetchJobStatus = async () => {
-    try {
-      const stat = await api.get(`/api/analysis/${analysisId}/status`);
-      setStatusData(stat);
+  useEffect(() => {
+    if (!currentAnalysisId) return;
 
-      if (stat.status === 'completed') {
-        fetchFullAnalysisData();
-      } else if (stat.status === 'failed') {
+    let isSubscribed = true;
+    let pollInterval = null;
+
+    const checkJobStatus = async () => {
+      try {
+        const stat = await api.get(`/api/analysis/${currentAnalysisId}/status`);
+        if (!isSubscribed) return;
+        setStatusData(stat);
+
+        if (stat.status === 'completed') {
+          if (pollInterval) clearInterval(pollInterval);
+          await fetchFullAnalysisData(currentAnalysisId);
+        } else if (stat.status === 'failed') {
+          if (pollInterval) clearInterval(pollInterval);
+          setLoading(false);
+        }
+      } catch (err) {
+        if (!isSubscribed) return;
+        setError(err.message || 'Failed to fetch analysis job status');
         setLoading(false);
+        if (pollInterval) clearInterval(pollInterval);
       }
-    } catch (err) {
-      setError(err.message || 'Failed to fetch analysis job status');
-      setLoading(false);
-    }
-  };
+    };
 
-  const fetchFullAnalysisData = async () => {
+    checkJobStatus();
+    pollInterval = setInterval(checkJobStatus, 2500);
+
+    return () => {
+      isSubscribed = false;
+      if (pollInterval) clearInterval(pollInterval);
+    };
+  }, [currentAnalysisId]);
+
+  const fetchFullAnalysisData = async (targetId) => {
+    const aid = targetId || currentAnalysisId;
     try {
       const [report, kps, bio, anoms] = await Promise.all([
-        api.get(`/api/analysis/${analysisId}/complete-report`).catch(() => null),
-        api.get(`/api/analysis/${analysisId}/keypoints`).catch(() => []),
-        api.get(`/api/analysis/${analysisId}/biomechanics`).catch(() => []),
-        api.get(`/api/analysis/${analysisId}/anomalies`).catch(() => [])
+        api.get(`/api/analysis/${aid}/complete-report`).catch(() => null),
+        api.get(`/api/analysis/${aid}/keypoints`).catch(() => []),
+        api.get(`/api/analysis/${aid}/biomechanics`).catch(() => []),
+        api.get(`/api/analysis/${aid}/anomalies`).catch(() => [])
       ]);
       setCompleteReport(report);
       setKeypointFrames(kps || []);
@@ -109,24 +129,25 @@ export const AnalysisDashboard = ({ analysisId, video, onBack }) => {
 
   const handleDownload = (type) => {
     const token = localStorage.getItem('token');
-    let url = `/api/analysis/${analysisId}/download/${type}`;
-    let filename = `${type}_${analysisId.slice(0, 8)}`;
+    const aid = currentAnalysisId || analysisId;
+    let url = `/api/analysis/${aid}/download/${type}`;
+    let filename = `${type}_${aid.slice(0, 8)}`;
 
     if (type === 'keypoints-json') {
-      url = `/api/analysis/${analysisId}/download/keypoints?format=json`;
-      filename = `keypoints_${analysisId.slice(0, 8)}.json`;
+      url = `/api/analysis/${aid}/download/keypoints?format=json`;
+      filename = `keypoints_${aid.slice(0, 8)}.json`;
     } else if (type === 'keypoints-csv') {
-      url = `/api/analysis/${analysisId}/download/keypoints?format=csv`;
-      filename = `keypoints_${analysisId.slice(0, 8)}.csv`;
+      url = `/api/analysis/${aid}/download/keypoints?format=csv`;
+      filename = `keypoints_${aid.slice(0, 8)}.csv`;
     } else if (type === 'biomechanics') {
-      url = `/api/analysis/${analysisId}/download/biomechanics`;
-      filename = `biomechanics_${analysisId.slice(0, 8)}.csv`;
+      url = `/api/analysis/${aid}/download/biomechanics`;
+      filename = `biomechanics_${aid.slice(0, 8)}.csv`;
     } else if (type === 'pdf') {
-      url = `/api/analysis/${analysisId}/download/pdf`;
-      filename = `AthleteGuard_Report_${analysisId.slice(0, 8)}.pdf`;
+      url = `/api/analysis/${aid}/download/pdf`;
+      filename = `AthleteGuard_Report_${aid.slice(0, 8)}.pdf`;
     } else if (type === 'excel') {
-      url = `/api/analysis/${analysisId}/download/excel`;
-      filename = `AthleteGuard_Workbook_${analysisId.slice(0, 8)}.xlsx`;
+      url = `/api/analysis/${aid}/download/excel`;
+      filename = `AthleteGuard_Workbook_${aid.slice(0, 8)}.xlsx`;
     }
 
     const fullFetchUrl = `${api.baseUrl}${url}${
@@ -154,11 +175,34 @@ export const AnalysisDashboard = ({ analysisId, video, onBack }) => {
       });
   };
 
+  const handleReanalyse = async () => {
+    const videoId = completeReport?.video?.video_id || video?.video_id;
+    if (!videoId) return;
+    if (!window.confirm('Force a fresh AI pose estimation & injury risk analysis on this video?')) return;
+    setIsReanalysing(true);
+    try {
+      const res = await api.post(`/api/analysis/videos/${videoId}/reanalyse`);
+      if (res && res.analysis_id) {
+        setCurrentAnalysisId(res.analysis_id);
+        setStatusData({ status: 'queued', stage: 'Queued for Re-analysis', progress: 0 });
+        setCompleteReport(null);
+        setKeypointFrames([]);
+        setBiomechFrames([]);
+        setAnomalies([]);
+        setLoading(true);
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to trigger re-analysis');
+    } finally {
+      setIsReanalysing(false);
+    }
+  };
+
   const token = localStorage.getItem('token');
   const skeletonVideoFullUrl = statusData?.skeleton_video_url
     ? `${api.baseUrl}${statusData.skeleton_video_url}${
         token ? `${statusData.skeleton_video_url.includes('?') ? '&' : '?'}token=${encodeURIComponent(token)}` : ''
-      }`
+      }${statusData.completed_at ? `&_v=${encodeURIComponent(statusData.completed_at)}` : `&_v=${Date.now()}`}`
     : null;
 
   const riskInfo = completeReport?.risk || {};
@@ -167,7 +211,9 @@ export const AnalysisDashboard = ({ analysisId, video, onBack }) => {
   const recItems = completeReport?.recommendations || [];
   const biomechSummary = completeReport?.biomechanics || {};
 
-  const overallScore = riskInfo.overall_score ?? 0.0;
+  const overallScore = (riskInfo.screening_risk_score && riskInfo.screening_risk_score > 0)
+    ? riskInfo.screening_risk_score
+    : (riskInfo.overall_score ?? 0.0);
   const riskLevel = (riskInfo.risk_level || 'LOW').toUpperCase();
   const confidencePct = Math.round((riskInfo.confidence || 0.95) * 100);
   const modelVersion = riskInfo.model_version || '2.0.0-weighted';
@@ -246,6 +292,15 @@ export const AnalysisDashboard = ({ analysisId, video, onBack }) => {
             >
               Keypoints CSV
             </button>
+            <button
+              onClick={handleReanalyse}
+              disabled={isReanalysing}
+              className="flex items-center gap-1.5 px-3 py-2 bg-purple-950/80 hover:bg-purple-900 text-purple-300 hover:text-white text-xs font-bold rounded-xl border border-purple-700/80 transition-colors cursor-pointer disabled:opacity-50"
+              title="Force fresh AI pose estimation & injury screening on this video"
+            >
+              <RotateCw className={`w-3.5 h-3.5 ${isReanalysing ? 'animate-spin text-purple-400' : 'text-purple-400'}`} />
+              <span>{isReanalysing ? 'Queuing...' : 'Re-analyse'}</span>
+            </button>
           </div>
         )}
       </div>
@@ -306,6 +361,7 @@ export const AnalysisDashboard = ({ analysisId, video, onBack }) => {
         <div className="w-full">
           {viewMode === 'VIDEO' ? (
             <PoseVideoPlayer
+              key={currentAnalysisId || skeletonVideoFullUrl}
               videoUrl={skeletonVideoFullUrl}
               onTimeUpdate={setCurrentTime}
               seekToTime={seekTime}
@@ -348,6 +404,85 @@ export const AnalysisDashboard = ({ analysisId, video, onBack }) => {
         onSelectAnomaly={handleSelectAnomaly}
         onSeek={handleSeekFromTimeline}
       />
+
+      {/* 6.5 DUAL INTELLIGENCE PANEL: Calibrated Supervised ML Probability vs Screening Risk Score */}
+      <div className="p-6 rounded-3xl bg-slate-950/90 border border-slate-800/90 shadow-2xl space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+          <div className="flex items-center gap-2">
+            <Cpu className="w-4 h-4 text-cyan-400" />
+            <h3 className="text-sm font-mono font-bold text-white uppercase tracking-wider">
+              DUAL INTELLIGENCE ENGINE • SUPERVISED ML & BIOMECHANICAL SCREENING
+            </h3>
+          </div>
+          <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-800">
+            Subject-Level Grouped Validation (0% Leakage)
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Panel 1: Calibrated Supervised ML Injury Probability */}
+          <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono font-bold text-slate-400 uppercase">Calibrated ML Probability</span>
+              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-purple-950 text-purple-400 border border-purple-800">
+                Platt Scaled
+              </span>
+            </div>
+            <div className="text-3xl font-black text-purple-400">
+              {((riskInfo.calibrated_ml_probability ?? injuryPreds.calibrated_probability ?? 0.05) * 100).toFixed(1)}%
+            </div>
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Model: <strong className="text-slate-200">{injuryPreds.ml_model_name || 'Calibrated-XGBoost v2.0'}</strong>
+              <br />
+              Trained on 45,198 samples (Lövdal 2021 & Swathikiran 2021 cohorts). ROC-AUC: 0.814, Brier: 0.051.
+            </p>
+          </div>
+
+          {/* Panel 2: Biomechanical Screening Risk Score */}
+          <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono font-bold text-slate-400 uppercase">Screening Risk Score</span>
+              <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${getSeverityBadge(riskLevel)}`}>
+                {riskLevel} RISK
+              </span>
+            </div>
+            <div className="text-3xl font-black text-cyan-400">
+              {Math.round(overallScore)}/100
+            </div>
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Engine: <strong className="text-slate-200">5-Factor Screening ({modelVersion})</strong>
+              <br />
+              35% Biomechanics, 20% History, 20% Asymmetry, 15% Workload, 10% Fatigue.
+            </p>
+          </div>
+
+          {/* Panel 3: Pose Model & Provenance */}
+          <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono font-bold text-slate-400 uppercase">Active Vision Engine</span>
+              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">
+                ONNX Runtime
+              </span>
+            </div>
+            <div className="text-lg font-bold text-emerald-400">
+              {riskInfo.pose_model || 'RTMPose-M (ONNX)'}
+            </div>
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Architecture: <strong className="text-slate-200">SimCC Heatmap-Free</strong>
+              <br />
+              17 COCO Keypoints • One-Euro Filter • Fallback: Torchvision Keypoint R-CNN.
+            </p>
+          </div>
+        </div>
+
+        {/* Clinical Proxy & Limitations Disclaimer */}
+        <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-[11px] font-mono text-slate-400 leading-relaxed flex items-start gap-2">
+          <AlertCircle className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+          <div>
+            <span className="text-cyan-300 font-bold">Clinical Transparency Note:</span> Monocular video pose estimation yields 2D kinematic proxies and angular estimates. High-risk flags indicate biomechanical compensation or workload spikes warranting professional athletic screening, not definitive medical diagnoses.
+          </div>
+        </div>
+      </div>
 
       {/* 7. 3D INJURY RISK HEATMAP VISUALIZATION */}
       <RiskSkeleton3D

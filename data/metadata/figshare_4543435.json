@@ -1,0 +1,2150 @@
+{
+  "source": "Figshare",
+  "article_id": 4543435,
+  "doi": "10.6084/m9.figshare.4543435.v5",
+  "title": "A public data set of running biomechanics and the effects of running speed on lower extremity kinematics and kinetics",
+  "license": "CC BY 4.0",
+  "published_date": "2023-03-02T06:16:37Z",
+  "files_available": [
+    {
+      "name": "RBDS001runT25markers.txt",
+      "size_bytes": 3435568,
+      "download_url": "https://ndownloader.figshare.com/files/7360135"
+    },
+    {
+      "name": "RBDS001runT35markers.txt",
+      "size_bytes": 3435336,
+      "download_url": "https://ndownloader.figshare.com/files/7360141"
+    },
+    {
+      "name": "RBDS001runT45markers.txt",
+      "size_bytes": 3435382,
+      "download_url": "https://ndownloader.figshare.com/files/7360147"
+    },
+    {
+      "name": "RBDS001static.txt",
+      "size_bytes": 173117,
+      "download_url": "https://ndownloader.figshare.com/files/7360150"
+    },
+    {
+      "name": "RBDS002runT25markers.txt",
+      "size_bytes": 3435580,
+      "download_url": "https://ndownloader.figshare.com/files/7360156"
+    },
+    {
+      "name": "RBDS002runT35markers.txt",
+      "size_bytes": 3430307,
+      "download_url": "https://ndownloader.figshare.com/files/7360162"
+    },
+    {
+      "name": "RBDS002runT45markers.txt",
+      "size_bytes": 3415449,
+      "download_url": "https://ndownloader.figshare.com/files/7360168"
+    },
+    {
+      "name": "RBDS002static.txt",
+      "size_bytes": 173103,
+      "download_url": "https://ndownloader.figshare.com/files/7360171"
+    },
+    {
+      "name": "RBDS003runT25markers.txt",
+      "size_bytes": 3382863,
+      "download_url": "https://ndownloader.figshare.com/files/7360177"
+    },
+    {
+      "name": "RBDS003runT35markers.txt",
+      "size_bytes": 3434508,
+      "download_url": "https://ndownloader.figshare.com/files/7360183"
+    },
+    {
+      "name": "RBDS003runT45markers.txt",
+      "size_bytes": 3434204,
+      "download_url": "https://ndownloader.figshare.com/files/7360189"
+    },
+    {
+      "name": "RBDS003static.txt",
+      "size_bytes": 173234,
+      "download_url": "https://ndownloader.figshare.com/files/7360192"
+    },
+    {
+      "name": "RBDS004runT25markers.txt",
+      "size_bytes": 3435095,
+      "download_url": "https://ndownloader.figshare.com/files/7360198"
+    },
+    {
+      "name": "RBDS004runT35markers.txt",
+      "size_bytes": 3435581,
+      "download_url": "https://ndownloader.figshare.com/files/7360204"
+    },
+    {
+      "name": "RBDS004runT45markers.txt",
+      "size_bytes": 3434414,
+      "download_url": "https://ndownloader.figshare.com/files/7360210"
+    },
+    {
+      "name": "RBDS004static.txt",
+      "size_bytes": 173357,
+      "download_url": "https://ndownloader.figshare.com/files/7360213"
+    },
+    {
+      "name": "RBDS005runT25markers.txt",
+      "size_bytes": 3435846,
+      "download_url": "https://ndownloader.figshare.com/files/7360219"
+    },
+    {
+      "name": "RBDS005runT35markers.txt",
+      "size_bytes": 3435329,
+      "download_url": "https://ndownloader.figshare.com/files/7360225"
+    },
+    {
+      "name": "RBDS005runT45markers.txt",
+      "size_bytes": 3382791,
+      "download_url": "https://ndownloader.figshare.com/files/7360231"
+    },
+    {
+      "name": "RBDS005static.txt",
+      "size_bytes": 173450,
+      "download_url": "https://ndownloader.figshare.com/files/7360234"
+    },
+    {
+      "name": "RBDS006runT25markers.txt",
+      "size_bytes": 3435414,
+      "download_url": "https://ndownloader.figshare.com/files/7360240"
+    },
+    {
+      "name": "RBDS006runT35markers.txt",
+      "size_bytes": 3435306,
+      "download_url": "https://ndownloader.figshare.com/files/7360246"
+    },
+    {
+      "name": "RBDS006runT45markers.txt",
+      "size_bytes": 3396197,
+      "download_url": "https://ndownloader.figshare.com/files/7360252"
+    },
+    {
+      "name": "RBDS006static.txt",
+      "size_bytes": 173095,
+      "download_url": "https://ndownloader.figshare.com/files/7360255"
+    },
+    {
+      "name": "RBDS007runT25markers.txt",
+      "size_bytes": 3435116,
+      "download_url": "https://ndownloader.figshare.com/files/7360261"
+    },
+    {
+      "name": "RBDS007runT35markers.txt",
+      "size_bytes": 3435712,
+      "download_url": "https://ndownloader.figshare.com/files/7360267"
+    },
+    {
+      "name": "RBDS007runT45markers.txt",
+      "size_bytes": 3435480,
+      "download_url": "https://ndownloader.figshare.com/files/7360273"
+    },
+    {
+      "name": "RBDS007static.txt",
+      "size_bytes": 172988,
+      "download_url": "https://ndownloader.figshare.com/files/7360276"
+    },
+    {
+      "name": "RBDS008runT25markers.txt",
+      "size_bytes": 3435477,
+      "download_url": "https://ndownloader.figshare.com/files/7360282"
+    },
+    {
+      "name": "RBDS008runT35markers.txt",
+      "size_bytes": 3434402,
+      "download_url": "https://ndownloader.figshare.com/files/7360288"
+    },
+    {
+      "name": "RBDS008runT45markers.txt",
+      "size_bytes": 3426898,
+      "download_url": "https://ndownloader.figshare.com/files/7360294"
+    },
+    {
+      "name": "RBDS008static.txt",
+      "size_bytes": 173206,
+      "download_url": "https://ndownloader.figshare.com/files/7360297"
+    },
+    {
+      "name": "RBDS009runT25markers.txt",
+      "size_bytes": 3435544,
+      "download_url": "https://ndownloader.figshare.com/files/7360303"
+    },
+    {
+      "name": "RBDS009runT35markers.txt",
+      "size_bytes": 3435114,
+      "download_url": "https://ndownloader.figshare.com/files/7360309"
+    },
+    {
+      "name": "RBDS009runT45markers.txt",
+      "size_bytes": 3431609,
+      "download_url": "https://ndownloader.figshare.com/files/7360315"
+    },
+    {
+      "name": "RBDS009static.txt",
+      "size_bytes": 172914,
+      "download_url": "https://ndownloader.figshare.com/files/7360318"
+    },
+    {
+      "name": "RBDS010runT25markers.txt",
+      "size_bytes": 3381734,
+      "download_url": "https://ndownloader.figshare.com/files/7360324"
+    },
+    {
+      "name": "RBDS010runT35markers.txt",
+      "size_bytes": 3382908,
+      "download_url": "https://ndownloader.figshare.com/files/7360330"
+    },
+    {
+      "name": "RBDS010runT45markers.txt",
+      "size_bytes": 3382996,
+      "download_url": "https://ndownloader.figshare.com/files/7360336"
+    },
+    {
+      "name": "RBDS010static.txt",
+      "size_bytes": 173290,
+      "download_url": "https://ndownloader.figshare.com/files/7360339"
+    },
+    {
+      "name": "RBDS011runT25markers.txt",
+      "size_bytes": 3435436,
+      "download_url": "https://ndownloader.figshare.com/files/7360345"
+    },
+    {
+      "name": "RBDS011runT35markers.txt",
+      "size_bytes": 3435232,
+      "download_url": "https://ndownloader.figshare.com/files/7360351"
+    },
+    {
+      "name": "RBDS011runT45markers.txt",
+      "size_bytes": 3435041,
+      "download_url": "https://ndownloader.figshare.com/files/7360357"
+    },
+    {
+      "name": "RBDS011static.txt",
+      "size_bytes": 173233,
+      "download_url": "https://ndownloader.figshare.com/files/7360360"
+    },
+    {
+      "name": "RBDS012runT25markers.txt",
+      "size_bytes": 3435651,
+      "download_url": "https://ndownloader.figshare.com/files/7360366"
+    },
+    {
+      "name": "RBDS012runT35markers.txt",
+      "size_bytes": 3435414,
+      "download_url": "https://ndownloader.figshare.com/files/7360372"
+    },
+    {
+      "name": "RBDS012runT45markers.txt",
+      "size_bytes": 3435537,
+      "download_url": "https://ndownloader.figshare.com/files/7360378"
+    },
+    {
+      "name": "RBDS012static.txt",
+      "size_bytes": 173097,
+      "download_url": "https://ndownloader.figshare.com/files/7360381"
+    },
+    {
+      "name": "RBDS013runT25markers.txt",
+      "size_bytes": 3435165,
+      "download_url": "https://ndownloader.figshare.com/files/7360387"
+    },
+    {
+      "name": "RBDS013runT35markers.txt",
+      "size_bytes": 3435408,
+      "download_url": "https://ndownloader.figshare.com/files/7360393"
+    },
+    {
+      "name": "RBDS013runT45markers.txt",
+      "size_bytes": 3434819,
+      "download_url": "https://ndownloader.figshare.com/files/7360399"
+    },
+    {
+      "name": "RBDS013static.txt",
+      "size_bytes": 173373,
+      "download_url": "https://ndownloader.figshare.com/files/7360402"
+    },
+    {
+      "name": "RBDS014runT25markers.txt",
+      "size_bytes": 3433704,
+      "download_url": "https://ndownloader.figshare.com/files/7360408"
+    },
+    {
+      "name": "RBDS014runT35markers.txt",
+      "size_bytes": 3434420,
+      "download_url": "https://ndownloader.figshare.com/files/7360414"
+    },
+    {
+      "name": "RBDS014runT45markers.txt",
+      "size_bytes": 3381631,
+      "download_url": "https://ndownloader.figshare.com/files/7360420"
+    },
+    {
+      "name": "RBDS014static.txt",
+      "size_bytes": 173246,
+      "download_url": "https://ndownloader.figshare.com/files/7360423"
+    },
+    {
+      "name": "RBDS015runT25markers.txt",
+      "size_bytes": 3435216,
+      "download_url": "https://ndownloader.figshare.com/files/7360429"
+    },
+    {
+      "name": "RBDS015runT35markers.txt",
+      "size_bytes": 3435282,
+      "download_url": "https://ndownloader.figshare.com/files/7360435"
+    },
+    {
+      "name": "RBDS015runT45markers.txt",
+      "size_bytes": 3435401,
+      "download_url": "https://ndownloader.figshare.com/files/7360441"
+    },
+    {
+      "name": "RBDS015static.txt",
+      "size_bytes": 173177,
+      "download_url": "https://ndownloader.figshare.com/files/7360444"
+    },
+    {
+      "name": "RBDS016runT25markers.txt",
+      "size_bytes": 3424375,
+      "download_url": "https://ndownloader.figshare.com/files/7360450"
+    },
+    {
+      "name": "RBDS016runT35markers.txt",
+      "size_bytes": 3426108,
+      "download_url": "https://ndownloader.figshare.com/files/7360456"
+    },
+    {
+      "name": "RBDS016runT45markers.txt",
+      "size_bytes": 3431755,
+      "download_url": "https://ndownloader.figshare.com/files/7360462"
+    },
+    {
+      "name": "RBDS016static.txt",
+      "size_bytes": 173221,
+      "download_url": "https://ndownloader.figshare.com/files/7360465"
+    },
+    {
+      "name": "RBDS017runT25markers.txt",
+      "size_bytes": 3434109,
+      "download_url": "https://ndownloader.figshare.com/files/7360471"
+    },
+    {
+      "name": "RBDS017runT35markers.txt",
+      "size_bytes": 3435837,
+      "download_url": "https://ndownloader.figshare.com/files/7360477"
+    },
+    {
+      "name": "RBDS017runT45markers.txt",
+      "size_bytes": 3435338,
+      "download_url": "https://ndownloader.figshare.com/files/7360483"
+    },
+    {
+      "name": "RBDS017static.txt",
+      "size_bytes": 173246,
+      "download_url": "https://ndownloader.figshare.com/files/7360486"
+    },
+    {
+      "name": "RBDS018runT25markers.txt",
+      "size_bytes": 3435385,
+      "download_url": "https://ndownloader.figshare.com/files/7360492"
+    },
+    {
+      "name": "RBDS018runT35markers.txt",
+      "size_bytes": 3435292,
+      "download_url": "https://ndownloader.figshare.com/files/7360498"
+    },
+    {
+      "name": "RBDS018runT45markers.txt",
+      "size_bytes": 3435485,
+      "download_url": "https://ndownloader.figshare.com/files/7360504"
+    },
+    {
+      "name": "RBDS018static.txt",
+      "size_bytes": 173202,
+      "download_url": "https://ndownloader.figshare.com/files/7360507"
+    },
+    {
+      "name": "RBDS019runT25markers.txt",
+      "size_bytes": 3435482,
+      "download_url": "https://ndownloader.figshare.com/files/7360513"
+    },
+    {
+      "name": "RBDS019runT35markers.txt",
+      "size_bytes": 3432621,
+      "download_url": "https://ndownloader.figshare.com/files/7360519"
+    },
+    {
+      "name": "RBDS019runT45markers.txt",
+      "size_bytes": 3428896,
+      "download_url": "https://ndownloader.figshare.com/files/7360525"
+    },
+    {
+      "name": "RBDS019static.txt",
+      "size_bytes": 173180,
+      "download_url": "https://ndownloader.figshare.com/files/7360528"
+    },
+    {
+      "name": "RBDS020runT25markers.txt",
+      "size_bytes": 3435282,
+      "download_url": "https://ndownloader.figshare.com/files/7360534"
+    },
+    {
+      "name": "RBDS020runT35markers.txt",
+      "size_bytes": 3435684,
+      "download_url": "https://ndownloader.figshare.com/files/7360540"
+    },
+    {
+      "name": "RBDS020runT45markers.txt",
+      "size_bytes": 3435258,
+      "download_url": "https://ndownloader.figshare.com/files/7360546"
+    },
+    {
+      "name": "RBDS020static.txt",
+      "size_bytes": 173173,
+      "download_url": "https://ndownloader.figshare.com/files/7360549"
+    },
+    {
+      "name": "RBDS021runT25markers.txt",
+      "size_bytes": 3430847,
+      "download_url": "https://ndownloader.figshare.com/files/7360555"
+    },
+    {
+      "name": "RBDS021runT35markers.txt",
+      "size_bytes": 3432149,
+      "download_url": "https://ndownloader.figshare.com/files/7360561"
+    },
+    {
+      "name": "RBDS021runT45markers.txt",
+      "size_bytes": 3434352,
+      "download_url": "https://ndownloader.figshare.com/files/7360567"
+    },
+    {
+      "name": "RBDS021static.txt",
+      "size_bytes": 173244,
+      "download_url": "https://ndownloader.figshare.com/files/7360570"
+    },
+    {
+      "name": "RBDS022runT25markers.txt",
+      "size_bytes": 3435112,
+      "download_url": "https://ndownloader.figshare.com/files/7360576"
+    },
+    {
+      "name": "RBDS022runT35markers.txt",
+      "size_bytes": 3435364,
+      "download_url": "https://ndownloader.figshare.com/files/7360582"
+    },
+    {
+      "name": "RBDS022runT45markers.txt",
+      "size_bytes": 3435419,
+      "download_url": "https://ndownloader.figshare.com/files/7360588"
+    },
+    {
+      "name": "RBDS022static.txt",
+      "size_bytes": 172931,
+      "download_url": "https://ndownloader.figshare.com/files/7360591"
+    },
+    {
+      "name": "RBDS023runT25markers.txt",
+      "size_bytes": 3432668,
+      "download_url": "https://ndownloader.figshare.com/files/7360597"
+    },
+    {
+      "name": "RBDS023runT35markers.txt",
+      "size_bytes": 3435167,
+      "download_url": "https://ndownloader.figshare.com/files/7360603"
+    },
+    {
+      "name": "RBDS023runT45markers.txt",
+      "size_bytes": 3434397,
+      "download_url": "https://ndownloader.figshare.com/files/7360609"
+    },
+    {
+      "name": "RBDS023static.txt",
+      "size_bytes": 173347,
+      "download_url": "https://ndownloader.figshare.com/files/7360612"
+    },
+    {
+      "name": "RBDS024runT25markers.txt",
+      "size_bytes": 3435073,
+      "download_url": "https://ndownloader.figshare.com/files/7360618"
+    },
+    {
+      "name": "RBDS024runT35markers.txt",
+      "size_bytes": 3434987,
+      "download_url": "https://ndownloader.figshare.com/files/7360624"
+    },
+    {
+      "name": "RBDS024runT45markers.txt",
+      "size_bytes": 3382329,
+      "download_url": "https://ndownloader.figshare.com/files/7360630"
+    },
+    {
+      "name": "RBDS024static.txt",
+      "size_bytes": 173198,
+      "download_url": "https://ndownloader.figshare.com/files/7360633"
+    },
+    {
+      "name": "RBDS025runT25markers.txt",
+      "size_bytes": 3435956,
+      "download_url": "https://ndownloader.figshare.com/files/7360639"
+    },
+    {
+      "name": "RBDS025runT35markers.txt",
+      "size_bytes": 3435706,
+      "download_url": "https://ndownloader.figshare.com/files/7360645"
+    },
+    {
+      "name": "RBDS025runT45markers.txt",
+      "size_bytes": 3435541,
+      "download_url": "https://ndownloader.figshare.com/files/7360651"
+    },
+    {
+      "name": "RBDS025static.txt",
+      "size_bytes": 173250,
+      "download_url": "https://ndownloader.figshare.com/files/7360654"
+    },
+    {
+      "name": "RBDS026runT25markers.txt",
+      "size_bytes": 3435899,
+      "download_url": "https://ndownloader.figshare.com/files/7360660"
+    },
+    {
+      "name": "RBDS026runT35markers.txt",
+      "size_bytes": 3435631,
+      "download_url": "https://ndownloader.figshare.com/files/7360666"
+    },
+    {
+      "name": "RBDS026runT45markers.txt",
+      "size_bytes": 3434873,
+      "download_url": "https://ndownloader.figshare.com/files/7360672"
+    },
+    {
+      "name": "RBDS026static.txt",
+      "size_bytes": 173087,
+      "download_url": "https://ndownloader.figshare.com/files/7360675"
+    },
+    {
+      "name": "RBDS027runT25markers.txt",
+      "size_bytes": 3435641,
+      "download_url": "https://ndownloader.figshare.com/files/7360681"
+    },
+    {
+      "name": "RBDS027runT35markers.txt",
+      "size_bytes": 3429010,
+      "download_url": "https://ndownloader.figshare.com/files/7360687"
+    },
+    {
+      "name": "RBDS027runT45markers.txt",
+      "size_bytes": 3413540,
+      "download_url": "https://ndownloader.figshare.com/files/7360693"
+    },
+    {
+      "name": "RBDS027static.txt",
+      "size_bytes": 173267,
+      "download_url": "https://ndownloader.figshare.com/files/7360696"
+    },
+    {
+      "name": "RBDS028runT25markers.txt",
+      "size_bytes": 3433081,
+      "download_url": "https://ndownloader.figshare.com/files/7360702"
+    },
+    {
+      "name": "RBDS028runT35markers.txt",
+      "size_bytes": 3433877,
+      "download_url": "https://ndownloader.figshare.com/files/7360708"
+    },
+    {
+      "name": "RBDS028runT45markers.txt",
+      "size_bytes": 3434695,
+      "download_url": "https://ndownloader.figshare.com/files/7360714"
+    },
+    {
+      "name": "RBDS028static.txt",
+      "size_bytes": 173134,
+      "download_url": "https://ndownloader.figshare.com/files/7360717"
+    },
+    {
+      "name": "RBDS001runT25.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360720"
+    },
+    {
+      "name": "RBDS001runT35.c3d",
+      "size_bytes": 2527168,
+      "download_url": "https://ndownloader.figshare.com/files/7360723"
+    },
+    {
+      "name": "RBDS001runT45.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360726"
+    },
+    {
+      "name": "RBDS001static.c3d",
+      "size_bytes": 121344,
+      "download_url": "https://ndownloader.figshare.com/files/7360729"
+    },
+    {
+      "name": "RBDS002runT25.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360732"
+    },
+    {
+      "name": "RBDS002runT35.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360735"
+    },
+    {
+      "name": "RBDS002runT45.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360738"
+    },
+    {
+      "name": "RBDS002static.c3d",
+      "size_bytes": 129568,
+      "download_url": "https://ndownloader.figshare.com/files/7360741"
+    },
+    {
+      "name": "RBDS03runT25.c3d",
+      "size_bytes": 2527168,
+      "download_url": "https://ndownloader.figshare.com/files/7360744"
+    },
+    {
+      "name": "RBDS03runT35.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360747"
+    },
+    {
+      "name": "RBDS03runT45.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360750"
+    },
+    {
+      "name": "RBDS03static.c3d",
+      "size_bytes": 129568,
+      "download_url": "https://ndownloader.figshare.com/files/7360753"
+    },
+    {
+      "name": "RBDS04runT25.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360756"
+    },
+    {
+      "name": "RBDS04runT35.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360759"
+    },
+    {
+      "name": "RBDS04runT45.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360762"
+    },
+    {
+      "name": "RBDS04static.c3d",
+      "size_bytes": 129568,
+      "download_url": "https://ndownloader.figshare.com/files/7360765"
+    },
+    {
+      "name": "RBDS05runT25.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360768"
+    },
+    {
+      "name": "RBDS05runT35.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360771"
+    },
+    {
+      "name": "RBDS05runT45.c3d",
+      "size_bytes": 2527168,
+      "download_url": "https://ndownloader.figshare.com/files/7360774"
+    },
+    {
+      "name": "RBDS05static.c3d",
+      "size_bytes": 121344,
+      "download_url": "https://ndownloader.figshare.com/files/7360777"
+    },
+    {
+      "name": "RBDS06runT25.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360783"
+    },
+    {
+      "name": "RBDS06runT30.c3d",
+      "size_bytes": 4039168,
+      "download_url": "https://ndownloader.figshare.com/files/7360786"
+    },
+    {
+      "name": "RBDS06runT35.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360789"
+    },
+    {
+      "name": "RBDS06runT45.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360792"
+    },
+    {
+      "name": "RBDS06static.c3d",
+      "size_bytes": 129568,
+      "download_url": "https://ndownloader.figshare.com/files/7360795"
+    },
+    {
+      "name": "RBDS07runT25.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360798"
+    },
+    {
+      "name": "RBDS07runT30.c3d",
+      "size_bytes": 4039168,
+      "download_url": "https://ndownloader.figshare.com/files/7360801"
+    },
+    {
+      "name": "RBDS07runT35.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360804"
+    },
+    {
+      "name": "RBDS07runT45.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360807"
+    },
+    {
+      "name": "RBDS07static.c3d",
+      "size_bytes": 129568,
+      "download_url": "https://ndownloader.figshare.com/files/7360810"
+    },
+    {
+      "name": "RBDS08runT25.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360813"
+    },
+    {
+      "name": "RBDS08runT35.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360816"
+    },
+    {
+      "name": "RBDS08runT45.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360819"
+    },
+    {
+      "name": "RBDS08static.c3d",
+      "size_bytes": 129568,
+      "download_url": "https://ndownloader.figshare.com/files/7360822"
+    },
+    {
+      "name": "RBDS09runT25.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360825"
+    },
+    {
+      "name": "RBDS09runT35.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360828"
+    },
+    {
+      "name": "RBDS09runT45.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360831"
+    },
+    {
+      "name": "RBDS09static.c3d",
+      "size_bytes": 129568,
+      "download_url": "https://ndownloader.figshare.com/files/7360834"
+    },
+    {
+      "name": "RBDS010runT25.c3d",
+      "size_bytes": 2527168,
+      "download_url": "https://ndownloader.figshare.com/files/7360837"
+    },
+    {
+      "name": "RBDS010runT35.c3d",
+      "size_bytes": 2527168,
+      "download_url": "https://ndownloader.figshare.com/files/7360840"
+    },
+    {
+      "name": "RBDS010runT45.c3d",
+      "size_bytes": 2527168,
+      "download_url": "https://ndownloader.figshare.com/files/7360843"
+    },
+    {
+      "name": "RBDS010static.c3d",
+      "size_bytes": 129568,
+      "download_url": "https://ndownloader.figshare.com/files/7360846"
+    },
+    {
+      "name": "RBDS011runT25.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360849"
+    },
+    {
+      "name": "RBDS011runT35.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360852"
+    },
+    {
+      "name": "RBDS011runT45.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360855"
+    },
+    {
+      "name": "RBDS011static.c3d",
+      "size_bytes": 129568,
+      "download_url": "https://ndownloader.figshare.com/files/7360858"
+    },
+    {
+      "name": "RBDS012runT25.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360861"
+    },
+    {
+      "name": "RBDS012runT35.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360864"
+    },
+    {
+      "name": "RBDS012runT45.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360867"
+    },
+    {
+      "name": "RBDS012static.c3d",
+      "size_bytes": 129568,
+      "download_url": "https://ndownloader.figshare.com/files/7360870"
+    },
+    {
+      "name": "RBDS013runT25.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360873"
+    },
+    {
+      "name": "RBDS013runT35.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360876"
+    },
+    {
+      "name": "RBDS013runT45.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360879"
+    },
+    {
+      "name": "RBDS013static.c3d",
+      "size_bytes": 129568,
+      "download_url": "https://ndownloader.figshare.com/files/7360882"
+    },
+    {
+      "name": "RBDS014runT25.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360885"
+    },
+    {
+      "name": "RBDS014runT35.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360888"
+    },
+    {
+      "name": "RBDS014runT45.c3d",
+      "size_bytes": 2527168,
+      "download_url": "https://ndownloader.figshare.com/files/7360891"
+    },
+    {
+      "name": "RBDS014static.c3d",
+      "size_bytes": 129568,
+      "download_url": "https://ndownloader.figshare.com/files/7360894"
+    },
+    {
+      "name": "RBDS015runT25.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360897"
+    },
+    {
+      "name": "RBDS015runT35.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360900"
+    },
+    {
+      "name": "RBDS015runT45.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360903"
+    },
+    {
+      "name": "RBDS015static.c3d",
+      "size_bytes": 129568,
+      "download_url": "https://ndownloader.figshare.com/files/7360906"
+    },
+    {
+      "name": "RBDS016runT25.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360909"
+    },
+    {
+      "name": "RBDS016runT35.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360912"
+    },
+    {
+      "name": "RBDS016runT45.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360915"
+    },
+    {
+      "name": "RBDS016static.c3d",
+      "size_bytes": 129568,
+      "download_url": "https://ndownloader.figshare.com/files/7360918"
+    },
+    {
+      "name": "RBDS017runT25.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360921"
+    },
+    {
+      "name": "RBDS017runT35.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360924"
+    },
+    {
+      "name": "RBDS017runT45.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360927"
+    },
+    {
+      "name": "RBDS017static.c3d",
+      "size_bytes": 129568,
+      "download_url": "https://ndownloader.figshare.com/files/7360930"
+    },
+    {
+      "name": "RBDS018runT25.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360933"
+    },
+    {
+      "name": "RBDS018runT35.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360936"
+    },
+    {
+      "name": "RBDS018runT45.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360939"
+    },
+    {
+      "name": "RBDS018static.c3d",
+      "size_bytes": 129568,
+      "download_url": "https://ndownloader.figshare.com/files/7360942"
+    },
+    {
+      "name": "RBDS019runT25.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360945"
+    },
+    {
+      "name": "RBDS019runT35.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360948"
+    },
+    {
+      "name": "RBDS019runT45.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360951"
+    },
+    {
+      "name": "RBDS019static.c3d",
+      "size_bytes": 129568,
+      "download_url": "https://ndownloader.figshare.com/files/7360954"
+    },
+    {
+      "name": "RBDS020runT25.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360957"
+    },
+    {
+      "name": "RBDS020runT35.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360960"
+    },
+    {
+      "name": "RBDS020runT45.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360963"
+    },
+    {
+      "name": "RBDS020static.c3d",
+      "size_bytes": 129568,
+      "download_url": "https://ndownloader.figshare.com/files/7360966"
+    },
+    {
+      "name": "RBDS021runT25.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360969"
+    },
+    {
+      "name": "RBDS021runT35.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360972"
+    },
+    {
+      "name": "RBDS021runT45.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360975"
+    },
+    {
+      "name": "RBDS021static.c3d",
+      "size_bytes": 129568,
+      "download_url": "https://ndownloader.figshare.com/files/7360978"
+    },
+    {
+      "name": "RBDS022runT25.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360981"
+    },
+    {
+      "name": "RBDS022runT35.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360984"
+    },
+    {
+      "name": "RBDS022runT45.c3d",
+      "size_bytes": 2527168,
+      "download_url": "https://ndownloader.figshare.com/files/7360987"
+    },
+    {
+      "name": "RBDS022static.c3d",
+      "size_bytes": 129568,
+      "download_url": "https://ndownloader.figshare.com/files/7360990"
+    },
+    {
+      "name": "RBDS023runT25.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360993"
+    },
+    {
+      "name": "RBDS023runT35.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360996"
+    },
+    {
+      "name": "RBDS023runT45.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7360999"
+    },
+    {
+      "name": "RBDS023static.c3d",
+      "size_bytes": 129568,
+      "download_url": "https://ndownloader.figshare.com/files/7361002"
+    },
+    {
+      "name": "RBDS024runT25.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7361005"
+    },
+    {
+      "name": "RBDS024runT35.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7361008"
+    },
+    {
+      "name": "RBDS024runT45.c3d",
+      "size_bytes": 2527168,
+      "download_url": "https://ndownloader.figshare.com/files/7361011"
+    },
+    {
+      "name": "RBDS024static.c3d",
+      "size_bytes": 129568,
+      "download_url": "https://ndownloader.figshare.com/files/7361014"
+    },
+    {
+      "name": "RBDS025runT25.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7361017"
+    },
+    {
+      "name": "RBDS025runT35.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7361020"
+    },
+    {
+      "name": "RBDS025runT45.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7361023"
+    },
+    {
+      "name": "RBDS025static.c3d",
+      "size_bytes": 129568,
+      "download_url": "https://ndownloader.figshare.com/files/7361026"
+    },
+    {
+      "name": "RBDS026runT25.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7361029"
+    },
+    {
+      "name": "RBDS026runT35.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7361032"
+    },
+    {
+      "name": "RBDS026runT45.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7361035"
+    },
+    {
+      "name": "RBDS026static.c3d",
+      "size_bytes": 129568,
+      "download_url": "https://ndownloader.figshare.com/files/7361038"
+    },
+    {
+      "name": "RBDS027runT25.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7361041"
+    },
+    {
+      "name": "RBDS027runT35.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7361044"
+    },
+    {
+      "name": "RBDS027runT45.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7361047"
+    },
+    {
+      "name": "RBDS027static.c3d",
+      "size_bytes": 121344,
+      "download_url": "https://ndownloader.figshare.com/files/7361050"
+    },
+    {
+      "name": "RBDS028runT25.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7361053"
+    },
+    {
+      "name": "RBDS028runT35.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7361056"
+    },
+    {
+      "name": "RBDS028runT45.c3d",
+      "size_bytes": 2599168,
+      "download_url": "https://ndownloader.figshare.com/files/7361059"
+    },
+    {
+      "name": "RBDS028static.c3d",
+      "size_bytes": 121344,
+      "download_url": "https://ndownloader.figshare.com/files/7361062"
+    },
+    {
+      "name": "RBDSmodelV3D.mdh",
+      "size_bytes": 24319,
+      "download_url": "https://ndownloader.figshare.com/files/7361578"
+    },
+    {
+      "name": "RBDS023runT25forces.txt",
+      "size_bytes": 404338,
+      "download_url": "https://ndownloader.figshare.com/files/7802497"
+    },
+    {
+      "name": "RBDS023runT35forces.txt",
+      "size_bytes": 395089,
+      "download_url": "https://ndownloader.figshare.com/files/7802500"
+    },
+    {
+      "name": "RBDS023runT45forces.txt",
+      "size_bytes": 389726,
+      "download_url": "https://ndownloader.figshare.com/files/7802503"
+    },
+    {
+      "name": "RBDS024runT25forces.txt",
+      "size_bytes": 399431,
+      "download_url": "https://ndownloader.figshare.com/files/7802506"
+    },
+    {
+      "name": "RBDS024runT35forces.txt",
+      "size_bytes": 389587,
+      "download_url": "https://ndownloader.figshare.com/files/7802509"
+    },
+    {
+      "name": "RBDS024runT45forces.txt",
+      "size_bytes": 389275,
+      "download_url": "https://ndownloader.figshare.com/files/7802512"
+    },
+    {
+      "name": "RBDS025runT25forces.txt",
+      "size_bytes": 408133,
+      "download_url": "https://ndownloader.figshare.com/files/7802515"
+    },
+    {
+      "name": "RBDS025runT35forces.txt",
+      "size_bytes": 394954,
+      "download_url": "https://ndownloader.figshare.com/files/7802518"
+    },
+    {
+      "name": "RBDS025runT45forces.txt",
+      "size_bytes": 389164,
+      "download_url": "https://ndownloader.figshare.com/files/7802521"
+    },
+    {
+      "name": "RBDS026runT25forces.txt",
+      "size_bytes": 413806,
+      "download_url": "https://ndownloader.figshare.com/files/7802524"
+    },
+    {
+      "name": "RBDS026runT35forces.txt",
+      "size_bytes": 390346,
+      "download_url": "https://ndownloader.figshare.com/files/7802527"
+    },
+    {
+      "name": "RBDS026runT45forces.txt",
+      "size_bytes": 374751,
+      "download_url": "https://ndownloader.figshare.com/files/7802530"
+    },
+    {
+      "name": "RBDS027runT25forces.txt",
+      "size_bytes": 405400,
+      "download_url": "https://ndownloader.figshare.com/files/7802533"
+    },
+    {
+      "name": "RBDS027runT35forces.txt",
+      "size_bytes": 394361,
+      "download_url": "https://ndownloader.figshare.com/files/7802536"
+    },
+    {
+      "name": "RBDS027runT45forces.txt",
+      "size_bytes": 385500,
+      "download_url": "https://ndownloader.figshare.com/files/7802539"
+    },
+    {
+      "name": "RBDS028runT25forces.txt",
+      "size_bytes": 411306,
+      "download_url": "https://ndownloader.figshare.com/files/7802542"
+    },
+    {
+      "name": "RBDS028runT35forces.txt",
+      "size_bytes": 399903,
+      "download_url": "https://ndownloader.figshare.com/files/7802545"
+    },
+    {
+      "name": "RBDS028runT45forces.txt",
+      "size_bytes": 395383,
+      "download_url": "https://ndownloader.figshare.com/files/7802548"
+    },
+    {
+      "name": "RBDS001runT25forces.txt",
+      "size_bytes": 408864,
+      "download_url": "https://ndownloader.figshare.com/files/7802551"
+    },
+    {
+      "name": "RBDS001runT35forces.txt",
+      "size_bytes": 401971,
+      "download_url": "https://ndownloader.figshare.com/files/7802557"
+    },
+    {
+      "name": "RBDS001runT45forces.txt",
+      "size_bytes": 397567,
+      "download_url": "https://ndownloader.figshare.com/files/7802554"
+    },
+    {
+      "name": "RBDS002runT25forces.txt",
+      "size_bytes": 426375,
+      "download_url": "https://ndownloader.figshare.com/files/7802560"
+    },
+    {
+      "name": "RBDS002runT35forces.txt",
+      "size_bytes": 402481,
+      "download_url": "https://ndownloader.figshare.com/files/7802563"
+    },
+    {
+      "name": "RBDS002runT45forces.txt",
+      "size_bytes": 396505,
+      "download_url": "https://ndownloader.figshare.com/files/7802566"
+    },
+    {
+      "name": "RBDS003runT25forces.txt",
+      "size_bytes": 395754,
+      "download_url": "https://ndownloader.figshare.com/files/7802569"
+    },
+    {
+      "name": "RBDS003runT35forces.txt",
+      "size_bytes": 387192,
+      "download_url": "https://ndownloader.figshare.com/files/7802572"
+    },
+    {
+      "name": "RBDS003runT45forces.txt",
+      "size_bytes": 388631,
+      "download_url": "https://ndownloader.figshare.com/files/7802575"
+    },
+    {
+      "name": "RBDS004runT25forces.txt",
+      "size_bytes": 408315,
+      "download_url": "https://ndownloader.figshare.com/files/7802578"
+    },
+    {
+      "name": "RBDS004runT35forces.txt",
+      "size_bytes": 391055,
+      "download_url": "https://ndownloader.figshare.com/files/7802581"
+    },
+    {
+      "name": "RBDS004runT45forces.txt",
+      "size_bytes": 384074,
+      "download_url": "https://ndownloader.figshare.com/files/7802584"
+    },
+    {
+      "name": "RBDS005runT25forces.txt",
+      "size_bytes": 417399,
+      "download_url": "https://ndownloader.figshare.com/files/7802587"
+    },
+    {
+      "name": "RBDS005runT35forces.txt",
+      "size_bytes": 402292,
+      "download_url": "https://ndownloader.figshare.com/files/7802590"
+    },
+    {
+      "name": "RBDS005runT45forces.txt",
+      "size_bytes": 393797,
+      "download_url": "https://ndownloader.figshare.com/files/7802593"
+    },
+    {
+      "name": "RBDS006runT25forces.txt",
+      "size_bytes": 425878,
+      "download_url": "https://ndownloader.figshare.com/files/7802596"
+    },
+    {
+      "name": "RBDS006runT35forces.txt",
+      "size_bytes": 410890,
+      "download_url": "https://ndownloader.figshare.com/files/7802599"
+    },
+    {
+      "name": "RBDS006runT45forces.txt",
+      "size_bytes": 403103,
+      "download_url": "https://ndownloader.figshare.com/files/7802602"
+    },
+    {
+      "name": "RBDS007runT25forces.txt",
+      "size_bytes": 401684,
+      "download_url": "https://ndownloader.figshare.com/files/7802605"
+    },
+    {
+      "name": "RBDS007runT35forces.txt",
+      "size_bytes": 391732,
+      "download_url": "https://ndownloader.figshare.com/files/7802608"
+    },
+    {
+      "name": "RBDS007runT45forces.txt",
+      "size_bytes": 388987,
+      "download_url": "https://ndownloader.figshare.com/files/7802611"
+    },
+    {
+      "name": "RBDS008runT25forces.txt",
+      "size_bytes": 424153,
+      "download_url": "https://ndownloader.figshare.com/files/7802614"
+    },
+    {
+      "name": "RBDS008runT35forces.txt",
+      "size_bytes": 405771,
+      "download_url": "https://ndownloader.figshare.com/files/7802617"
+    },
+    {
+      "name": "RBDS008runT45forces.txt",
+      "size_bytes": 398242,
+      "download_url": "https://ndownloader.figshare.com/files/7802620"
+    },
+    {
+      "name": "RBDS009runT25forces.txt",
+      "size_bytes": 390364,
+      "download_url": "https://ndownloader.figshare.com/files/7802623"
+    },
+    {
+      "name": "RBDS009runT35forces.txt",
+      "size_bytes": 386646,
+      "download_url": "https://ndownloader.figshare.com/files/7802626"
+    },
+    {
+      "name": "RBDS009runT45forces.txt",
+      "size_bytes": 386351,
+      "download_url": "https://ndownloader.figshare.com/files/7802629"
+    },
+    {
+      "name": "RBDS010runT25forces.txt",
+      "size_bytes": 410185,
+      "download_url": "https://ndownloader.figshare.com/files/7802632"
+    },
+    {
+      "name": "RBDS010runT35forces.txt",
+      "size_bytes": 393220,
+      "download_url": "https://ndownloader.figshare.com/files/7802635"
+    },
+    {
+      "name": "RBDS010runT45forces.txt",
+      "size_bytes": 383532,
+      "download_url": "https://ndownloader.figshare.com/files/7802638"
+    },
+    {
+      "name": "RBDS011runT25forces.txt",
+      "size_bytes": 407799,
+      "download_url": "https://ndownloader.figshare.com/files/7802641"
+    },
+    {
+      "name": "RBDS011runT35forces.txt",
+      "size_bytes": 391863,
+      "download_url": "https://ndownloader.figshare.com/files/7802644"
+    },
+    {
+      "name": "RBDS011runT45forces.txt",
+      "size_bytes": 388718,
+      "download_url": "https://ndownloader.figshare.com/files/7802647"
+    },
+    {
+      "name": "RBDS012runT25forces.txt",
+      "size_bytes": 403800,
+      "download_url": "https://ndownloader.figshare.com/files/7802650"
+    },
+    {
+      "name": "RBDS012runT35forces.txt",
+      "size_bytes": 399105,
+      "download_url": "https://ndownloader.figshare.com/files/7802653"
+    },
+    {
+      "name": "RBDS012runT45forces.txt",
+      "size_bytes": 394516,
+      "download_url": "https://ndownloader.figshare.com/files/7802656"
+    },
+    {
+      "name": "RBDS013runT25forces.txt",
+      "size_bytes": 384675,
+      "download_url": "https://ndownloader.figshare.com/files/7802659"
+    },
+    {
+      "name": "RBDS013runT35forces.txt",
+      "size_bytes": 371231,
+      "download_url": "https://ndownloader.figshare.com/files/7802662"
+    },
+    {
+      "name": "RBDS013runT45forces.txt",
+      "size_bytes": 366471,
+      "download_url": "https://ndownloader.figshare.com/files/7802665"
+    },
+    {
+      "name": "RBDS014runT25forces.txt",
+      "size_bytes": 420552,
+      "download_url": "https://ndownloader.figshare.com/files/7802668"
+    },
+    {
+      "name": "RBDS014runT35forces.txt",
+      "size_bytes": 401141,
+      "download_url": "https://ndownloader.figshare.com/files/7802671"
+    },
+    {
+      "name": "RBDS014runT45forces.txt",
+      "size_bytes": 398587,
+      "download_url": "https://ndownloader.figshare.com/files/7802674"
+    },
+    {
+      "name": "RBDS015runT25forces.txt",
+      "size_bytes": 411777,
+      "download_url": "https://ndownloader.figshare.com/files/7802677"
+    },
+    {
+      "name": "RBDS015runT35forces.txt",
+      "size_bytes": 400281,
+      "download_url": "https://ndownloader.figshare.com/files/7802680"
+    },
+    {
+      "name": "RBDS015runT45forces.txt",
+      "size_bytes": 394152,
+      "download_url": "https://ndownloader.figshare.com/files/7802683"
+    },
+    {
+      "name": "RBDS016runT25forces.txt",
+      "size_bytes": 414073,
+      "download_url": "https://ndownloader.figshare.com/files/7802686"
+    },
+    {
+      "name": "RBDS016runT35forces.txt",
+      "size_bytes": 394281,
+      "download_url": "https://ndownloader.figshare.com/files/7802689"
+    },
+    {
+      "name": "RBDS016runT45forces.txt",
+      "size_bytes": 388812,
+      "download_url": "https://ndownloader.figshare.com/files/7802692"
+    },
+    {
+      "name": "RBDS017runT25forces.txt",
+      "size_bytes": 397739,
+      "download_url": "https://ndownloader.figshare.com/files/7802695"
+    },
+    {
+      "name": "RBDS017runT35forces.txt",
+      "size_bytes": 387796,
+      "download_url": "https://ndownloader.figshare.com/files/7802698"
+    },
+    {
+      "name": "RBDS017runT45forces.txt",
+      "size_bytes": 380746,
+      "download_url": "https://ndownloader.figshare.com/files/7802701"
+    },
+    {
+      "name": "RBDS018runT25forces.txt",
+      "size_bytes": 413604,
+      "download_url": "https://ndownloader.figshare.com/files/7802704"
+    },
+    {
+      "name": "RBDS018runT35forces.txt",
+      "size_bytes": 393496,
+      "download_url": "https://ndownloader.figshare.com/files/7802707"
+    },
+    {
+      "name": "RBDS018runT45forces.txt",
+      "size_bytes": 383244,
+      "download_url": "https://ndownloader.figshare.com/files/7802710"
+    },
+    {
+      "name": "RBDS019runT25forces.txt",
+      "size_bytes": 391354,
+      "download_url": "https://ndownloader.figshare.com/files/7802713"
+    },
+    {
+      "name": "RBDS019runT35forces.txt",
+      "size_bytes": 381948,
+      "download_url": "https://ndownloader.figshare.com/files/7802716"
+    },
+    {
+      "name": "RBDS019runT45forces.txt",
+      "size_bytes": 379313,
+      "download_url": "https://ndownloader.figshare.com/files/7802719"
+    },
+    {
+      "name": "RBDS020runT25forces.txt",
+      "size_bytes": 413378,
+      "download_url": "https://ndownloader.figshare.com/files/7802722"
+    },
+    {
+      "name": "RBDS020runT35forces.txt",
+      "size_bytes": 398575,
+      "download_url": "https://ndownloader.figshare.com/files/7802725"
+    },
+    {
+      "name": "RBDS020runT45forces.txt",
+      "size_bytes": 393099,
+      "download_url": "https://ndownloader.figshare.com/files/7802728"
+    },
+    {
+      "name": "RBDS021runT25forces.txt",
+      "size_bytes": 408048,
+      "download_url": "https://ndownloader.figshare.com/files/7802731"
+    },
+    {
+      "name": "RBDS021runT35forces.txt",
+      "size_bytes": 397491,
+      "download_url": "https://ndownloader.figshare.com/files/7802734"
+    },
+    {
+      "name": "RBDS021runT45forces.txt",
+      "size_bytes": 390981,
+      "download_url": "https://ndownloader.figshare.com/files/7802737"
+    },
+    {
+      "name": "RBDS022runT25forces.txt",
+      "size_bytes": 421674,
+      "download_url": "https://ndownloader.figshare.com/files/7802740"
+    },
+    {
+      "name": "RBDS022runT35forces.txt",
+      "size_bytes": 408442,
+      "download_url": "https://ndownloader.figshare.com/files/7802743"
+    },
+    {
+      "name": "RBDS022runT45forces.txt",
+      "size_bytes": 397854,
+      "download_url": "https://ndownloader.figshare.com/files/7802746"
+    },
+    {
+      "name": "RBDS004processed.txt",
+      "size_bytes": 131097,
+      "download_url": "https://ndownloader.figshare.com/files/7824949"
+    },
+    {
+      "name": "RBDS005processed.txt",
+      "size_bytes": 130837,
+      "download_url": "https://ndownloader.figshare.com/files/7824952"
+    },
+    {
+      "name": "RBDS006processed.txt",
+      "size_bytes": 130114,
+      "download_url": "https://ndownloader.figshare.com/files/7824955"
+    },
+    {
+      "name": "RBDS007processed.txt",
+      "size_bytes": 130474,
+      "download_url": "https://ndownloader.figshare.com/files/7824958"
+    },
+    {
+      "name": "RBDS008processed.txt",
+      "size_bytes": 130303,
+      "download_url": "https://ndownloader.figshare.com/files/7824961"
+    },
+    {
+      "name": "RBDS009processed.txt",
+      "size_bytes": 129758,
+      "download_url": "https://ndownloader.figshare.com/files/7824964"
+    },
+    {
+      "name": "RBDS010processed.txt",
+      "size_bytes": 129978,
+      "download_url": "https://ndownloader.figshare.com/files/7824967"
+    },
+    {
+      "name": "RBDS011processed.txt",
+      "size_bytes": 129854,
+      "download_url": "https://ndownloader.figshare.com/files/7824970"
+    },
+    {
+      "name": "RBDS012processed.txt",
+      "size_bytes": 130160,
+      "download_url": "https://ndownloader.figshare.com/files/7824973"
+    },
+    {
+      "name": "RBDS013processed.txt",
+      "size_bytes": 129578,
+      "download_url": "https://ndownloader.figshare.com/files/7824976"
+    },
+    {
+      "name": "RBDS014processed.txt",
+      "size_bytes": 130233,
+      "download_url": "https://ndownloader.figshare.com/files/7824979"
+    },
+    {
+      "name": "RBDS015processed.txt",
+      "size_bytes": 131105,
+      "download_url": "https://ndownloader.figshare.com/files/7824982"
+    },
+    {
+      "name": "RBDS016processed.txt",
+      "size_bytes": 130306,
+      "download_url": "https://ndownloader.figshare.com/files/7824985"
+    },
+    {
+      "name": "RBDS017processed.txt",
+      "size_bytes": 130072,
+      "download_url": "https://ndownloader.figshare.com/files/7824988"
+    },
+    {
+      "name": "RBDS018processed.txt",
+      "size_bytes": 129093,
+      "download_url": "https://ndownloader.figshare.com/files/7824991"
+    },
+    {
+      "name": "RBDS019processed.txt",
+      "size_bytes": 129324,
+      "download_url": "https://ndownloader.figshare.com/files/7824994"
+    },
+    {
+      "name": "RBDS020processed.txt",
+      "size_bytes": 129567,
+      "download_url": "https://ndownloader.figshare.com/files/7824997"
+    },
+    {
+      "name": "RBDS021processed.txt",
+      "size_bytes": 129282,
+      "download_url": "https://ndownloader.figshare.com/files/7825000"
+    },
+    {
+      "name": "RBDS022processed.txt",
+      "size_bytes": 129871,
+      "download_url": "https://ndownloader.figshare.com/files/7825003"
+    },
+    {
+      "name": "RBDS023processed.txt",
+      "size_bytes": 130109,
+      "download_url": "https://ndownloader.figshare.com/files/7825006"
+    },
+    {
+      "name": "RBDS024processed.txt",
+      "size_bytes": 130227,
+      "download_url": "https://ndownloader.figshare.com/files/7825009"
+    },
+    {
+      "name": "RBDS025processed.txt",
+      "size_bytes": 129502,
+      "download_url": "https://ndownloader.figshare.com/files/7825012"
+    },
+    {
+      "name": "RBDS026processed.txt",
+      "size_bytes": 129848,
+      "download_url": "https://ndownloader.figshare.com/files/7825015"
+    },
+    {
+      "name": "RBDS027processed.txt",
+      "size_bytes": 129545,
+      "download_url": "https://ndownloader.figshare.com/files/7825018"
+    },
+    {
+      "name": "RBDS028processed.txt",
+      "size_bytes": 129516,
+      "download_url": "https://ndownloader.figshare.com/files/7825021"
+    },
+    {
+      "name": "RBDS001processed.txt",
+      "size_bytes": 130438,
+      "download_url": "https://ndownloader.figshare.com/files/7825024"
+    },
+    {
+      "name": "RBDS002processed.txt",
+      "size_bytes": 130005,
+      "download_url": "https://ndownloader.figshare.com/files/7825027"
+    },
+    {
+      "name": "RBDS003processed.txt",
+      "size_bytes": 130231,
+      "download_url": "https://ndownloader.figshare.com/files/7825030"
+    },
+    {
+      "name": "RBDSpipelineV3D.v3s",
+      "size_bytes": 12973,
+      "download_url": "https://ndownloader.figshare.com/files/7825036"
+    },
+    {
+      "name": "RBDSinfo.xlsx",
+      "size_bytes": 87278,
+      "download_url": "https://ndownloader.figshare.com/files/7841128"
+    },
+    {
+      "name": "RBDSinfo.txt",
+      "size_bytes": 112389,
+      "download_url": "https://ndownloader.figshare.com/files/7841131"
+    },
+    {
+      "name": "RBDS029processed.txt",
+      "size_bytes": 130359,
+      "download_url": "https://ndownloader.figshare.com/files/39452677"
+    },
+    {
+      "name": "RBDS029runT25.c3d",
+      "size_bytes": 5191168,
+      "download_url": "https://ndownloader.figshare.com/files/39452680"
+    },
+    {
+      "name": "RBDS029runT25forces.txt",
+      "size_bytes": 478349,
+      "download_url": "https://ndownloader.figshare.com/files/39452683"
+    },
+    {
+      "name": "RBDS029runT25markers.txt",
+      "size_bytes": 3941119,
+      "download_url": "https://ndownloader.figshare.com/files/39452686"
+    },
+    {
+      "name": "RBDS029runT35.c3d",
+      "size_bytes": 5191168,
+      "download_url": "https://ndownloader.figshare.com/files/39452689"
+    },
+    {
+      "name": "RBDS029runT35forces.txt",
+      "size_bytes": 478349,
+      "download_url": "https://ndownloader.figshare.com/files/39452692"
+    },
+    {
+      "name": "RBDS029runT35markers.txt",
+      "size_bytes": 3941119,
+      "download_url": "https://ndownloader.figshare.com/files/39452695"
+    },
+    {
+      "name": "RBDS029runT45.c3d",
+      "size_bytes": 5191168,
+      "download_url": "https://ndownloader.figshare.com/files/39452698"
+    },
+    {
+      "name": "RBDS029runT45forces.txt",
+      "size_bytes": 478349,
+      "download_url": "https://ndownloader.figshare.com/files/39452701"
+    },
+    {
+      "name": "RBDS029runT45markers.txt",
+      "size_bytes": 3941119,
+      "download_url": "https://ndownloader.figshare.com/files/39452704"
+    },
+    {
+      "name": "RBDS029static.c3d",
+      "size_bytes": 1181632,
+      "download_url": "https://ndownloader.figshare.com/files/39452707"
+    },
+    {
+      "name": "RBDS029static.txt",
+      "size_bytes": 1773747,
+      "download_url": "https://ndownloader.figshare.com/files/39452710"
+    },
+    {
+      "name": "RBDS030processed.txt",
+      "size_bytes": 131461,
+      "download_url": "https://ndownloader.figshare.com/files/39452713"
+    },
+    {
+      "name": "RBDS030runT25.c3d",
+      "size_bytes": 5191168,
+      "download_url": "https://ndownloader.figshare.com/files/39452716"
+    },
+    {
+      "name": "RBDS030runT25forces.txt",
+      "size_bytes": 481332,
+      "download_url": "https://ndownloader.figshare.com/files/39452719"
+    },
+    {
+      "name": "RBDS030runT25markers.txt",
+      "size_bytes": 4054334,
+      "download_url": "https://ndownloader.figshare.com/files/39452722"
+    },
+    {
+      "name": "RBDS030runT35.c3d",
+      "size_bytes": 5191168,
+      "download_url": "https://ndownloader.figshare.com/files/39452725"
+    },
+    {
+      "name": "RBDS030runT35forces.txt",
+      "size_bytes": 481332,
+      "download_url": "https://ndownloader.figshare.com/files/39452728"
+    },
+    {
+      "name": "RBDS030runT35markers.txt",
+      "size_bytes": 4054334,
+      "download_url": "https://ndownloader.figshare.com/files/39452731"
+    },
+    {
+      "name": "RBDS030runT45.c3d",
+      "size_bytes": 5191168,
+      "download_url": "https://ndownloader.figshare.com/files/39452734"
+    },
+    {
+      "name": "RBDS030runT45forces.txt",
+      "size_bytes": 481332,
+      "download_url": "https://ndownloader.figshare.com/files/39452737"
+    },
+    {
+      "name": "RBDS030runT45markers.txt",
+      "size_bytes": 4054334,
+      "download_url": "https://ndownloader.figshare.com/files/39452740"
+    },
+    {
+      "name": "RBDS030static.c3d",
+      "size_bytes": 1181632,
+      "download_url": "https://ndownloader.figshare.com/files/39452743"
+    },
+    {
+      "name": "RBDS030static.txt",
+      "size_bytes": 1781235,
+      "download_url": "https://ndownloader.figshare.com/files/39452746"
+    },
+    {
+      "name": "RBDS031processed.txt",
+      "size_bytes": 44000,
+      "download_url": "https://ndownloader.figshare.com/files/39452749"
+    },
+    {
+      "name": "RBDS031runT35.c3d",
+      "size_bytes": 5191168,
+      "download_url": "https://ndownloader.figshare.com/files/39452752"
+    },
+    {
+      "name": "RBDS031runT35forces.txt",
+      "size_bytes": 478016,
+      "download_url": "https://ndownloader.figshare.com/files/39452755"
+    },
+    {
+      "name": "RBDS031runT35markers.txt",
+      "size_bytes": 3936670,
+      "download_url": "https://ndownloader.figshare.com/files/39452758"
+    },
+    {
+      "name": "RBDS031static.c3d",
+      "size_bytes": 1181632,
+      "download_url": "https://ndownloader.figshare.com/files/39452761"
+    },
+    {
+      "name": "RBDS031static.txt",
+      "size_bytes": 1779611,
+      "download_url": "https://ndownloader.figshare.com/files/39452764"
+    },
+    {
+      "name": "RBDS032processed.txt",
+      "size_bytes": 131240,
+      "download_url": "https://ndownloader.figshare.com/files/39452767"
+    },
+    {
+      "name": "RBDS032runT25.c3d",
+      "size_bytes": 5191168,
+      "download_url": "https://ndownloader.figshare.com/files/39452770"
+    },
+    {
+      "name": "RBDS032runT25forces.txt",
+      "size_bytes": 491078,
+      "download_url": "https://ndownloader.figshare.com/files/39452773"
+    },
+    {
+      "name": "RBDS032runT25markers.txt",
+      "size_bytes": 4021735,
+      "download_url": "https://ndownloader.figshare.com/files/39452776"
+    },
+    {
+      "name": "RBDS032runT35.c3d",
+      "size_bytes": 5191168,
+      "download_url": "https://ndownloader.figshare.com/files/39452779"
+    },
+    {
+      "name": "RBDS032runT35forces.txt",
+      "size_bytes": 491078,
+      "download_url": "https://ndownloader.figshare.com/files/39452782"
+    },
+    {
+      "name": "RBDS032runT35markers.txt",
+      "size_bytes": 4021735,
+      "download_url": "https://ndownloader.figshare.com/files/39452785"
+    },
+    {
+      "name": "RBDS032runT45.c3d",
+      "size_bytes": 5191168,
+      "download_url": "https://ndownloader.figshare.com/files/39452788"
+    },
+    {
+      "name": "RBDS032runT45forces.txt",
+      "size_bytes": 491078,
+      "download_url": "https://ndownloader.figshare.com/files/39452791"
+    },
+    {
+      "name": "RBDS032runT45markers.txt",
+      "size_bytes": 4021735,
+      "download_url": "https://ndownloader.figshare.com/files/39452794"
+    },
+    {
+      "name": "RBDS032static.c3d",
+      "size_bytes": 1735168,
+      "download_url": "https://ndownloader.figshare.com/files/39452797"
+    },
+    {
+      "name": "RBDS032static.txt",
+      "size_bytes": 1779470,
+      "download_url": "https://ndownloader.figshare.com/files/39452800"
+    },
+    {
+      "name": "RBDS033processed.txt",
+      "size_bytes": 43785,
+      "download_url": "https://ndownloader.figshare.com/files/39452803"
+    },
+    {
+      "name": "RBDS033runT35.c3d",
+      "size_bytes": 7784704,
+      "download_url": "https://ndownloader.figshare.com/files/39452806"
+    },
+    {
+      "name": "RBDS033runT35forces.txt",
+      "size_bytes": 489083,
+      "download_url": "https://ndownloader.figshare.com/files/39452809"
+    },
+    {
+      "name": "RBDS033runT35markers.txt",
+      "size_bytes": 4423973,
+      "download_url": "https://ndownloader.figshare.com/files/39452812"
+    },
+    {
+      "name": "RBDS033static.c3d",
+      "size_bytes": 2047168,
+      "download_url": "https://ndownloader.figshare.com/files/39452815"
+    },
+    {
+      "name": "RBDS033static.txt",
+      "size_bytes": 1943154,
+      "download_url": "https://ndownloader.figshare.com/files/39452818"
+    },
+    {
+      "name": "RBDS034processed.txt",
+      "size_bytes": 43888,
+      "download_url": "https://ndownloader.figshare.com/files/39452821"
+    },
+    {
+      "name": "RBDS034runT35.c3d",
+      "size_bytes": 5191168,
+      "download_url": "https://ndownloader.figshare.com/files/39452824"
+    },
+    {
+      "name": "RBDS034runT35forces.txt",
+      "size_bytes": 484906,
+      "download_url": "https://ndownloader.figshare.com/files/39452827"
+    },
+    {
+      "name": "RBDS034runT35markers.txt",
+      "size_bytes": 4033406,
+      "download_url": "https://ndownloader.figshare.com/files/39452830"
+    },
+    {
+      "name": "RBDS034static.c3d",
+      "size_bytes": 1181632,
+      "download_url": "https://ndownloader.figshare.com/files/39452833"
+    },
+    {
+      "name": "RBDS034static.txt",
+      "size_bytes": 1778313,
+      "download_url": "https://ndownloader.figshare.com/files/39452836"
+    },
+    {
+      "name": "RBDS035processed.txt",
+      "size_bytes": 43562,
+      "download_url": "https://ndownloader.figshare.com/files/39452839"
+    },
+    {
+      "name": "RBDS035runT35.c3d",
+      "size_bytes": 5191168,
+      "download_url": "https://ndownloader.figshare.com/files/39452842"
+    },
+    {
+      "name": "RBDS035runT35forces.txt",
+      "size_bytes": 481613,
+      "download_url": "https://ndownloader.figshare.com/files/39452845"
+    },
+    {
+      "name": "RBDS035runT35markers.txt",
+      "size_bytes": 3888758,
+      "download_url": "https://ndownloader.figshare.com/files/39452848"
+    },
+    {
+      "name": "RBDS035static.c3d",
+      "size_bytes": 1735168,
+      "download_url": "https://ndownloader.figshare.com/files/39452851"
+    },
+    {
+      "name": "RBDS035static.txt",
+      "size_bytes": 1776332,
+      "download_url": "https://ndownloader.figshare.com/files/39452854"
+    },
+    {
+      "name": "RBDS036processed.txt",
+      "size_bytes": 49984,
+      "download_url": "https://ndownloader.figshare.com/files/39452857"
+    },
+    {
+      "name": "RBDS036runT35.c3d",
+      "size_bytes": 7784704,
+      "download_url": "https://ndownloader.figshare.com/files/39452863"
+    },
+    {
+      "name": "RBDS036runT35forces.txt",
+      "size_bytes": 480714,
+      "download_url": "https://ndownloader.figshare.com/files/39452866"
+    },
+    {
+      "name": "RBDS036runT35markers.txt",
+      "size_bytes": 4526003,
+      "download_url": "https://ndownloader.figshare.com/files/39452869"
+    },
+    {
+      "name": "RBDS036static.c3d",
+      "size_bytes": 2047168,
+      "download_url": "https://ndownloader.figshare.com/files/39452872"
+    },
+    {
+      "name": "RBDS036static.txt",
+      "size_bytes": 3113389,
+      "download_url": "https://ndownloader.figshare.com/files/39452875"
+    },
+    {
+      "name": "RBDS037processed.txt",
+      "size_bytes": 50138,
+      "download_url": "https://ndownloader.figshare.com/files/39452878"
+    },
+    {
+      "name": "RBDS037runT35.c3d",
+      "size_bytes": 3464704,
+      "download_url": "https://ndownloader.figshare.com/files/39452881"
+    },
+    {
+      "name": "RBDS037runT35forces.txt",
+      "size_bytes": 212468,
+      "download_url": "https://ndownloader.figshare.com/files/39452884"
+    },
+    {
+      "name": "RBDS037runT35markers.txt",
+      "size_bytes": 1632062,
+      "download_url": "https://ndownloader.figshare.com/files/39452887"
+    },
+    {
+      "name": "RBDS037static.c3d",
+      "size_bytes": 2047168,
+      "download_url": "https://ndownloader.figshare.com/files/39452890"
+    },
+    {
+      "name": "RBDS037static.txt",
+      "size_bytes": 1773730,
+      "download_url": "https://ndownloader.figshare.com/files/39452893"
+    },
+    {
+      "name": "RBDS038processed.txt",
+      "size_bytes": 50168,
+      "download_url": "https://ndownloader.figshare.com/files/39452896"
+    },
+    {
+      "name": "RBDS038runT35.c3d",
+      "size_bytes": 7784704,
+      "download_url": "https://ndownloader.figshare.com/files/39452899"
+    },
+    {
+      "name": "RBDS038runT35forces.txt",
+      "size_bytes": 479423,
+      "download_url": "https://ndownloader.figshare.com/files/39452902"
+    },
+    {
+      "name": "RBDS038runT35markers.txt",
+      "size_bytes": 3721616,
+      "download_url": "https://ndownloader.figshare.com/files/39452905"
+    },
+    {
+      "name": "RBDS038static.c3d",
+      "size_bytes": 1760208,
+      "download_url": "https://ndownloader.figshare.com/files/39452908"
+    },
+    {
+      "name": "RBDS038static.txt",
+      "size_bytes": 1525711,
+      "download_url": "https://ndownloader.figshare.com/files/39452911"
+    },
+    {
+      "name": "RBDS039processed.txt",
+      "size_bytes": 49726,
+      "download_url": "https://ndownloader.figshare.com/files/39452914"
+    },
+    {
+      "name": "RBDS039runT35.c3d",
+      "size_bytes": 7784704,
+      "download_url": "https://ndownloader.figshare.com/files/39452917"
+    },
+    {
+      "name": "RBDS039runT35forces.txt",
+      "size_bytes": 478796,
+      "download_url": "https://ndownloader.figshare.com/files/39452920"
+    },
+    {
+      "name": "RBDS039runT35markers.txt",
+      "size_bytes": 3696228,
+      "download_url": "https://ndownloader.figshare.com/files/39452923"
+    },
+    {
+      "name": "RBDS039static.c3d",
+      "size_bytes": 2600704,
+      "download_url": "https://ndownloader.figshare.com/files/39452926"
+    },
+    {
+      "name": "RBDS039static.txt",
+      "size_bytes": 1777700,
+      "download_url": "https://ndownloader.figshare.com/files/39452929"
+    },
+    {
+      "name": "RBDSinfo.txt",
+      "size_bytes": 142235,
+      "download_url": "https://ndownloader.figshare.com/files/39452932"
+    },
+    {
+      "name": "RBDSinfo.xlsx",
+      "size_bytes": 79203,
+      "download_url": "https://ndownloader.figshare.com/files/39452935"
+    }
+  ]
+}

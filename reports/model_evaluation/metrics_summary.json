@@ -1,0 +1,74 @@
+{
+  "evaluation_cohort": {
+    "total_test_samples": 11073,
+    "unseen_athletes_count": 26,
+    "injury_cases": 191,
+    "prevalence": 0.0172
+  },
+  "models_evaluated": {
+    "Logistic Regression": {
+      "roc_auc": 0.7064,
+      "pr_auc": 0.0418,
+      "accuracy": 0.7132,
+      "precision": 0.0337,
+      "sensitivity_recall": 0.5654,
+      "specificity": 0.7158,
+      "f1_score": 0.0637,
+      "brier_score": 0.2008,
+      "confusion_matrix": {
+        "true_positives": 108,
+        "false_positives": 3093,
+        "true_negatives": 7789,
+        "false_negatives": 83
+      }
+    },
+    "Random Forest": {
+      "roc_auc": 0.6693,
+      "pr_auc": 0.048,
+      "accuracy": 0.8273,
+      "precision": 0.0411,
+      "sensitivity_recall": 0.4031,
+      "specificity": 0.8348,
+      "f1_score": 0.0745,
+      "brier_score": 0.1548,
+      "confusion_matrix": {
+        "true_positives": 77,
+        "false_positives": 1798,
+        "true_negatives": 9084,
+        "false_negatives": 114
+      }
+    },
+    "XGBoost (Raw)": {
+      "roc_auc": 0.6654,
+      "pr_auc": 0.045,
+      "accuracy": 0.783,
+      "precision": 0.0369,
+      "sensitivity_recall": 0.4607,
+      "specificity": 0.7886,
+      "f1_score": 0.0682,
+      "brier_score": 0.1619,
+      "confusion_matrix": {
+        "true_positives": 88,
+        "false_positives": 2300,
+        "true_negatives": 8582,
+        "false_negatives": 103
+      }
+    },
+    "XGBoost (Calibrated)": {
+      "roc_auc": 0.6448,
+      "pr_auc": 0.0441,
+      "accuracy": 0.9828,
+      "precision": 0.0,
+      "sensitivity_recall": 0.0,
+      "specificity": 1.0,
+      "f1_score": 0.0,
+      "brier_score": 0.0168,
+      "confusion_matrix": {
+        "true_positives": 0,
+        "false_positives": 0,
+        "true_negatives": 10882,
+        "false_negatives": 191
+      }
+    }
+  }
+}

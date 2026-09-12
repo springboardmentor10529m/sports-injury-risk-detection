@@ -56,7 +56,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-all_code_dump.txt
+code_dump.txt
 
 # Archives & Large artifacts
 *.zip
