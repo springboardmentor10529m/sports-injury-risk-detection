@@ -380,7 +380,6 @@ function Dashboard({ athleteData, onNavigate, onLogout }) {
                 <div style={{ textAlign: "center", marginBottom: "0.5rem" }}>
                   <span style={{ fontSize: "1.3rem", fontWeight: 800, color: "#0f172a" }}>{latestAnalysis.overall_risk_score}</span>
                   <span style={{ fontSize: "0.85rem", color: "#64748b" }}>/100</span>
-                  <div style={{ fontSize: "0.65rem", color: "#94a3b8", marginTop: "0.15rem" }}>0.35×Max + 0.35×Mean + 0.30×(100−MQ)</div>
                 </div>
               )}
 

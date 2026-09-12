@@ -486,6 +486,27 @@ def create_analysis(
     detected_activity = biomechanics.get("detected_activity", video_record.activity)
     anomalies = detect_biomechanical_anomalies(biomechanics, activity_type=detected_activity)
 
+    # 6. Execute Supervised Machine Learning Risk Prediction (Random Forest)
+    rpe_fatigue = (biomechanics.get("fatigue_score", 20.0) / 10.0) if biomechanics.get("fatigue_score") else 5.0
+    ml_eval = None
+    try:
+        ml_eval = ml_interface.predict_risk(
+            features={
+                "knee_valgus_angle_deg": biomechanics.get("knee_valgus", 12.0),
+                "hip_stability_score": biomechanics.get("hip_stability", 80.0),
+                "trunk_lateral_flexion_deg": biomechanics.get("trunk_lean", 8.0),
+                "range_of_motion_deg": biomechanics.get("range_of_motion_deg", 105.0),
+                "bilateral_symmetry_pct": biomechanics.get("symmetry_score", 85.0),
+                "movement_smoothness_score": biomechanics.get("movement_quality", 80.0),
+                "rpe_fatigue_score": rpe_fatigue,
+            }
+        )
+    except Exception as ml_err:
+        print(f"ML evaluation note in /analysis: {ml_err}")
+
+    final_risk_level = ml_eval["risk_level"].capitalize() if ml_eval and ml_eval.get("risk_level") else risk_eval["risk_level"]
+    final_risk_score = int(round(ml_eval["predicted_risk_score"])) if ml_eval and ml_eval.get("predicted_risk_score") is not None else int(round(risk_eval["overall_risk_score"]))
+
     analysis_id = uuid.uuid4()
 
     new_analysis = AnalysisResult(
@@ -500,8 +521,8 @@ def create_analysis(
         symmetry_score=biomechanics["symmetry_score"],
         fatigue_score=biomechanics["fatigue_score"],
         movement_quality=biomechanics["movement_quality"],
-        overall_risk_score=risk_eval["overall_risk_score"],
-        risk_level=risk_eval["risk_level"],
+        overall_risk_score=final_risk_score,
+        risk_level=final_risk_level,
         created_at=datetime.utcnow()
     )
 
@@ -611,14 +632,9 @@ def create_prediction(
         lower_back_risk=risk_eval["lower_back_risk"],
         overuse_risk=risk_eval["overuse_risk"]
     )
-
-    # Also update analysis record overall risk score and level to stay perfectly in sync
-    analysis_record.overall_risk_score = risk_eval["overall_risk_score"]
-    analysis_record.risk_level = risk_eval["risk_level"]
-
     db.add(new_prediction)
 
-    # Auto-generate deterministic recommendations across 5 categories
+    # Auto-generate targeted recommendations across 5 categories
     recs_data = generate_targeted_recommendations(
         biomechanics=biomechanics,
         risk_prediction=risk_eval,
@@ -637,11 +653,11 @@ def create_prediction(
         training_modification=recs_data["summary_strings"]["training_modification"]
     )
     db.add(auto_rec)
-
     db.commit()
     db.refresh(new_prediction)
 
-    # Compute ML Model inference alongside rule system
+    # Compute ML Model inference from trained Random Forest model
+    rpe_fatigue = (analysis_record.fatigue_score / 10.0) if analysis_record.fatigue_score else 5.0
     ml_eval = None
     try:
         ml_eval = ml_interface.predict_risk(
@@ -652,15 +668,22 @@ def create_prediction(
                 "range_of_motion_deg": biomechanics.get("range_of_motion_deg", 105.0),
                 "bilateral_symmetry_pct": biomechanics.get("symmetry_score", 85.0),
                 "movement_smoothness_score": biomechanics.get("movement_quality", 80.0),
-            },
-            fatigue_multiplier=1.0 + (analysis_record.fatigue_score or 20.0) / 500.0,
-            prior_injury_multiplier=1.0 + min(0.35, len(prior_injuries_list) * 0.15)
+                "rpe_fatigue_score": rpe_fatigue,
+            }
         )
     except Exception as ml_err:
         print(f"ML evaluation note: {ml_err}")
 
+    final_risk_level = ml_eval["risk_level"].capitalize() if ml_eval and ml_eval.get("risk_level") else risk_eval["risk_level"]
+    final_risk_score = int(round(ml_eval["predicted_risk_score"])) if ml_eval and ml_eval.get("predicted_risk_score") is not None else int(round(risk_eval["overall_risk_score"]))
+
+    # Update analysis record overall risk score and level to match ML model prediction
+    analysis_record.overall_risk_score = final_risk_score
+    analysis_record.risk_level = final_risk_level
+    db.commit()
+
     return {
-        "message": "Rule-based 6-injury prediction and targeted recommendations generated successfully",
+        "message": "Movement risk analysis and recommendations generated successfully",
         "prediction_id": str(new_prediction.prediction_id),
         "acl_risk": new_prediction.acl_risk,
         "hamstring_risk": new_prediction.hamstring_risk,
@@ -668,8 +691,8 @@ def create_prediction(
         "shoulder_risk": new_prediction.shoulder_risk,
         "lower_back_risk": new_prediction.lower_back_risk,
         "overuse_risk": new_prediction.overuse_risk,
-        "overall_risk_score": risk_eval["overall_risk_score"],
-        "risk_level": risk_eval["risk_level"],
+        "overall_risk_score": final_risk_score,
+        "risk_level": final_risk_level,
         "rules_triggered": risk_eval.get("rules_triggered", []),
         "injury_factors": risk_eval.get("injury_factors", {}),
         "position_applied_msg": risk_eval.get("position_applied_msg", ""),

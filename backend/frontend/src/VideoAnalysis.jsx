@@ -3,9 +3,9 @@ import "./VideoAnalysis.css";
 import API_BASE from "./config/api";
 
 const PROCESSING_STEPS = [
-  { id: 1, label: "Video Uploaded" },
-  { id: 2, label: "Processing Video" },
-  { id: 3, label: "AI Movement Analysis" },
+  { id: 1, label: "Uploading Video" },
+  { id: 2, label: "Processing Movement" },
+  { id: 3, label: "Calculating Risk" },
   { id: 4, label: "Analysis Complete" },
 ];
 
@@ -370,8 +370,8 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
 
               <div style={{ fontSize: "0.9rem", color: "#2563eb", fontWeight: 600 }}>
                 {currentStep === 1 && "Uploading video file to server..."}
-                {currentStep === 2 && "Running MediaPipe pose estimation & extracting joint kinematics..."}
-                {currentStep === 3 && "Evaluating injury risk models and generating recommendations..."}
+                {currentStep === 2 && "Processing movement kinematics..."}
+                {currentStep === 3 && "Calculating risk assessment with AI..."}
                 {currentStep === 4 && "Analysis complete! Finalizing results..."}
               </div>
             </div>
@@ -469,7 +469,7 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
                     />
                   )}
 
-                  {/* Single Clear Upload Action */}
+                  {/* Single Clear Primary Action */}
                   <button
                     type="button"
                     className="btn btn-primary btn-full"
@@ -571,7 +571,7 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
                     background: riskBg(predictionResult.risk_level),
                     border: `1px solid ${riskColour(predictionResult.risk_level)}40`,
                     borderRadius: "12px", padding: "18px", display: "flex",
-                    justifyContent: "space-between", alignItems: "center", marginBottom: "16px"
+                    justifyContent: "space-between", alignItems: "center", marginBottom: "14px"
                   }}>
                     <div>
                       <div style={{ fontSize: "0.8rem", color: "#475569", fontWeight: 600 }}>Overall Injury Risk Score</div>
@@ -589,9 +589,14 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
                   </div>
                 </div>
 
-                {/* Concise Model Transparency Note */}
-                <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "10px 14px", fontSize: "0.76rem", color: "#64748b" }}>
-                  <strong>Model Information:</strong> Baseline probability evaluated using a Random Forest model trained on <code>Project-Injury-Dataset.csv</code>. Specific joint injury risks are derived from validated biomechanical kinematic rules.
+                {/* Plain-English Assessment Explanation */}
+                <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "12px 14px", fontSize: "0.82rem", color: "#475569", lineHeight: 1.5 }}>
+                  <strong style={{ color: "#0f172a", display: "block", marginBottom: "3px" }}>What this result means:</strong>
+                  {predictionResult.risk_level?.toLowerCase() === "high"
+                    ? "High risk of musculoskeletal strain detected. Notable kinematic deviations and joint stresses were observed. Follow the targeted recovery drills and consult with your coach or trainer."
+                    : predictionResult.risk_level?.toLowerCase() === "moderate"
+                    ? "Moderate risk detected with mild joint strain or alignment deviations. Implement the targeted mobility and stabilization drills below into your warm-ups."
+                    : "Low risk detected. Your movement mechanics show healthy alignment, balance, and bilateral symmetry. Continue your current routine to maintain peak conditioning."}
                 </div>
               </div>
 
@@ -694,29 +699,6 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
                   );
                 })}
               </div>
-            </div>
-
-            {/* Previous Injury History */}
-            <div className="va-card" style={{ padding: "18px 20px" }}>
-              <h3 style={{ margin: "0 0 8px 0", fontSize: "1rem", color: "#0f172a" }}>
-                📋 Previous Injury History
-              </h3>
-              {analysisResult.history_notes && analysisResult.history_notes.length > 0 ? (
-                <div style={{ background: "#fefce8", border: "1px solid #fde68a", borderRadius: "8px", padding: "10px 14px" }}>
-                  <strong style={{ fontSize: "0.8rem", color: "#92400e" }}>
-                    Recorded Past Injuries (From Athlete Profile):
-                  </strong>
-                  <ul style={{ margin: "4px 0 0 0", paddingLeft: "18px", fontSize: "0.8rem", color: "#78350f" }}>
-                    {analysisResult.history_notes.map((note, idx) => (
-                      <li key={idx} style={{ marginTop: "2px" }}>{note}</li>
-                    ))}
-                  </ul>
-                </div>
-              ) : (
-                <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "10px 14px", fontSize: "0.82rem", color: "#64748b" }}>
-                  No previous injury record available. Risk scores reflect pure movement kinematics without prior injury weightings.
-                </div>
-              )}
             </div>
 
             {/* Personalized Recommendations */}
