@@ -7,21 +7,8 @@ function Recommendations({ athleteId, onNavigateToVideo }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Custom Form Modal
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [customForm, setCustomForm] = useState({
-    prediction_id: "",
-    exercise: "",
-    mobility: "",
-    strengthening: "",
-    recovery: "",
-    training_modification: "",
-  });
-
   const activeAthleteId = athleteId || localStorage.getItem("athlete_id");
   const storedPredictionId = localStorage.getItem("latest_prediction_id");
-  const storedRecId = localStorage.getItem("latest_recommendation_id");
 
   // Fetch Latest Recommendation
   const fetchLatestRecommendation = async () => {
@@ -86,46 +73,6 @@ function Recommendations({ athleteId, onNavigateToVideo }) {
     fetchLatestRecommendation();
   }, [activeAthleteId, storedPredictionId]);
 
-  // Handle Custom Recommendation Submission
-  const handleCustomSubmit = async (e) => {
-    e.preventDefault();
-    if (!customForm.prediction_id.trim()) {
-      alert("Please provide a valid Prediction ID.");
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const formData = new URLSearchParams();
-      formData.append("prediction_id", customForm.prediction_id);
-      formData.append("exercise", customForm.exercise);
-      formData.append("mobility", customForm.mobility);
-      formData.append("strengthening", customForm.strengthening);
-      formData.append("recovery", customForm.recovery);
-      formData.append("training_modification", customForm.training_modification);
-
-      const res = await fetch(`${API_BASE}/recommendation`, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        setRecommendation(data);
-        localStorage.setItem("latest_prediction_id", customForm.prediction_id);
-        setIsModalOpen(false);
-      } else {
-        alert(data.detail || "Failed to save recommendation.");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Network error.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   return (
     <main className="recommendations-page">
       <div className="rec-container">
@@ -136,27 +83,11 @@ function Recommendations({ athleteId, onNavigateToVideo }) {
             <span className="rec-kicker">INJURY PREVENTION PROTOCOLS</span>
             <h1>Tailored Corrective Recommendations</h1>
             <p>
-              Targeted rule-based corrective exercises, mobility drills, strengthening regimens, and workload adjustments mapped from detected biomechanical deviations and risk scores.
+              Targeted corrective exercises, mobility drills, strengthening regimens, and workload adjustments mapped from detected biomechanical deviations and ML risk predictions.
             </p>
           </div>
 
           <div className="rec-header-actions">
-            <button
-              className="btn btn-secondary btn-outline"
-              onClick={() => {
-                setCustomForm({
-                  prediction_id: storedPredictionId || "",
-                  exercise: recommendation?.exercise || "",
-                  mobility: recommendation?.mobility || "",
-                  strengthening: recommendation?.strengthening || "",
-                  recovery: recommendation?.recovery || "",
-                  training_modification: recommendation?.training_modification || "",
-                });
-                setIsModalOpen(true);
-              }}
-            >
-              ⚙️ Custom Protocol
-            </button>
             <button
               className="btn btn-primary"
               onClick={onNavigateToVideo}
@@ -266,122 +197,6 @@ function Recommendations({ athleteId, onNavigateToVideo }) {
         )}
 
       </div>
-
-      {/* CUSTOM RECOMMENDATION MODAL */}
-      {isModalOpen && (
-        <div className="modal-backdrop" onClick={() => setIsModalOpen(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div>
-                <h2>Custom Clinical Protocol</h2>
-                <p>Submit customized recommendations for an injury prediction.</p>
-              </div>
-              <button
-                className="close-modal-btn"
-                onClick={() => setIsModalOpen(false)}
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleCustomSubmit}>
-              <div className="modal-body">
-                <div className="form-group" style={{ display: "none" }}>
-                  <label>Target Analysis Session Key</label>
-                  <input
-                    type="hidden"
-                    required
-                    value={customForm.prediction_id}
-                  />
-                </div>
-                <div style={{ marginBottom: "14px", padding: "8px 12px", background: "#f1f5f9", borderRadius: "8px", fontSize: "0.8rem", color: "#475569" }}>
-                  📋 <strong>Active Assessment Session:</strong> Latest Video Kinematics Session
-                </div>
-
-                <div className="form-group">
-                  <label>Corrective Exercises</label>
-                  <textarea
-                    rows="2"
-                    required
-                    value={customForm.exercise}
-                    onChange={(e) =>
-                      setCustomForm({ ...customForm, exercise: e.target.value })
-                    }
-                  ></textarea>
-                </div>
-
-                <div className="form-group">
-                  <label>Mobility Improvements</label>
-                  <textarea
-                    rows="2"
-                    required
-                    value={customForm.mobility}
-                    onChange={(e) =>
-                      setCustomForm({ ...customForm, mobility: e.target.value })
-                    }
-                  ></textarea>
-                </div>
-
-                <div className="form-group">
-                  <label>Strengthening Plan</label>
-                  <textarea
-                    rows="2"
-                    required
-                    value={customForm.strengthening}
-                    onChange={(e) =>
-                      setCustomForm({ ...customForm, strengthening: e.target.value })
-                    }
-                  ></textarea>
-                </div>
-
-                <div className="form-group">
-                  <label>Recovery Protocol</label>
-                  <textarea
-                    rows="2"
-                    required
-                    value={customForm.recovery}
-                    onChange={(e) =>
-                      setCustomForm({ ...customForm, recovery: e.target.value })
-                    }
-                  ></textarea>
-                </div>
-
-                <div className="form-group">
-                  <label>Training Load Modification</label>
-                  <textarea
-                    rows="2"
-                    required
-                    value={customForm.training_modification}
-                    onChange={(e) =>
-                      setCustomForm({
-                        ...customForm,
-                        training_modification: e.target.value,
-                      })
-                    }
-                  ></textarea>
-                </div>
-              </div>
-
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setIsModalOpen(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={submitting}
-                >
-                  {submitting ? "Saving..." : "Save Protocol"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </main>
   );
 }
