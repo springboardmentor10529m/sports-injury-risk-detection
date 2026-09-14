@@ -1,0 +1,93 @@
+# ============================================================
+# .dockerignore — Sports Injury Risk Detection Platform
+# Reduces Docker build context & prevents unwanted files in image
+# ============================================================
+
+# Git
+.git
+.gitignore
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+
+# Virtual environments
+venv/
+env/
+ENV/
+backend/venv/
+.Python
+
+# Test / Cache
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+
+# IDE & OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Environment files (NEVER in image)
+.env
+backend/.env
+
+# Local database files (created fresh at runtime)
+*.db
+sql_app.db
+backend/sql_app.db
+
+# Training datasets (large, not needed at runtime)
+datasets/
+
+# One-off diagnostic / utility scripts (not needed in image)
+diagnose_*.py
+inspect_*.py
+verify_*.py
+test_*.py
+backfill_telemetry.py
+convert_processed_videos.py
+do_git_push.py
+push_code.py
+run_trace_file.py
+step_by_step_debug.py
+tmp_medians.py
+train_sports_injury_model.py
+train_multimodal_sports_injury_model.py
+final_verify.py
+
+# Training notebooks (large)
+models/*.ipynb
+
+# Generated images / reports
+*.png
+ml_evaluation_dashboard.png
+
+# Windows scripts
+*.bat
+
+# Local upload files (mounted as volume at runtime)
+uploads/raw/*
+uploads/processed/*
+
+# DB reports
+db_report*.txt
+
+# ============================================================
+# DO NOT EXCLUDE — required in image:
+# ml_inference.py
+# models/best_sports_injury_model.joblib
+# models/model_features.json
+# models/model_metadata.json
+# scaler.joblib
+# pose_landmarker_full.task
+# backend/
+# frontend/
+# ============================================================

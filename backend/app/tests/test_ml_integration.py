@@ -6,6 +6,7 @@ Verifies valid inference, error handling, missing feature resilience, and non-br
 import pytest
 import sys
 import os
+import uuid
 from fastapi.testclient import TestClient
 
 # Path configuration for backend testing
@@ -114,3 +115,38 @@ def test_health_endpoint():
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "healthy"}
+
+
+def test_batch_video_upload_limit():
+    """Verify that uploading more than 5 videos returns HTTP 400 with strict validation message."""
+    from app.main import get_current_user
+    from app import models
+
+    mock_user = models.User(
+        user_id=uuid.uuid4(),
+        name="Test Athlete",
+        email="test@athlete.com",
+        password="dummypasswordhash",
+        role=models.UserRole.ATHLETE
+    )
+
+    app.dependency_overrides[get_current_user] = lambda: mock_user
+
+    try:
+        files = [
+            ("files", ("video1.mp4", b"dummy content 1", "video/mp4")),
+            ("files", ("video2.mp4", b"dummy content 2", "video/mp4")),
+            ("files", ("video3.mp4", b"dummy content 3", "video/mp4")),
+            ("files", ("video4.mp4", b"dummy content 4", "video/mp4")),
+            ("files", ("video5.mp4", b"dummy content 5", "video/mp4")),
+            ("files", ("video6.mp4", b"dummy content 6", "video/mp4")),
+        ]
+        response = client.post("/videos/upload-batch", files=files, data={"activity": "Squatting"})
+        assert response.status_code == 400
+        assert "Maximum 5 videos can be uploaded at once." in response.json()["detail"]
+    finally:
+        app.dependency_overrides.clear()
+
+
+
+
