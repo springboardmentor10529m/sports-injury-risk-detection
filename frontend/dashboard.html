@@ -1675,8 +1675,10 @@
                         "Delete";
 
 
+    
+
                     /*
-                     * View video
+                     * View video with pose detection
                      */
 
                     viewButton.addEventListener(
@@ -1685,7 +1687,6 @@
 
                             let videoUrl =
                                 video.video;
-
 
                             /*
                              * If Django returns
@@ -1704,15 +1705,26 @@
 
                             }
 
+                            if (!videoUrl) {
 
-                            if (videoUrl) {
-
-                                window.open(
-                                    videoUrl,
-                                    "_blank"
+                                alert(
+                                    "Video URL not available."
                                 );
 
+                                return;
+
                             }
+
+                            const viewerUrl =
+                                "video-viewer.html?id="
+                                + encodeURIComponent(video.id)
+                                + "&video="
+                                + encodeURIComponent(videoUrl);
+
+                            window.open(
+                                viewerUrl,
+                                "_blank"
+                            );
 
                         }
                     );

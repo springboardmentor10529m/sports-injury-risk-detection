@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Athlete - Pose Detection</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #111827;
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .header {
+            width: 100%;
+            background: #1f2937;
+            padding: 18px 25px;
+            text-align: center;
+        }
+        .header h1 { font-size: 22px; margin-bottom: 5px; }
+        .header p { color: #9ca3af; font-size: 13px; }
+        .viewer { width: min(1100px, 95vw); margin-top: 25px; }
+        .video-container {
+            position: relative;
+            width: 100%;
+            background: black;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+        #videoPlayer { display: block; width: 100%; height: auto; }
+        #poseCanvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        .status {
+            margin-top: 15px;
+            padding: 10px 15px;
+            background: #1f2937;
+            border-radius: 8px;
+            color: #d1d5db;
+            text-align: center;
+            font-size: 13px;
+        }
+        .back-button {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 18px;
+            background: #2563eb;
+            color: white;
+            text-decoration: none;
+            border-radius: 7px;
+            font-weight: 600;
+            margin-bottom: 25px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Smart Athlete</h1>
+        <p>MediaPipe Pose Detection</p>
+    </div>
+
+    <div class="viewer">
+        <div class="video-container">
+            <video id="videoPlayer" controls playsinline></video>
+            <canvas id="poseCanvas"></canvas>
+        </div>
+
+        <div id="status" class="status">
+            Loading video and pose data...
+        </div>
+
+        <a href="dashboard.html" class="back-button">
+            ← Back to Dashboard
+        </a>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const videoId = params.get("id");
+        let videoUrl = params.get("video");
+
+        const videoPlayer = document.getElementById("videoPlayer");
+        const poseCanvas = document.getElementById("poseCanvas");
+        const ctx = poseCanvas.getContext("2d");
+        const status = document.getElementById("status");
+        let poseData = [];
+
+        if (videoUrl && videoUrl.startsWith("/")) {
+            videoUrl = "http://127.0.0.1:8000" + videoUrl;
+        }
+
+        const connections = [
+            ["nose", "left_eye_inner"],
+            ["left_eye_inner", "left_eye"],
+            ["left_eye", "left_eye_outer"],
+            ["left_eye_outer", "left_ear"],
+            ["nose", "right_eye_inner"],
+            ["right_eye_inner", "right_eye"],
+            ["right_eye", "right_eye_outer"],
+            ["right_eye_outer", "right_ear"],
+            ["left_shoulder", "right_shoulder"],
+            ["left_shoulder", "left_elbow"],
+            ["left_elbow", "left_wrist"],
+            ["right_shoulder", "right_elbow"],
+            ["right_elbow", "right_wrist"],
+            ["left_shoulder", "left_hip"],
+            ["right_shoulder", "right_hip"],
+            ["left_hip", "right_hip"],
+            ["left_hip", "left_knee"],
+            ["left_knee", "left_ankle"],
+            ["left_ankle", "left_heel"],
+            ["left_heel", "left_foot_index"],
+            ["right_hip", "right_knee"],
+            ["right_knee", "right_ankle"],
+            ["right_ankle", "right_heel"],
+            ["right_heel", "right_foot_index"]
+        ];
+
+        function resizeCanvas() {
+            if (!videoPlayer.videoWidth || !videoPlayer.videoHeight) return;
+            poseCanvas.width = videoPlayer.videoWidth;
+            poseCanvas.height = videoPlayer.videoHeight;
+        }
+
+        function drawPose() {
+            requestAnimationFrame(drawPose);
+
+            if (!poseData.length || !videoPlayer.videoWidth || !videoPlayer.duration) {
+                return;
+            }
+
+            ctx.clearRect(0, 0, poseCanvas.width, poseCanvas.height);
+
+            const poseFps = 5;
+            let frameIndex = Math.floor(videoPlayer.currentTime * poseFps);
+            frameIndex = Math.max(0, Math.min(frameIndex, poseData.length - 1));
+
+            const poseFrame = poseData[frameIndex];
+            if (!poseFrame || !poseFrame.pose_detected || !poseFrame.landmarks) return;
+
+            const landmarks = poseFrame.landmarks;
+
+            ctx.lineWidth = 4;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+
+            connections.forEach(([startName, endName]) => {
+                const start = landmarks[startName];
+                const end = landmarks[endName];
+                if (!start || !end) return;
+                if (start.visibility < 0.5 || end.visibility < 0.5) return;
+
+                ctx.beginPath();
+                ctx.moveTo(start.x * poseCanvas.width, start.y * poseCanvas.height);
+                ctx.lineTo(end.x * poseCanvas.width, end.y * poseCanvas.height);
+                ctx.strokeStyle = "#00ff66";
+                ctx.stroke();
+            });
+
+            Object.values(landmarks).forEach((landmark) => {
+                if (landmark.visibility < 0.5) return;
+
+                const x = landmark.x * poseCanvas.width;
+                const y = landmark.y * poseCanvas.height;
+
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, Math.PI * 2);
+                ctx.fillStyle = "#ffcc00";
+                    ctx.fill();
+            });
+        }
+
+        videoPlayer.addEventListener("loadedmetadata", resizeCanvas);
+        window.addEventListener("resize", resizeCanvas);
+
+        if (!videoId || !videoUrl) {
+            status.textContent = "Video information is missing.";
+        } else {
+            videoPlayer.src = videoUrl;
+            const poseUrl =
+                "http://127.0.0.1:8000/media/pose_results/" +
+                videoId +
+                "/pose_landmarks.json";
+
+            fetch(poseUrl)
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error("Pose data could not be loaded.");
+                    }
+                    return response.json();
+                })
+                .then((data) => {
+                    poseData = data;
+                    status.textContent = "Pose detection ready";
+                    resizeCanvas();
+                    drawPose();
+                })
+                .catch((error) => {
+                    console.error(error);
+                    status.textContent = "Pose detection data could not be loaded.";
+                });
+        }
+    </script>
+</body>
+</html>
