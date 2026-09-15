@@ -170,7 +170,7 @@ def extract_frames(video_path, video_id):
     }
 
 
-def process_video(video_path, video_id):
+def process_video(video_path, video_id, athlete_profile=None):
     """
     Run the complete video-processing and risk-assessment pipeline.
     """
@@ -230,7 +230,8 @@ def process_video(video_path, video_id):
     from .rule_based_risk import assess_injury_risk
 
     risk_assessment = assess_injury_risk(
-        biomechanical_summary
+        biomechanical_summary, athlete_profile=athlete_profile
+
     )
 
     return {

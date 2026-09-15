@@ -223,7 +223,77 @@
             margin-top: 10px;
             font-size: 14px;
         }
+        /* Detailed Risk Analysis */
 
+        .analysis-details {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .analysis-details h4 {
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+
+        .analysis-scores {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .analysis-score {
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+
+        .analysis-score span {
+            display: block;
+            color: #6b7280;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .analysis-score strong {
+            font-size: 18px;
+        }
+
+        .breakdown-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 9px 10px;
+            background: #f8fafc;
+            border-radius: 7px;
+            font-size: 13px;
+        }
+
+        .breakdown-item span {
+            color: #4b5563;
+        }
+
+        .breakdown-item strong {
+            font-size: 13px;
+        }
+
+        @media (max-width: 650px) {
+
+            .analysis-scores {
+                grid-template-columns: 1fr;
+            }
+
+        }
+        
         .risk-level {
             font-weight: 600;
         }
@@ -1298,7 +1368,6 @@
                             factorsList.className =
                                 "risk-factors";
 
-
                             video.risk_factors.forEach(
                                 function(factor) {
 
@@ -1315,12 +1384,258 @@
                                 }
                             );
 
-
                             riskContainer.appendChild(
                                 factorsList
                             );
 
                         }
+
+
+                        /*
+                         * Detailed movement analysis
+                         */
+
+                        if (
+                            video.risk_breakdown ||
+                            video.movement_anomaly_score !== null
+                        ) {
+
+                            const analysisDetails =
+                                document.createElement("div");
+
+                            analysisDetails.className =
+                                "analysis-details";
+
+                            const analysisTitle =
+                                document.createElement("h4");
+
+                            analysisTitle.textContent =
+                                "Movement & Risk Analysis";
+
+                            analysisDetails.appendChild(
+                                analysisTitle
+                            );
+
+
+                            /*
+                             * Movement scores
+                             */
+
+                            const analysisScores =
+                                document.createElement("div");
+
+                            analysisScores.className =
+                                "analysis-scores";
+
+
+                            const breakdown =
+                                video.risk_breakdown || {};
+
+
+                            const movementQuality =
+                                breakdown.movement_quality_score;
+
+                            const biomechanicalEfficiency =
+                                breakdown.biomechanical_efficiency_score;
+
+                            const earlyMovementQuality =
+                                breakdown.early_movement_quality_score;
+
+                            const lateMovementQuality =
+                                breakdown.late_movement_quality_score;
+                            const anomalyScore =
+                                video.movement_anomaly_score;
+
+
+                            if (
+                                movementQuality !== null &&
+                                movementQuality !== undefined
+                            ) {
+
+                                analysisScores.innerHTML += `
+                                    <div class="analysis-score">
+                                        <span>Movement Quality</span>
+                                        <strong>${movementQuality}/100</strong>
+                                    </div>
+                                `;
+
+                            }
+
+
+                            if (
+                                biomechanicalEfficiency !== null &&
+                                biomechanicalEfficiency !== undefined
+                            ) {
+
+                                analysisScores.innerHTML += `
+                                    <div class="analysis-score">
+                                        <span>Biomechanical Efficiency</span>
+                                        <strong>${biomechanicalEfficiency}/100</strong>
+                                    </div>
+                                `;
+
+                            }
+
+                            if (
+                                earlyMovementQuality !== null &&
+                                earlyMovementQuality !== undefined
+                            ) {
+
+                                analysisScores.innerHTML += `
+                                    <div class="analysis-score">
+                                        <span>Early Movement Quality</span>
+                                        <strong>${earlyMovementQuality}/100</strong>
+                                    </div>
+                                `;
+
+                            }
+
+
+                            if (
+                                lateMovementQuality !== null &&
+                                lateMovementQuality !== undefined
+                            ) {
+
+                                analysisScores.innerHTML += `
+                                    <div class="analysis-score">
+                                        <span>Late Movement Quality</span>
+                                        <strong>${lateMovementQuality}/100</strong>
+                                    </div>
+                                `;
+
+                            }
+
+
+
+
+                            if (
+                                anomalyScore !== null &&
+                                anomalyScore !== undefined
+                            ) {
+
+                                analysisScores.innerHTML += `
+                                    <div class="analysis-score">
+                                        <span>Movement Anomaly</span>
+                                        <strong>${anomalyScore}/100</strong>
+                                    </div>
+                                `;
+
+                            }
+
+
+                            if (analysisScores.innerHTML) {
+
+                                analysisDetails.appendChild(
+                                    analysisScores
+                                );
+
+                            }
+
+
+                            /*
+                             * Risk breakdown
+                             */
+
+                            const breakdownTitle =
+                                document.createElement("h4");
+
+                            breakdownTitle.textContent =
+                                "Risk Factor Breakdown";
+
+                            analysisDetails.appendChild(
+                                breakdownTitle
+                            );
+
+
+                            const breakdownList =
+                                document.createElement("div");
+
+                            breakdownList.className =
+                                "breakdown-list";
+
+
+                            const breakdownLabels = {
+                                biomechanical_deviation:
+                                    "Biomechanical Deviation",
+
+                                historical_injury:
+                                    "Historical Injury",
+
+                                movement_asymmetry:
+                                    "Movement Asymmetry",
+
+                                training_load:
+                                    "Training Load",
+
+                                fatigue_indicator:
+                                    "Fatigue Indicator"
+                            };
+
+
+                            Object.keys(breakdownLabels).forEach(
+                                function(key) {
+
+                                const item =
+                                    breakdown[key];
+
+                                if (!item) {
+                                    return;
+                                }
+
+
+                                const breakdownItem =
+                                    document.createElement("div");
+
+                                breakdownItem.className =
+                                    "breakdown-item";
+
+
+                                const label =
+                                    document.createElement("span");
+
+                                label.textContent =
+                                    breakdownLabels[key];
+
+
+                                const value =
+                                    document.createElement("strong");
+
+                                value.textContent =
+                                    item.score +
+                                    "/100";
+
+
+                                breakdownItem.appendChild(
+                                    label
+                                );
+
+                                breakdownItem.appendChild(
+                                    value
+                                );
+
+
+                                breakdownList.appendChild(
+                                    breakdownItem
+                                );
+
+                            }
+                        );
+
+
+                        if (breakdownList.children.length > 0) {
+
+                            analysisDetails.appendChild(
+                            breakdownList
+                            );
+
+                        }
+
+
+                        riskContainer.appendChild(
+                            analysisDetails
+                        );
+
+                    }
 
                     }
 
@@ -1713,7 +2028,6 @@
             document.getElementById(
                 "logoutButton"
             );
-
 
         logoutButton.addEventListener(
             "click",

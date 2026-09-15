@@ -127,5 +127,15 @@ class AthleteVideo(models.Model):
         null=True
     )
 
+    risk_breakdown = models.JSONField(
+        blank=True,
+        null=True
+    )
+
+    movement_anomaly_score = models.IntegerField(
+        blank=True,
+        null=True
+    )
+
     def __str__(self):
         return f"{self.athlete.full_name} - {self.video.name}"

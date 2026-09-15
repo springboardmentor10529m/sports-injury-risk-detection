@@ -123,7 +123,9 @@ class AthleteVideoUploadView(APIView):
 
             processing_result = process_video(
                 video.video.path,
-                video.id
+                video.id, 
+                athlete_profile=athlete
+
             )
 
             # Save the risk assessment to the database
@@ -133,26 +135,45 @@ class AthleteVideoUploadView(APIView):
 
             if risk_assessment:
 
-                video.risk_level = risk_assessment.get(
-                    "risk_level"
+                video.risk_level = risk_assessment.get("risk_level")
+                video.risk_score = risk_assessment.get("risk_score")
+                video.risk_factors = risk_assessment.get("risk_factors", [])
+
+                risk_breakdown = risk_assessment.get("risk_breakdown", {})
+
+                risk_breakdown["movement_quality_score"] = (
+                    risk_assessment.get("movement_quality_score")
                 )
 
-                video.risk_score = risk_assessment.get(
-                    "risk_score"
+                risk_breakdown["biomechanical_efficiency_score"] = (
+                    risk_assessment.get("biomechanical_efficiency_score")
+                )
+                risk_breakdown["early_movement_quality_score"] = (
+                    risk_assessment.get(
+                        "early_movement_quality_score"
+                    )
                 )
 
-                video.risk_factors = risk_assessment.get(
-                    "risk_factors",
-                    []
+                risk_breakdown["late_movement_quality_score"] = (
+                    risk_assessment.get(
+                        "late_movement_quality_score"
+                    )
+                )
+                video.risk_breakdown = risk_breakdown
+                video.movement_anomaly_score = risk_assessment.get(
+                    "movement_anomaly_score"
                 )
 
                 video.save(
                     update_fields=[
                         "risk_level",
                         "risk_score",
-                        "risk_factors"
+                        "risk_factors",
+                        "risk_breakdown",
+                        "movement_anomaly_score"
                     ]
                 )
+                
 
             if not processing_result["success"]:
 

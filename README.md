@@ -283,3 +283,33 @@ Current pipeline:
 
 
 The completed pipeline upto date(07-09-26)
+
+
+
+                        ┌─────────────────────┐
+                  │   Athlete Profile   │
+                  └──────────┬──────────┘
+                             │
+                ┌────────────┴────────────┐
+                │                         │
+        Previous Injury             Training Load
+                │                         │
+                └────────────┬────────────┘
+                             │
+                             ▼
+                    ┌────────────────┐
+                    │  Risk Factors  │
+                    └───────┬────────┘
+                            │
+          ┌─────────────────┼──────────────────┐
+          │                 │                  │
+          ▼                 ▼                  ▼
+   Biomechanical       Movement           Fatigue
+     Deviation        Asymmetry           Indicator
+          │                 │                  │
+          └─────────────────┼──────────────────┘
+                            ▼
+                    Weighted Risk Score
+                            │
+                            ▼
+                    Low / Medium / High
