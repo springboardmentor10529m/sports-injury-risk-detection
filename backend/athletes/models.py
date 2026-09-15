@@ -137,5 +137,9 @@ class AthleteVideo(models.Model):
         null=True
     )
 
+    recommendations = models.JSONField(
+        blank=True,
+        null=True
+    )
     def __str__(self):
         return f"{self.athlete.full_name} - {self.video.name}"

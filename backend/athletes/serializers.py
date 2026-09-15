@@ -86,6 +86,7 @@ class AthleteVideoSerializer(serializers.ModelSerializer):
             "risk_factors",
             "risk_breakdown",
             "movement_anomaly_score",
+            "recommendations",
         ]
         read_only_fields = [
             "id",

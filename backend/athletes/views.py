@@ -133,6 +133,14 @@ class AthleteVideoUploadView(APIView):
                 "risk_assessment"
             )
 
+            recommendations = {}
+
+            if risk_assessment:
+                recommendations = risk_assessment.get(
+                    "recommendations",
+                    {}
+                )
+
             if risk_assessment:
 
                 video.risk_level = risk_assessment.get("risk_level")
@@ -161,8 +169,10 @@ class AthleteVideoUploadView(APIView):
                 )
                 video.risk_breakdown = risk_breakdown
                 video.movement_anomaly_score = risk_assessment.get(
-                    "movement_anomaly_score"
+                    "movement_anomaly_score" 
                 )
+
+                video.recommendations = recommendations
 
                 video.save(
                     update_fields=[
@@ -170,7 +180,8 @@ class AthleteVideoUploadView(APIView):
                         "risk_score",
                         "risk_factors",
                         "risk_breakdown",
-                        "movement_anomaly_score"
+                        "movement_anomaly_score",
+                        "recommendations",
                     ]
                 )
                 

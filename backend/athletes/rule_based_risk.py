@@ -1,3 +1,9 @@
+from .recommendation_engine import (
+    generate_recommendations
+)
+
+
+
 def calculate_biomechanical_deviation_score(
     biomechanical_data
 ):
@@ -406,6 +412,30 @@ def assess_injury_risk(
             "No significant risk factors detected."
         )
 
+
+    recommendations = generate_recommendations(
+        biomechanical_data,
+        {
+            "risk_breakdown": {
+                "biomechanical_deviation": {
+                    "score": biomechanical_score
+                },
+                "historical_injury": {
+                    "score": historical_injury_score
+                },
+                "movement_asymmetry": {
+                    "score": movement_asymmetry_score
+                },
+                "training_load": {
+                    "score": training_load_score
+                },
+                "fatigue_indicator": {
+                    "score": fatigue_score
+                }
+            }
+        },
+        athlete_profile=athlete_profile
+    )
     # ---------------------------------------------------------
     # Return complete assessment
     # ---------------------------------------------------------
@@ -476,5 +506,7 @@ def assess_injury_risk(
             biomechanical_data.get(
                 "late_movement_quality_score"
             ),
+        "recommendations":
+            recommendations,    
     }
     

@@ -411,6 +411,44 @@
             }
 
         }
+        
+        /* Corrective Recommendations */
+
+        .recommendations-details {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .recommendations-details h4 {
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+
+        .recommendation-category {
+            margin-bottom: 14px;
+        }
+
+        .recommendation-category:last-child {
+            margin-bottom: 0;
+        }
+
+        .recommendation-category strong {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            color: #1f2937;
+        }
+
+        .recommendation-category ul {
+            margin: 0;
+            padding-left: 18px;
+            color: #6b7280;
+            font-size: 13px;
+            line-height: 1.6;
+        }
 
         @media (max-width: 650px) {
 
@@ -1634,6 +1672,109 @@
                         riskContainer.appendChild(
                             analysisDetails
                         );
+                        
+                        /*
+                         * Corrective Recommendations
+                         */
+
+                        if (
+                            video.recommendations &&
+                            Object.keys(video.recommendations).length > 0
+                        ) {
+
+                            const recommendationsDetails =
+                                document.createElement("div");
+
+                            recommendationsDetails.className =
+                                "recommendations-details";
+
+                            const recommendationsTitle =
+                                document.createElement("h4");
+
+                            recommendationsTitle.textContent =
+                                "Corrective Recommendations";
+
+                            recommendationsDetails.appendChild(
+                                recommendationsTitle
+                            );
+
+                            const recommendationLabels = {
+                                exercise_recommendations:
+                                    "Exercise Recommendations",
+
+                                mobility_suggestions:
+                                    "Mobility Suggestions",
+
+                                strengthening_recommendations:
+                                    "Strengthening Recommendations",
+
+                                recovery_planning:
+                                    "Recovery Planning",
+
+                                training_modifications:
+                                    "Training Modifications"
+                            };
+
+                            Object.keys(recommendationLabels).forEach(
+                                function(key) {
+
+                                    const recommendations =
+                                        video.recommendations[key];
+
+                                    if (
+                                        !recommendations ||
+                                        recommendations.length === 0
+                                    ) {
+                                        return;
+                                    }
+
+                                    const category =
+                                        document.createElement("div");
+
+                                    category.className =
+                                        "recommendation-category";
+
+                                    const categoryTitle =
+                                        document.createElement("strong");
+
+                                    categoryTitle.textContent =
+                                        recommendationLabels[key];
+
+                                    category.appendChild(
+                                        categoryTitle
+                                    );
+
+                                    const list =
+                                        document.createElement("ul");
+
+                                    recommendations.forEach(
+                                        function(recommendation) {
+
+                                            const item =
+                                                document.createElement("li");
+
+                                            item.textContent =
+                                                recommendation;
+
+                                            list.appendChild(item);
+
+                                        }
+                                    );
+
+                                    category.appendChild(list);
+
+                                    recommendationsDetails.appendChild(
+                                        category
+                                    );
+
+                                }
+                            );
+
+                            riskContainer.appendChild(
+                                recommendationsDetails
+                            );
+
+                        }
 
                     }
 
