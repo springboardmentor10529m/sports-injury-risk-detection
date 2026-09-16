@@ -284,7 +284,7 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // Draw MediaPipe Skeleton Overlay on Canvas
+  // Professional Biomechanics AI Skeleton Rendering
   const drawPoseSkeleton = useCallback((landmarks, canvas, width, height) => {
     if (!canvas || !landmarks) return;
     const ctx = canvas.getContext("2d");
@@ -292,7 +292,7 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
 
     if (!showSkeleton) return;
 
-    // Helper to get coordinates
+    // Helper to get scaled landmark coordinates
     const getPoint = (idx) => {
       const lm = landmarks[idx] || landmarks[String(idx)];
       if (!lm) return null;
@@ -303,8 +303,25 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
       };
     };
 
-    // Draw connecting bones
-    ctx.lineWidth = 4;
+    // Deviation checks for selective risk highlighting
+    const kneeValgus = analysisResult?.knee_valgus || 0;
+    const isValgusHighRisk = kneeValgus > 12.0;
+    const isValgusWarning = kneeValgus > 8.0 && !isValgusHighRisk;
+
+    const trunkLean = analysisResult?.trunk_lean || 0;
+    const isTrunkHighRisk = trunkLean > 8.0;
+    const isTrunkWarning = trunkLean > 5.5 && !isTrunkHighRisk;
+
+    const hipStability = analysisResult?.hip_stability || 85;
+    const isHipWarning = hipStability < 75.0;
+
+    // Professional Sports Biomechanics Color Palette
+    const COLOR_NORMAL = "rgba(56, 189, 248, 0.85)"; // Subtle sleek cyan/blue
+    const COLOR_WARNING = "rgba(245, 158, 11, 0.95)"; // Subtle amber/orange
+    const COLOR_HIGH_RISK = "rgba(239, 68, 68, 0.95)"; // Subtle red
+
+    // 1. Draw Thin, Clean Bone Connections
+    ctx.lineWidth = 1.6;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
@@ -312,22 +329,25 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
       const p1 = getPoint(startIdx);
       const p2 = getPoint(endIdx);
       if (p1 && p2 && p1.visibility > 0.3 && p2.visibility > 0.3) {
-        // Color coding by body region
-        const isLeg = (startIdx >= 23 && endIdx >= 23);
-        const isArm = (startIdx >= 11 && startIdx <= 16) && (endIdx >= 11 && endIdx <= 16);
-        const isTorso = [11, 12, 23, 24].includes(startIdx) && [11, 12, 23, 24].includes(endIdx);
+        // Selective Risk Highlighting - Normal skeleton stays uniform cyan/blue
+        let strokeStyle = COLOR_NORMAL;
 
-        if (isTorso) {
-          ctx.strokeStyle = "#3b82f6"; // Blue torso
-        } else if (isLeg) {
-          const valgusHigh = (analysisResult?.knee_valgus || 0) > 12.0;
-          ctx.strokeStyle = valgusHigh ? "#ef4444" : "#10b981"; // Red if valgus deviation, green if safe
-        } else if (isArm) {
-          ctx.strokeStyle = "#8b5cf6"; // Purple arms
-        } else {
-          ctx.strokeStyle = "#06b6d4"; // Cyan head/neck
+        const isKneeLegSegment =
+          (startIdx === 25 || endIdx === 25 || startIdx === 26 || endIdx === 26) &&
+          (startIdx >= 23 && endIdx >= 23);
+
+        const isTorsoSegment =
+          [11, 12, 23, 24].includes(startIdx) && [11, 12, 23, 24].includes(endIdx);
+
+        if (isKneeLegSegment) {
+          if (isValgusHighRisk) strokeStyle = COLOR_HIGH_RISK;
+          else if (isValgusWarning) strokeStyle = COLOR_WARNING;
+        } else if (isTorsoSegment) {
+          if (isTrunkHighRisk) strokeStyle = COLOR_HIGH_RISK;
+          else if (isTrunkWarning) strokeStyle = COLOR_WARNING;
         }
 
+        ctx.strokeStyle = strokeStyle;
         ctx.beginPath();
         ctx.moveTo(p1.x, p1.y);
         ctx.lineTo(p2.x, p2.y);
@@ -335,34 +355,98 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
       }
     });
 
-    // Draw joint nodes (shoulders, elbows, wrists, hips, knees, ankles)
+    // 2. Draw Small & Subtle Joint Markers (Avoid large circles)
     const keyJointIndices = [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32];
     keyJointIndices.forEach((idx) => {
       const p = getPoint(idx);
       if (p && p.visibility > 0.3) {
         const isKnee = idx === 25 || idx === 26;
         const isHip = idx === 23 || idx === 24;
-        const isAnkle = idx === 27 || idx === 28;
 
+        let jointColor = "rgba(224, 242, 254, 0.95)"; // Default clean cyan-white
+
+        if (isKnee) {
+          if (isValgusHighRisk) jointColor = COLOR_HIGH_RISK;
+          else if (isValgusWarning) jointColor = COLOR_WARNING;
+          else jointColor = COLOR_NORMAL;
+        } else if (isHip && isHipWarning) {
+          jointColor = COLOR_WARNING;
+        }
+
+        // Small subtle joint dot (radius 2.5px, knees 3.0px)
+        const radius = isKnee ? 3.0 : 2.5;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, isKnee || isHip || isAnkle ? 6 : 4.5, 0, 2 * Math.PI);
-        ctx.fillStyle = isKnee ? "#f59e0b" : isHip ? "#3b82f6" : isAnkle ? "#10b981" : "#ffffff";
+        ctx.arc(p.x, p.y, radius, 0, 2 * Math.PI);
+        ctx.fillStyle = jointColor;
         ctx.fill();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = "#0f172a";
+
+        // Crisp dark outline for professional definition
+        ctx.lineWidth = 0.8;
+        ctx.strokeStyle = "rgba(15, 23, 42, 0.85)";
         ctx.stroke();
       }
     });
 
-    // Draw Knee Valgus & Angle callout if knee landmark exists
+    // Helper to draw modern, compact, semi-transparent measurement badge
+    const drawMeasurementBadge = (text, x, y, isWarning = false, isHighRisk = false) => {
+      ctx.font = "600 10px Inter, -apple-system, sans-serif";
+      const metrics = ctx.measureText(text);
+      const textWidth = metrics.width;
+      const padX = 6;
+      const badgeW = textWidth + padX * 2 + 6;
+      const badgeH = 18;
+      const radius = 4;
+
+      // Keep inside canvas bounds
+      const clampedX = Math.max(6, Math.min(width - badgeW - 6, x));
+      const clampedY = Math.max(6, Math.min(height - badgeH - 6, y));
+
+      // Semi-transparent glassmorphic background
+      ctx.fillStyle = "rgba(15, 23, 42, 0.72)";
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(clampedX, clampedY, badgeW, badgeH, radius);
+      } else {
+        ctx.rect(clampedX, clampedY, badgeW, badgeH);
+      }
+      ctx.fill();
+
+      // Modern subtle border
+      ctx.lineWidth = 1.0;
+      ctx.strokeStyle = isHighRisk
+        ? "rgba(239, 68, 68, 0.75)"
+        : isWarning
+        ? "rgba(245, 158, 11, 0.75)"
+        : "rgba(56, 189, 248, 0.4)";
+      ctx.stroke();
+
+      // Subtle indicator dot
+      const dotColor = isHighRisk ? "#ef4444" : isWarning ? "#f59e0b" : "#38bdf8";
+      ctx.beginPath();
+      ctx.arc(clampedX + 6, clampedY + badgeH / 2, 2, 0, 2 * Math.PI);
+      ctx.fillStyle = dotColor;
+      ctx.fill();
+
+      // Text
+      ctx.fillStyle = isHighRisk ? "#fecaca" : isWarning ? "#fef3c7" : "#f1f5f9";
+      ctx.fillText(text, clampedX + 12, clampedY + 12.5);
+    };
+
+    // 3. Draw Compact Measurement Labels Close to Relevant Joints
     const leftKnee = getPoint(25);
     const rightKnee = getPoint(26);
-    if (leftKnee && leftKnee.visibility > 0.4) {
-      ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
-      ctx.fillRect(leftKnee.x + 8, leftKnee.y - 18, 90, 22);
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 10px Inter, sans-serif";
-      ctx.fillText(`Knee: ${analysisResult?.knee_angle || 135}°`, leftKnee.x + 12, leftKnee.y - 4);
+    const targetKnee = (leftKnee && leftKnee.visibility > 0.35) ? leftKnee : (rightKnee && rightKnee.visibility > 0.35) ? rightKnee : null;
+
+    if (targetKnee) {
+      const kneeAngleVal = analysisResult?.knee_angle ? `${Math.round(analysisResult.knee_angle)}°` : "135°";
+      drawMeasurementBadge(`Knee angle ${kneeAngleVal}`, targetKnee.x + 8, targetKnee.y - 10, isValgusWarning, isValgusHighRisk);
+    }
+
+    // Secondary hip measurement label if hip stability or trunk lean is notable
+    const leftHip = getPoint(23);
+    if (leftHip && leftHip.visibility > 0.4 && (isTrunkWarning || isTrunkHighRisk || isHipWarning)) {
+      const hipAngleVal = analysisResult?.hip_angle ? `${Math.round(analysisResult.hip_angle)}°` : "140°";
+      drawMeasurementBadge(`Hip ${hipAngleVal}`, leftHip.x + 8, leftHip.y - 10, isHipWarning || isTrunkWarning, isTrunkHighRisk);
     }
   }, [showSkeleton, analysisResult]);
 
@@ -752,7 +836,23 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
                   </button>
                 </div>
 
-                <div style={{ position: "relative", width: "100%", height: "300px", background: "#000", borderRadius: "10px", overflow: "hidden" }}>
+                <div className="video-player-wrapper" style={{ position: "relative", width: "100%", height: "300px", background: "#090d16", borderRadius: "10px", overflow: "hidden" }}>
+                  {/* Professional In-Video Biomechanics HUD Header */}
+                  {showSkeleton && (
+                    <div className="video-hud-overlay">
+                      <div className="video-hud-left">
+                        <span className="hud-tag">AI POSE ANALYSIS</span>
+                        <span className="hud-sub">MediaPipe Pose Tracking</span>
+                      </div>
+                      <div className="video-hud-right">
+                        <span className="hud-rec-dot">●</span>
+                        <span className="hud-frame">
+                          FRAME: {String(currentFrameIdx + 1).padStart(2, "0")} / {String(poseFrames.length || 30).padStart(2, "0")}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
                   {videoPreviewUrl ? (
                     <video
                       ref={videoRef}

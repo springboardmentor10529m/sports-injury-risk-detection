@@ -565,3 +565,84 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* =====================================================
+   PROFESSIONAL BIOMECHANICS HUD OVERLAY STYLES
+   ===================================================== */
+.video-player-wrapper {
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6);
+}
+
+.video-hud-overlay {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.video-hud-left {
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  padding: 4px 9px;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.hud-tag {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #38bdf8;
+  text-transform: uppercase;
+  font-family: Inter, system-ui, sans-serif;
+  line-height: 1.1;
+}
+
+.hud-sub {
+  font-size: 8px;
+  font-weight: 500;
+  color: rgba(226, 232, 240, 0.85);
+  letter-spacing: 0.02em;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.video-hud-right {
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 4px 9px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hud-rec-dot {
+  color: #22c55e;
+  font-size: 9px;
+  animation: hudPulse 1.4s ease-in-out infinite alternate;
+}
+
+@keyframes hudPulse {
+  0% { opacity: 0.4; }
+  100% { opacity: 1.0; }
+}
+
+.hud-frame {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #f8fafc;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
