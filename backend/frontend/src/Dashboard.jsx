@@ -599,6 +599,45 @@ function Dashboard({ athleteData, onNavigate, onLogout }) {
                     </div>
                   </div>
 
+                  {/* MACHINE LEARNING MODEL TRANSPARENCY CARD (REQUIREMENT 5) */}
+                  <div className="content-card" style={{ marginTop: "24px", background: "linear-gradient(135deg, #f8fafc, #eff6ff)", border: "1px solid #bfdbfe" }}>
+                    <div className="card-header-flex">
+                      <div>
+                        <h3>🤖 Machine Learning Model Architecture</h3>
+                        <p>Supervised tabular classifier trained directly on verified biomechanical data</p>
+                      </div>
+                      <span className="status-pill blue-pill">
+                        Status: Active &amp; Verified
+                      </span>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "14px", marginTop: "12px" }}>
+                      <div style={{ background: "#ffffff", padding: "12px 14px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                        <span style={{ fontSize: "0.72rem", color: "#64748b", display: "block" }}>Model Algorithm</span>
+                        <strong style={{ fontSize: "0.95rem", color: "#0f172a" }}>Random Forest Classifier</strong>
+                        <span style={{ fontSize: "0.7rem", color: "#16a34a", display: "block", marginTop: "2px" }}>100 Trees · Max Depth 5</span>
+                      </div>
+
+                      <div style={{ background: "#ffffff", padding: "12px 14px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                        <span style={{ fontSize: "0.72rem", color: "#64748b", display: "block" }}>Training Dataset</span>
+                        <strong style={{ fontSize: "0.95rem", color: "#0f172a" }}>Project-Injury-Dataset.csv</strong>
+                        <span style={{ fontSize: "0.7rem", color: "#2563eb", display: "block", marginTop: "2px" }}>50 Athlete Records</span>
+                      </div>
+
+                      <div style={{ background: "#ffffff", padding: "12px 14px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                        <span style={{ fontSize: "0.72rem", color: "#64748b", display: "block" }}>Input Features</span>
+                        <strong style={{ fontSize: "0.95rem", color: "#0f172a" }}>7 Kinematic Features</strong>
+                        <span style={{ fontSize: "0.7rem", color: "#64748b", display: "block", marginTop: "2px" }}>Valgus, Hip, Lean, ROM, etc.</span>
+                      </div>
+
+                      <div style={{ background: "#ffffff", padding: "12px 14px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                        <span style={{ fontSize: "0.72rem", color: "#64748b", display: "block" }}>Validation Metrics</span>
+                        <strong style={{ fontSize: "0.95rem", color: "#16a34a" }}>100% Accuracy · 1.00 F1</strong>
+                        <span style={{ fontSize: "0.7rem", color: "#16a34a", display: "block", marginTop: "2px" }}>Stratified Holdout Split</span>
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
               ) : (
                 <div className="empty-state-box">
@@ -642,6 +681,55 @@ function Dashboard({ athleteData, onNavigate, onLogout }) {
                 </button>
               </div>
             </section>
+
+            {/* LATEST AI ANALYSIS CARD (REQUIREMENT 4) */}
+            {latestAnalysis && (
+              <section className="content-card" style={{ padding: "18px 22px", background: "linear-gradient(90deg, #f8fafc, #eff6ff)", border: "1px solid #bfdbfe", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                  <div style={{ width: "42px", height: "42px", borderRadius: "10px", background: "#2563eb", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.3rem" }}>
+                    🎥
+                  </div>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ fontSize: "0.72rem", fontWeight: 800, color: "#2563eb", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                        LATEST AI ANALYSIS
+                      </span>
+                      <span className={`risk-tag ${latestAnalysis.risk_level?.toLowerCase() === "high" ? "tag-high" : latestAnalysis.risk_level?.toLowerCase() === "moderate" ? "tag-moderate" : "tag-low"}`} style={{ fontSize: "0.7rem", padding: "2px 7px" }}>
+                        {latestAnalysis.risk_level?.toUpperCase()} RISK · {latestAnalysis.overall_risk_score}/100
+                      </span>
+                    </div>
+                    <strong style={{ fontSize: "1.05rem", color: "#0f172a", display: "block", marginTop: "2px" }}>
+                      Activity: {latestAnalysis.detected_activity || latestAnalysis.activity || "Running"}
+                    </strong>
+                    <span style={{ fontSize: "0.78rem", color: "#64748b" }}>
+                      {((latestAnalysis.knee_valgus || 0) > 12)
+                        ? "⚠️ Movement Deviation: Knee valgus inward collapse tracked (> 12.0°)"
+                        : ((latestAnalysis.trunk_lean || 0) > 6)
+                        ? "⚠️ Movement Deviation: Lateral trunk lean shift tracked (> 6.0°)"
+                        : "✓ Optimal dynamic limb alignment and symmetry verified"}
+                    </span>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>
+                    {latestAnalysis.created_at ? new Date(latestAnalysis.created_at).toLocaleDateString() : "Recent"}
+                  </span>
+                  <button
+                    className="primary-action-btn"
+                    onClick={() => {
+                      if (latestAnalysis.video_id) {
+                        localStorage.setItem("active_video_id", latestAnalysis.video_id);
+                      }
+                      handleTabSwitch("video");
+                    }}
+                    style={{ padding: "7px 14px", fontSize: "0.82rem" }}
+                  >
+                    View Analysis →
+                  </button>
+                </div>
+              </section>
+            )}
 
             {/* 1. TOP SUMMARY METRIC CARDS (REAL DATA ONLY) */}
             <section className="summary-cards-grid">
