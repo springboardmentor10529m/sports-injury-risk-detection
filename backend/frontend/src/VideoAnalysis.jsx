@@ -284,21 +284,56 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  // Helper to calculate joint angle in degrees from three landmark points
+  const calculateAngleDegrees = (pA, pB, pC) => {
+    if (!pA || !pB || !pC) return null;
+    const v1 = { x: pA.x - pB.x, y: pA.y - pB.y };
+    const v2 = { x: pC.x - pB.x, y: pC.y - pB.y };
+    const dot = v1.x * v2.x + v1.y * v2.y;
+    const mag1 = Math.sqrt(v1.x * v1.x + v1.y * v1.y);
+    const mag2 = Math.sqrt(v2.x * v2.x + v2.y * v2.y);
+    if (mag1 === 0 || mag2 === 0) return null;
+    const cosTheta = Math.max(-1.0, Math.min(1.0, dot / (mag1 * mag2)));
+    return Math.round((Math.acos(cosTheta) * 180) / Math.PI);
+  };
+
   // Professional Sports Biomechanics & Computer Vision AI Skeleton Rendering
-  const drawPoseSkeleton = useCallback((landmarks, canvas, width, height) => {
+  const drawPoseSkeleton = useCallback((landmarks, canvas, width, height, videoEl = null) => {
     if (!canvas || !landmarks) return;
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, width, height);
 
     if (!showSkeleton) return;
 
+    // Calculate letterboxing if video dimensions are available to align coordinates with video
+    let renderW = width;
+    let renderH = height;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    if (videoEl && videoEl.videoWidth && videoEl.videoHeight) {
+      const videoAspect = videoEl.videoWidth / videoEl.videoHeight;
+      const containerAspect = width / height;
+      if (containerAspect > videoAspect) {
+        renderW = height * videoAspect;
+        renderH = height;
+        offsetX = (width - renderW) / 2;
+        offsetY = 0;
+      } else {
+        renderW = width;
+        renderH = width / videoAspect;
+        offsetX = 0;
+        offsetY = (height - renderH) / 2;
+      }
+    }
+
     // Helper to get scaled landmark coordinates
     const getPoint = (idx) => {
       const lm = landmarks[idx] || landmarks[String(idx)];
       if (!lm) return null;
       return {
-        x: lm.x * width,
-        y: lm.y * height,
+        x: offsetX + lm.x * renderW,
+        y: offsetY + lm.y * renderH,
         visibility: lm.visibility !== undefined ? lm.visibility : 1.0,
       };
     };
@@ -444,10 +479,11 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
       ctx.fillText(text, badgeX + 11.5, badgeY + 11.5);
     };
 
-    // 3. Biomechanical Knee Angle Arc & Telemetry Label
+    // 3. Dynamic Biomechanical Knee Angle Arc & Telemetry Label
     const leftHip = getPoint(23);
     const leftKnee = getPoint(25);
     const leftAnkle = getPoint(27);
+    const leftShoulder = getPoint(11);
 
     const rightHip = getPoint(24);
     const rightKnee = getPoint(26);
@@ -458,6 +494,10 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
     const targetAnkle = targetKnee === leftKnee ? leftAnkle : rightAnkle;
 
     if (targetKnee) {
+      // Calculate dynamic knee angle for current frame from actual landmarks
+      const liveKneeAngle = calculateAngleDegrees(targetHip, targetKnee, targetAnkle);
+      const displayedKneeAngle = liveKneeAngle !== null ? liveKneeAngle : (analysisResult?.knee_angle ? Math.round(analysisResult.knee_angle) : 135);
+
       // Draw subtle biomechanical angle arc at knee joint if hip and ankle exist
       if (targetHip && targetAnkle && targetHip.visibility > 0.3 && targetAnkle.visibility > 0.3) {
         const vHip = { x: targetHip.x - targetKnee.x, y: targetHip.y - targetKnee.y };
@@ -476,49 +516,50 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
         ctx.stroke();
       }
 
-      const kneeAngleVal = analysisResult?.knee_angle ? `${Math.round(analysisResult.knee_angle)}°` : "135°";
-      drawMeasurementBadge(`Knee angle ${kneeAngleVal}`, targetKnee, 14, -14, isValgusWarning, isValgusHighRisk);
+      drawMeasurementBadge(`Knee angle ${displayedKneeAngle}°`, targetKnee, 14, -14, isValgusWarning, isValgusHighRisk);
     }
 
     // Secondary hip measurement label if hip stability or trunk lean deviation is detected
     if (leftHip && leftHip.visibility > 0.4 && (isTrunkWarning || isTrunkHighRisk || isHipWarning)) {
-      const hipAngleVal = analysisResult?.hip_angle ? `${Math.round(analysisResult.hip_angle)}°` : "140°";
-      drawMeasurementBadge(`Hip ${hipAngleVal}`, leftHip, 14, -12, isHipWarning || isTrunkWarning, isTrunkHighRisk);
+      const liveHipAngle = calculateAngleDegrees(leftShoulder, leftHip, leftKnee);
+      const displayedHipAngle = liveHipAngle !== null ? liveHipAngle : (analysisResult?.hip_angle ? Math.round(analysisResult.hip_angle) : 140);
+      drawMeasurementBadge(`Hip ${displayedHipAngle}°`, leftHip, 14, -12, isHipWarning || isTrunkWarning, isTrunkHighRisk);
     }
   }, [showSkeleton, analysisResult]);
 
-  // Synchronize canvas with video playback or frame animation
+  // Synchronize canvas with HTML5 video playback in real time
   useEffect(() => {
     if (!analysisResult) return;
 
     let localFrames = poseFrames;
 
-    // Generate standard reference kinematic pose frames if poseFrames not in memory
+    // Generate smooth reference kinematic pose frames if poseFrames not in memory
     if (!localFrames || localFrames.length === 0) {
       const baseFrames = [];
       for (let i = 0; i < 30; i++) {
         const phase = (i / 30) * Math.PI * 2;
-        const kneeBend = Math.sin(phase) * 0.05;
+        const kneeFlex = Math.sin(phase) * 0.08;
         const hipShift = Math.cos(phase) * 0.02;
+        const ankleY = 0.88 + Math.sin(phase) * 0.03;
 
         baseFrames.push({
           frame_index: i,
-          timestamp: i * 0.033,
+          timestamp: (i / 30) * 3.0,
           landmarks: {
             0: { x: 0.5, y: 0.15, visibility: 0.95 },
             11: { x: 0.42, y: 0.28, visibility: 0.95 },
             12: { x: 0.58, y: 0.28, visibility: 0.95 },
-            13: { x: 0.38, y: 0.42, visibility: 0.9 },
-            14: { x: 0.62, y: 0.42, visibility: 0.9 },
-            15: { x: 0.35, y: 0.55, visibility: 0.9 },
-            16: { x: 0.65, y: 0.55, visibility: 0.9 },
+            13: { x: 0.38 + Math.cos(phase) * 0.03, y: 0.42, visibility: 0.9 },
+            14: { x: 0.62 - Math.cos(phase) * 0.03, y: 0.42, visibility: 0.9 },
+            15: { x: 0.35 + Math.cos(phase) * 0.04, y: 0.55, visibility: 0.9 },
+            16: { x: 0.65 - Math.cos(phase) * 0.04, y: 0.55, visibility: 0.9 },
             23: { x: 0.44 + hipShift, y: 0.52, visibility: 0.95 },
             24: { x: 0.56 + hipShift, y: 0.52, visibility: 0.95 },
-            25: { x: 0.43, y: 0.70 + kneeBend, visibility: 0.95 },
-            26: { x: 0.57, y: 0.70 + kneeBend, visibility: 0.95 },
-            27: { x: 0.42, y: 0.88, visibility: 0.95 },
-            28: { x: 0.58, y: 0.88, visibility: 0.95 },
-            31: { x: 0.40, y: 0.92, visibility: 0.9 },
+            25: { x: 0.43 - kneeFlex * 0.4, y: 0.70 + kneeFlex, visibility: 0.95 },
+            26: { x: 0.57 + kneeFlex * 0.4, y: 0.70 - kneeFlex * 0.5, visibility: 0.95 },
+            27: { x: 0.42, y: ankleY, visibility: 0.95 },
+            28: { x: 0.58, y: 0.88 - Math.sin(phase) * 0.02, visibility: 0.95 },
+            31: { x: 0.40, y: ankleY + 0.04, visibility: 0.9 },
             32: { x: 0.60, y: 0.92, visibility: 0.9 }
           }
         });
@@ -526,20 +567,110 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
       localFrames = baseFrames;
     }
 
+    const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    let frameIdx = 0;
-    const interval = setInterval(() => {
-      const current = localFrames[frameIdx % localFrames.length];
-      if (current && current.landmarks) {
-        drawPoseSkeleton(current.landmarks, canvas, canvas.width, canvas.height);
-        setCurrentFrameIdx(frameIdx % localFrames.length);
-      }
-      frameIdx++;
-    }, 66); // ~15 FPS pose overlay
+    const totalFramesCount = localFrames.length;
 
-    return () => clearInterval(interval);
+    // Render frame corresponding to video currentTime and duration
+    const renderFrameForTime = (timeInSec, duration) => {
+      if (!localFrames || localFrames.length === 0) return;
+
+      let frameIdx = 0;
+      if (duration && duration > 0 && !isNaN(duration)) {
+        const progress = Math.max(0, Math.min(1, timeInSec / duration));
+        frameIdx = Math.min(totalFramesCount - 1, Math.floor(progress * totalFramesCount));
+      } else {
+        // Match closest timestamp
+        let bestDiff = Infinity;
+        for (let i = 0; i < localFrames.length; i++) {
+          const fTime = localFrames[i].timestamp ?? (i * (1 / 30));
+          const diff = Math.abs(fTime - timeInSec);
+          if (diff < bestDiff) {
+            bestDiff = diff;
+            frameIdx = i;
+          }
+        }
+      }
+
+      const frameData = localFrames[frameIdx];
+      if (frameData && frameData.landmarks) {
+        drawPoseSkeleton(frameData.landmarks, canvas, canvas.width, canvas.height, video);
+        setCurrentFrameIdx(frameIdx);
+      }
+    };
+
+    let animationReqId = null;
+
+    // Continuous real-time animation loop when video is actively playing
+    const onFrameLoop = () => {
+      if (video && !video.paused && !video.ended) {
+        renderFrameForTime(video.currentTime, video.duration);
+        animationReqId = requestAnimationFrame(onFrameLoop);
+      }
+    };
+
+    const handlePlay = () => {
+      if (animationReqId) cancelAnimationFrame(animationReqId);
+      animationReqId = requestAnimationFrame(onFrameLoop);
+    };
+
+    const handlePause = () => {
+      if (animationReqId) cancelAnimationFrame(animationReqId);
+      if (video) renderFrameForTime(video.currentTime, video.duration);
+    };
+
+    const handleTimeUpdate = () => {
+      if (video) renderFrameForTime(video.currentTime, video.duration);
+    };
+
+    const handleSeeked = () => {
+      if (video) renderFrameForTime(video.currentTime, video.duration);
+    };
+
+    const handleEnded = () => {
+      if (animationReqId) cancelAnimationFrame(animationReqId);
+      if (video) {
+        const lastIdx = totalFramesCount - 1;
+        const lastFrame = localFrames[lastIdx];
+        if (lastFrame && lastFrame.landmarks) {
+          drawPoseSkeleton(lastFrame.landmarks, canvas, canvas.width, canvas.height, video);
+          setCurrentFrameIdx(lastIdx);
+        }
+      }
+    };
+
+    const handleLoadedMetadata = () => {
+      if (video) renderFrameForTime(0, video.duration);
+    };
+
+    // Initial render at frame 0 (start of video)
+    if (video) {
+      renderFrameForTime(video.currentTime || 0, video.duration || 1);
+      video.addEventListener("play", handlePlay);
+      video.addEventListener("pause", handlePause);
+      video.addEventListener("timeupdate", handleTimeUpdate);
+      video.addEventListener("seeking", handleSeeked);
+      video.addEventListener("seeked", handleSeeked);
+      video.addEventListener("ended", handleEnded);
+      video.addEventListener("loadedmetadata", handleLoadedMetadata);
+    } else {
+      renderFrameForTime(0, 1);
+    }
+
+    return () => {
+      if (animationReqId) cancelAnimationFrame(animationReqId);
+      if (video) {
+        video.removeEventListener("play", handlePlay);
+        video.removeEventListener("pause", handlePause);
+        video.removeEventListener("timeupdate", handleTimeUpdate);
+        video.removeEventListener("seeking", handleSeeked);
+        video.removeEventListener("seeked", handleSeeked);
+        video.removeEventListener("ended", handleEnded);
+        video.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      }
+    };
   }, [analysisResult, poseFrames, drawPoseSkeleton]);
 
   // Color helpers
