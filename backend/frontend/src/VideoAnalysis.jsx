@@ -598,21 +598,19 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
     if (!analysisResult) return;
 
     const localFrames = poseFrames || [];
-
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!video || !canvas) return;
 
-    let isRunning = true;
+    let isMounted = true;
     let rvfcId = null;
     let rafId = null;
-    let lastRenderedTime = -1;
 
-    // Process single video frame -> detect with MediaPipe or match timestamp -> draw on canvas
-    const processCurrentVideoFrame = () => {
-      if (!video || !canvas) return;
+    // Direct, lightweight synchronous render of real MediaPipe pose at video.currentTime
+    const renderPoseAtCurrentTime = () => {
+      if (!isMounted || !video || !canvas) return;
 
-      // Ensure canvas internal coordinate space matches the actual rendered box
+      // Match canvas internal resolution with client dimensions (1:1 sharpness)
       const clientW = canvas.clientWidth || video.clientWidth || 640;
       const clientH = canvas.clientHeight || video.clientHeight || 360;
       if (clientW > 0 && clientH > 0 && (canvas.width !== clientW || canvas.height !== clientH)) {
@@ -621,37 +619,16 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
       }
 
       const currentTime = video.currentTime || 0;
-      const nowMs = performance.now();
-
       let activeLandmarks = null;
-      let newResultReceived = false;
       let matchedFrameIdx = 0;
 
-      // 1. Direct MediaPipe Pose Landmark Detection from active video frame pixels
-      if (poseLandmarkerRef.current && video.readyState >= 2) {
-        try {
-          const res = poseLandmarkerRef.current.detectForVideo(video, nowMs);
-          if (res && res.landmarks && res.landmarks.length > 0 && res.landmarks[0].length > 0) {
-            activeLandmarks = res.landmarks[0];
-            newResultReceived = true;
-          }
-        } catch (detErr) {
-          try {
-            const res = poseLandmarkerRef.current.detectForVideo(video, nowMs + 1);
-            if (res && res.landmarks && res.landmarks.length > 0 && res.landmarks[0].length > 0) {
-              activeLandmarks = res.landmarks[0];
-              newResultReceived = true;
-            }
-          } catch (e) {}
-        }
-      }
-
-      // 2. Trajectory frame lookup strictly by video timestamp / currentTime
+      // Exact timestamp lookup from actual extracted MediaPipe pose_frames
       if (localFrames && localFrames.length > 0) {
         let bestDiff = Infinity;
         for (let i = 0; i < localFrames.length; i++) {
-          const fTime = (localFrames[i].timestamp !== undefined && localFrames[i].timestamp !== null)
-            ? Number(localFrames[i].timestamp)
+          const f = localFrames[i];
+          const fTime = (f.timestamp !== undefined && f.timestamp !== null)
+            ? Number(f.timestamp)
             : (i * (1 / 30));
           const diff = Math.abs(fTime - currentTime);
           if (diff < bestDiff) {
@@ -660,13 +637,12 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
           }
         }
 
-        // If client detector did not provide landmarks, use the timestamp-matched frame
-        if (!activeLandmarks && localFrames[matchedFrameIdx]?.landmarks) {
+        if (matchedFrameIdx >= 0 && localFrames[matchedFrameIdx]?.landmarks) {
           activeLandmarks = localFrames[matchedFrameIdx].landmarks;
         }
       }
 
-      // 3. Render skeleton onto canvas for this exact video frame
+      // Draw real landmarks or clear canvas if no landmarks exist for this frame
       if (activeLandmarks) {
         drawPoseSkeleton(activeLandmarks, canvas, canvas.width, canvas.height, video);
       } else {
@@ -674,93 +650,81 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
 
-      // 4. Update HUD frame index based on exact playback time
+      // Update frame index display
       if (localFrames.length > 0) {
         setCurrentFrameIdx(matchedFrameIdx);
-      } else {
-        const videoFps = 30;
-        const currentFrameNumber = Math.max(0, Math.floor(currentTime * videoFps));
-        setCurrentFrameIdx(currentFrameNumber);
-      }
-
-      // 5. DEBUG LOGS: Real-time synchronization telemetry
-      if (Math.abs(currentTime - lastRenderedTime) > 0.05 || !video.paused) {
-        lastRenderedTime = currentTime;
-        console.log(`[MediaPipe Pose Tracking] video.currentTime: ${currentTime.toFixed(3)}s | processed timestamp: ${nowMs.toFixed(0)}ms | newResultReceived: ${newResultReceived} | Frame: ${(matchedFrameIdx || 0) + 1}/${localFrames.length || 1}`);
       }
     };
 
-    // Callback when hardware presents a new video frame (requestVideoFrameCallback)
-    const onVideoFramePresented = () => {
-      if (!isRunning) return;
-      processCurrentVideoFrame();
-      if (video && !video.paused && !video.ended && video.requestVideoFrameCallback) {
-        rvfcId = video.requestVideoFrameCallback(onVideoFramePresented);
-      }
-    };
-
-    // requestAnimationFrame fallback loop
-    const onAnimationFrameLoop = () => {
-      if (!isRunning) return;
-      processCurrentVideoFrame();
+    // Callback on hardware video presentation (requestVideoFrameCallback or fallback)
+    const onFrame = () => {
+      if (!isMounted) return;
+      renderPoseAtCurrentTime();
       if (video && !video.paused && !video.ended) {
-        rafId = requestAnimationFrame(onAnimationFrameLoop);
-      }
-    };
-
-    const startPlaybackLoop = () => {
-      if (video && "requestVideoFrameCallback" in HTMLVideoElement.prototype && video.requestVideoFrameCallback) {
-        if (rvfcId) video.cancelVideoFrameCallback(rvfcId);
-        rvfcId = video.requestVideoFrameCallback(onVideoFramePresented);
-      } else {
-        if (rafId) cancelAnimationFrame(rafId);
-        rafId = requestAnimationFrame(onAnimationFrameLoop);
+        if ("requestVideoFrameCallback" in video) {
+          rvfcId = video.requestVideoFrameCallback(onFrame);
+        } else {
+          rafId = requestAnimationFrame(onFrame);
+        }
       }
     };
 
     const handlePlay = () => {
-      startPlaybackLoop();
+      if ("requestVideoFrameCallback" in video) {
+        if (rvfcId) video.cancelVideoFrameCallback(rvfcId);
+        rvfcId = video.requestVideoFrameCallback(onFrame);
+      } else {
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(onFrame);
+      }
     };
 
     const handlePause = () => {
       if (rafId) cancelAnimationFrame(rafId);
-      processCurrentVideoFrame();
+      if (rvfcId && video.cancelVideoFrameCallback) {
+        try { video.cancelVideoFrameCallback(rvfcId); } catch (e) {}
+      }
+      renderPoseAtCurrentTime();
     };
 
-    const handleSeek = () => {
-      processCurrentVideoFrame();
+    const handleTimeUpdate = () => {
+      renderPoseAtCurrentTime();
+    };
+
+    const handleSeeked = () => {
+      renderPoseAtCurrentTime();
     };
 
     const handleEnded = () => {
       if (rafId) cancelAnimationFrame(rafId);
-      processCurrentVideoFrame();
+      if (rvfcId && video.cancelVideoFrameCallback) {
+        try { video.cancelVideoFrameCallback(rvfcId); } catch (e) {}
+      }
+      renderPoseAtCurrentTime();
     };
 
     const handleMetadata = () => {
-      processCurrentVideoFrame();
+      renderPoseAtCurrentTime();
     };
 
     // Initial render for frame-0 / current position
-    if (video) {
-      processCurrentVideoFrame();
-      video.addEventListener("play", handlePlay);
-      video.addEventListener("pause", handlePause);
-      video.addEventListener("timeupdate", handleSeek);
-      video.addEventListener("seeking", handleSeek);
-      video.addEventListener("seeked", handleSeek);
-      video.addEventListener("ended", handleEnded);
-      video.addEventListener("loadedmetadata", handleMetadata);
-      video.addEventListener("loadeddata", handleMetadata);
+    renderPoseAtCurrentTime();
 
-      if (!video.paused && !video.ended) {
-        startPlaybackLoop();
-      }
-    } else {
-      processCurrentVideoFrame();
+    video.addEventListener("play", handlePlay);
+    video.addEventListener("pause", handlePause);
+    video.addEventListener("timeupdate", handleTimeUpdate);
+    video.addEventListener("seeking", handleSeeked);
+    video.addEventListener("seeked", handleSeeked);
+    video.addEventListener("ended", handleEnded);
+    video.addEventListener("loadedmetadata", handleMetadata);
+    video.addEventListener("loadeddata", handleMetadata);
+
+    if (!video.paused && !video.ended) {
+      handlePlay();
     }
 
     return () => {
-      isRunning = false;
+      isMounted = false;
       if (rafId) cancelAnimationFrame(rafId);
       if (video) {
         if (rvfcId && video.cancelVideoFrameCallback) {
@@ -768,15 +732,15 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
         }
         video.removeEventListener("play", handlePlay);
         video.removeEventListener("pause", handlePause);
-        video.removeEventListener("timeupdate", handleSeek);
-        video.removeEventListener("seeking", handleSeek);
-        video.removeEventListener("seeked", handleSeek);
+        video.removeEventListener("timeupdate", handleTimeUpdate);
+        video.removeEventListener("seeking", handleSeeked);
+        video.removeEventListener("seeked", handleSeeked);
         video.removeEventListener("ended", handleEnded);
         video.removeEventListener("loadedmetadata", handleMetadata);
         video.removeEventListener("loadeddata", handleMetadata);
       }
     };
-  }, [analysisResult, poseFrames, landmarkerReady, drawPoseSkeleton]);
+  }, [analysisResult, poseFrames, drawPoseSkeleton]);
 
   // Color helpers
   const riskColour = (level) => {
@@ -1152,7 +1116,6 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
                       muted
                       loop
                       playsInline
-                      crossOrigin="anonymous"
                       style={{
                         width: "100%", height: "100%", objectFit: "contain",
                         position: "absolute", top: 0, left: 0, zIndex: 1
