@@ -47,6 +47,32 @@
             gap: 20px;
         }
 
+        .notification-bell {
+            position: relative;
+            border: none;
+            background: transparent;
+            font-size: 22px;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .notification-count {
+            position: absolute;
+            top: -3px;
+            right: -5px;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 4px;
+            background: #dc2626;
+            color: white;
+            border-radius: 50%;
+            font-size: 11px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         .user-name {
             font-weight: 600;
         }
@@ -197,7 +223,7 @@
 
         .video-item {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: space-between;
             gap: 20px;
             padding: 18px;
@@ -324,6 +350,8 @@
         .video-actions {
             display: flex;
             gap: 10px;
+            flex-shrink: 0;
+            align-items: flex-start;
         }
 
         .view-video-btn,
@@ -491,6 +519,21 @@
             >
                 Athlete
             </span>
+
+            <button
+                class="notification-bell"
+                id="notificationBell"
+                type="button"
+                aria-label="Notifications"
+            >
+                🔔
+                <span
+                    class="notification-count"
+                    id="notificationCount"
+                >
+                    0
+                </span>
+            </button>
 
             <a
                 href="#"
@@ -750,6 +793,16 @@
             document.getElementById(
                 "notificationsContent"
             );
+        
+        const notificationBell =
+            document.getElementById(
+                "notificationBell"
+            );
+
+        const notificationCount =
+            document.getElementById(
+                "notificationCount"
+            );    
 
         /*
          * Profile status
@@ -2147,7 +2200,14 @@
 
                 const notifications =
                     await response.json();
+                
+                const unreadCount =
+                    notifications.filter(
+                        notification => !notification.is_read
+                    ).length;
 
+                notificationCount.textContent =
+                    unreadCount;    
 
                 /*
                  * No notifications

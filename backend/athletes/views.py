@@ -201,6 +201,24 @@ class AthleteVideoUploadView(APIView):
                     ),
                 )   
 
+            # Create high-risk movement notification
+            if (
+                video.movement_anomaly_score is not None
+                and video.movement_anomaly_score >= 60
+            ):
+
+                Notification.objects.create(
+                    athlete=athlete,
+                    notification_type="movement_alert",
+                    title="High-Risk Movement Alert",
+                        message=(
+                            f"Your latest sports video assessment detected "
+                            f"high-risk movement patterns with a movement "
+                            f"anomaly score of "
+                            f"{video.movement_anomaly_score}/100. "
+                            f"Review the movement analysis and corrective recommendations."
+                        ),
+                    )
             
             if not processing_result["success"]:
 
