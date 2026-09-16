@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { FilesetResolver, PoseLandmarker } from "@mediapipe/tasks-vision";
 import "./VideoAnalysis.css";
 import API_BASE from "./config/api";
 
@@ -56,7 +57,8 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
   const fileInputRef = useRef(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-  const animationFrameRef = useRef(null);
+  const poseLandmarkerRef = useRef(null);
+  const [landmarkerReady, setLandmarkerReady] = useState(false);
 
   // Helper to load analysis results from an item into active state
   const loadHistoryItem = (item) => {
@@ -72,6 +74,10 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
     setViewingHistory(true);
     setErrorMsg("");
     setProcessing(false);
+
+    if (item.analysis.pose_frames && item.analysis.pose_frames.length > 0) {
+      setPoseFrames(item.analysis.pose_frames);
+    }
 
     setAnalysisResult({
       analysis_id: item.analysis.analysis_id,
@@ -527,7 +533,67 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
     }
   }, [showSkeleton, analysisResult]);
 
-  // Synchronize canvas with HTML5 video playback in real time
+  // Initialize Browser MediaPipe PoseLandmarker in VIDEO mode
+  useEffect(() => {
+    let active = true;
+    const initLandmarker = async () => {
+      try {
+        const vision = await FilesetResolver.forVisionTasks(
+          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.18/wasm"
+        );
+        if (!active) return;
+        const landmarker = await PoseLandmarker.createFromOptions(vision, {
+          baseOptions: {
+            modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/latest/pose_landmarker_lite.task",
+            delegate: "GPU"
+          },
+          runningMode: "VIDEO",
+          numPoses: 1
+        });
+        if (active) {
+          poseLandmarkerRef.current = landmarker;
+          setLandmarkerReady(true);
+          console.log("[MediaPipe Pose] PoseLandmarker initialized on GPU delegate (VIDEO mode).");
+        }
+      } catch (gpuErr) {
+        console.warn("[MediaPipe Pose] GPU delegate init failed, attempting CPU delegate fallback...", gpuErr);
+        try {
+          const vision = await FilesetResolver.forVisionTasks(
+            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.18/wasm"
+          );
+          if (!active) return;
+          const landmarker = await PoseLandmarker.createFromOptions(vision, {
+            baseOptions: {
+              modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/latest/pose_landmarker_lite.task",
+              delegate: "CPU"
+            },
+            runningMode: "VIDEO",
+            numPoses: 1
+          });
+          if (active) {
+            poseLandmarkerRef.current = landmarker;
+            setLandmarkerReady(true);
+            console.log("[MediaPipe Pose] PoseLandmarker initialized on CPU delegate.");
+          }
+        } catch (cpuErr) {
+          console.error("[MediaPipe Pose] Could not initialize browser PoseLandmarker:", cpuErr);
+        }
+      }
+    };
+
+    initLandmarker();
+    return () => {
+      active = false;
+      if (poseLandmarkerRef.current) {
+        try {
+          poseLandmarkerRef.current.close();
+        } catch (e) {}
+        poseLandmarkerRef.current = null;
+      }
+    };
+  }, []);
+
+  // Synchronize canvas skeleton overlay with HTML5 video playback in real time
   useEffect(() => {
     if (!analysisResult) return;
 
@@ -572,106 +638,174 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
     if (!canvas) return;
 
     const totalFramesCount = localFrames.length;
+    let isRunning = true;
+    let rvfcId = null;
+    let rafId = null;
+    let lastRenderedTime = -1;
 
-    // Render frame corresponding to video currentTime and duration
-    const renderFrameForTime = (timeInSec, duration) => {
-      if (!localFrames || localFrames.length === 0) return;
+    // Process single video frame -> detect with MediaPipe -> draw on canvas
+    const processCurrentVideoFrame = () => {
+      if (!video || !canvas) return;
+      const currentTime = video.currentTime || 0;
+      const nowMs = performance.now();
 
-      let frameIdx = 0;
-      if (duration && duration > 0 && !isNaN(duration)) {
-        const progress = Math.max(0, Math.min(1, timeInSec / duration));
-        frameIdx = Math.min(totalFramesCount - 1, Math.floor(progress * totalFramesCount));
-      } else {
-        // Match closest timestamp
-        let bestDiff = Infinity;
-        for (let i = 0; i < localFrames.length; i++) {
-          const fTime = localFrames[i].timestamp ?? (i * (1 / 30));
-          const diff = Math.abs(fTime - timeInSec);
-          if (diff < bestDiff) {
-            bestDiff = diff;
-            frameIdx = i;
+      let activeLandmarks = null;
+      let newResultReceived = false;
+
+      // 1. Direct MediaPipe Pose Landmark Detection from active video frame pixels
+      if (poseLandmarkerRef.current && video.readyState >= 2) {
+        try {
+          const res = poseLandmarkerRef.current.detectForVideo(video, nowMs);
+          if (res && res.landmarks && res.landmarks.length > 0 && res.landmarks[0].length > 0) {
+            activeLandmarks = res.landmarks[0];
+            newResultReceived = true;
           }
+        } catch (detErr) {
+          // If timestamp collision occurs during rapid playback
+          try {
+            const res = poseLandmarkerRef.current.detectForVideo(video, nowMs + 1);
+            if (res && res.landmarks && res.landmarks.length > 0 && res.landmarks[0].length > 0) {
+              activeLandmarks = res.landmarks[0];
+              newResultReceived = true;
+            }
+          } catch (e) {}
         }
       }
 
-      const frameData = localFrames[frameIdx];
-      if (frameData && frameData.landmarks) {
-        drawPoseSkeleton(frameData.landmarks, canvas, canvas.width, canvas.height, video);
-        setCurrentFrameIdx(frameIdx);
+      // 2. Trajectory frame lookup by video timestamp if client detector is warming up
+      if (!activeLandmarks && localFrames && localFrames.length > 0) {
+        let frameIdx = 0;
+        if (video.duration && video.duration > 0 && !isNaN(video.duration)) {
+          const progress = Math.max(0, Math.min(1, currentTime / video.duration));
+          frameIdx = Math.min(totalFramesCount - 1, Math.floor(progress * totalFramesCount));
+        } else {
+          let bestDiff = Infinity;
+          for (let i = 0; i < localFrames.length; i++) {
+            const fTime = localFrames[i].timestamp ?? (i * (1 / 30));
+            const diff = Math.abs(fTime - currentTime);
+            if (diff < bestDiff) {
+              bestDiff = diff;
+              frameIdx = i;
+            }
+          }
+        }
+        const serverFrame = localFrames[frameIdx];
+        if (serverFrame && serverFrame.landmarks) {
+          activeLandmarks = serverFrame.landmarks;
+        }
+      }
+
+      // 3. Render skeleton onto canvas for this exact frame
+      if (activeLandmarks) {
+        drawPoseSkeleton(activeLandmarks, canvas, canvas.width, canvas.height, video);
+      } else {
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+
+      // 4. Update HUD frame index based on exact playback time
+      const videoFps = 30;
+      const totalVideoFrames = Math.max(1, Math.floor((video.duration || 1) * videoFps));
+      const currentFrameNumber = Math.min(
+        totalVideoFrames,
+        Math.max(1, Math.floor(currentTime * videoFps) + 1)
+      );
+      setCurrentFrameIdx(currentFrameNumber - 1);
+
+      // 5. DEBUG LOGS: Print real-time synchronization telemetry
+      if (Math.abs(currentTime - lastRenderedTime) > 0.05 || !video.paused) {
+        lastRenderedTime = currentTime;
+        console.log(`[MediaPipe Pose Tracking] video.currentTime: ${currentTime.toFixed(3)}s | processed timestamp: ${nowMs.toFixed(0)}ms | newResultReceived: ${newResultReceived} | Frame: ${currentFrameNumber}/${totalVideoFrames}`);
       }
     };
 
-    let animationReqId = null;
+    // Callback when hardware presents a new video frame
+    const onVideoFramePresented = () => {
+      if (!isRunning) return;
+      processCurrentVideoFrame();
+      if (video && !video.paused && !video.ended && video.requestVideoFrameCallback) {
+        rvfcId = video.requestVideoFrameCallback(onVideoFramePresented);
+      }
+    };
 
-    // Continuous real-time animation loop when video is actively playing
-    const onFrameLoop = () => {
+    // requestAnimationFrame fallback loop
+    const onAnimationFrameLoop = () => {
+      if (!isRunning) return;
+      processCurrentVideoFrame();
       if (video && !video.paused && !video.ended) {
-        renderFrameForTime(video.currentTime, video.duration);
-        animationReqId = requestAnimationFrame(onFrameLoop);
+        rafId = requestAnimationFrame(onAnimationFrameLoop);
+      }
+    };
+
+    const startPlaybackLoop = () => {
+      if (video && "requestVideoFrameCallback" in HTMLVideoElement.prototype && video.requestVideoFrameCallback) {
+        if (rvfcId) video.cancelVideoFrameCallback(rvfcId);
+        rvfcId = video.requestVideoFrameCallback(onVideoFramePresented);
+      } else {
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(onAnimationFrameLoop);
       }
     };
 
     const handlePlay = () => {
-      if (animationReqId) cancelAnimationFrame(animationReqId);
-      animationReqId = requestAnimationFrame(onFrameLoop);
+      startPlaybackLoop();
     };
 
     const handlePause = () => {
-      if (animationReqId) cancelAnimationFrame(animationReqId);
-      if (video) renderFrameForTime(video.currentTime, video.duration);
+      if (rafId) cancelAnimationFrame(rafId);
+      processCurrentVideoFrame();
     };
 
-    const handleTimeUpdate = () => {
-      if (video) renderFrameForTime(video.currentTime, video.duration);
-    };
-
-    const handleSeeked = () => {
-      if (video) renderFrameForTime(video.currentTime, video.duration);
+    const handleSeek = () => {
+      processCurrentVideoFrame();
     };
 
     const handleEnded = () => {
-      if (animationReqId) cancelAnimationFrame(animationReqId);
-      if (video) {
-        const lastIdx = totalFramesCount - 1;
-        const lastFrame = localFrames[lastIdx];
-        if (lastFrame && lastFrame.landmarks) {
-          drawPoseSkeleton(lastFrame.landmarks, canvas, canvas.width, canvas.height, video);
-          setCurrentFrameIdx(lastIdx);
-        }
-      }
+      if (rafId) cancelAnimationFrame(rafId);
+      processCurrentVideoFrame();
     };
 
-    const handleLoadedMetadata = () => {
-      if (video) renderFrameForTime(0, video.duration);
+    const handleMetadata = () => {
+      processCurrentVideoFrame();
     };
 
-    // Initial render at frame 0 (start of video)
+    // Initial frame-0 render
     if (video) {
-      renderFrameForTime(video.currentTime || 0, video.duration || 1);
+      processCurrentVideoFrame();
       video.addEventListener("play", handlePlay);
       video.addEventListener("pause", handlePause);
-      video.addEventListener("timeupdate", handleTimeUpdate);
-      video.addEventListener("seeking", handleSeeked);
-      video.addEventListener("seeked", handleSeeked);
+      video.addEventListener("timeupdate", handleSeek);
+      video.addEventListener("seeking", handleSeek);
+      video.addEventListener("seeked", handleSeek);
       video.addEventListener("ended", handleEnded);
-      video.addEventListener("loadedmetadata", handleLoadedMetadata);
+      video.addEventListener("loadedmetadata", handleMetadata);
+      video.addEventListener("loadeddata", handleMetadata);
+
+      if (!video.paused && !video.ended) {
+        startPlaybackLoop();
+      }
     } else {
-      renderFrameForTime(0, 1);
+      processCurrentVideoFrame();
     }
 
     return () => {
-      if (animationReqId) cancelAnimationFrame(animationReqId);
+      isRunning = false;
+      if (rafId) cancelAnimationFrame(rafId);
       if (video) {
+        if (rvfcId && video.cancelVideoFrameCallback) {
+          try { video.cancelVideoFrameCallback(rvfcId); } catch (e) {}
+        }
         video.removeEventListener("play", handlePlay);
         video.removeEventListener("pause", handlePause);
-        video.removeEventListener("timeupdate", handleTimeUpdate);
-        video.removeEventListener("seeking", handleSeeked);
-        video.removeEventListener("seeked", handleSeeked);
+        video.removeEventListener("timeupdate", handleSeek);
+        video.removeEventListener("seeking", handleSeek);
+        video.removeEventListener("seeked", handleSeek);
         video.removeEventListener("ended", handleEnded);
-        video.removeEventListener("loadedmetadata", handleLoadedMetadata);
+        video.removeEventListener("loadedmetadata", handleMetadata);
+        video.removeEventListener("loadeddata", handleMetadata);
       }
     };
-  }, [analysisResult, poseFrames, drawPoseSkeleton]);
+  }, [analysisResult, poseFrames, landmarkerReady, drawPoseSkeleton]);
 
   // Color helpers
   const riskColour = (level) => {
