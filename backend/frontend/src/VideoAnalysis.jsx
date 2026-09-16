@@ -284,7 +284,7 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // Professional Biomechanics AI Skeleton Rendering
+  // Professional Sports Biomechanics & Computer Vision AI Skeleton Rendering
   const drawPoseSkeleton = useCallback((landmarks, canvas, width, height) => {
     if (!canvas || !landmarks) return;
     const ctx = canvas.getContext("2d");
@@ -315,13 +315,13 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
     const hipStability = analysisResult?.hip_stability || 85;
     const isHipWarning = hipStability < 75.0;
 
-    // Professional Sports Biomechanics Color Palette
-    const COLOR_NORMAL = "rgba(56, 189, 248, 0.85)"; // Subtle sleek cyan/blue
-    const COLOR_WARNING = "rgba(245, 158, 11, 0.95)"; // Subtle amber/orange
-    const COLOR_HIGH_RISK = "rgba(239, 68, 68, 0.95)"; // Subtle red
+    // Laboratory Sports Biomechanics Color Palette
+    const COLOR_NORMAL = "rgba(56, 189, 248, 0.78)"; // Sleek, non-intrusive cyan
+    const COLOR_WARNING = "rgba(245, 158, 11, 0.90)"; // Subtle amber
+    const COLOR_HIGH_RISK = "rgba(239, 68, 68, 0.92)"; // Subtle crimson
 
-    // 1. Draw Thin, Clean Bone Connections
-    ctx.lineWidth = 1.6;
+    // 1. Draw Thin, Clean Bone Connections (1.3px for crisp vector precision)
+    ctx.lineWidth = 1.3;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
@@ -329,7 +329,7 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
       const p1 = getPoint(startIdx);
       const p2 = getPoint(endIdx);
       if (p1 && p2 && p1.visibility > 0.3 && p2.visibility > 0.3) {
-        // Selective Risk Highlighting - Normal skeleton stays uniform cyan/blue
+        // Selective Risk Highlighting - Normal skeleton stays uniform subtle cyan
         let strokeStyle = COLOR_NORMAL;
 
         const isKneeLegSegment =
@@ -355,7 +355,7 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
       }
     });
 
-    // 2. Draw Small & Subtle Joint Markers (Avoid large circles)
+    // 2. Draw Precision Optical Reticle Joint Markers (Vicon/OpenCap style)
     const keyJointIndices = [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32];
     keyJointIndices.forEach((idx) => {
       const p = getPoint(idx);
@@ -363,56 +363,68 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
         const isKnee = idx === 25 || idx === 26;
         const isHip = idx === 23 || idx === 24;
 
-        let jointColor = "rgba(224, 242, 254, 0.95)"; // Default clean cyan-white
-
+        let ringColor = COLOR_NORMAL;
         if (isKnee) {
-          if (isValgusHighRisk) jointColor = COLOR_HIGH_RISK;
-          else if (isValgusWarning) jointColor = COLOR_WARNING;
-          else jointColor = COLOR_NORMAL;
+          if (isValgusHighRisk) ringColor = COLOR_HIGH_RISK;
+          else if (isValgusWarning) ringColor = COLOR_WARNING;
         } else if (isHip && isHipWarning) {
-          jointColor = COLOR_WARNING;
+          ringColor = COLOR_WARNING;
         }
 
-        // Small subtle joint dot (radius 2.5px, knees 3.0px)
-        const radius = isKnee ? 3.0 : 2.5;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, radius, 0, 2 * Math.PI);
-        ctx.fillStyle = jointColor;
-        ctx.fill();
+        const outerRadius = isKnee ? 3.0 : isHip ? 2.7 : 2.3;
 
-        // Crisp dark outline for professional definition
-        ctx.lineWidth = 0.8;
-        ctx.strokeStyle = "rgba(15, 23, 42, 0.85)";
+        // Outer precision ring
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, outerRadius, 0, 2 * Math.PI);
+        ctx.strokeStyle = ringColor;
+        ctx.lineWidth = 0.85;
         ctx.stroke();
+
+        // Inner optical core dot
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 1.0, 0, 2 * Math.PI);
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
       }
     });
 
-    // Helper to draw modern, compact, semi-transparent measurement badge
-    const drawMeasurementBadge = (text, x, y, isWarning = false, isHighRisk = false) => {
-      ctx.font = "600 10px Inter, -apple-system, sans-serif";
+    // Helper to draw modern, compact, semi-transparent measurement badge with leader line
+    const drawMeasurementBadge = (text, jointPoint, offsetX, offsetY, isWarning = false, isHighRisk = false) => {
+      ctx.font = "600 9.5px Inter, -apple-system, sans-serif";
       const metrics = ctx.measureText(text);
       const textWidth = metrics.width;
       const padX = 6;
-      const badgeW = textWidth + padX * 2 + 6;
-      const badgeH = 18;
-      const radius = 4;
+      const badgeW = textWidth + padX * 2 + 8;
+      const badgeH = 17;
+      const radius = 3.5;
 
-      // Keep inside canvas bounds
-      const clampedX = Math.max(6, Math.min(width - badgeW - 6, x));
-      const clampedY = Math.max(6, Math.min(height - badgeH - 6, y));
+      const badgeX = Math.max(6, Math.min(width - badgeW - 6, jointPoint.x + offsetX));
+      const badgeY = Math.max(6, Math.min(height - badgeH - 6, jointPoint.y + offsetY));
 
-      // Semi-transparent glassmorphic background
-      ctx.fillStyle = "rgba(15, 23, 42, 0.72)";
+      // Draw subtle fine leader line from joint to badge
+      ctx.beginPath();
+      ctx.moveTo(jointPoint.x, jointPoint.y);
+      ctx.lineTo(badgeX > jointPoint.x ? badgeX : badgeX + badgeW, badgeY + badgeH / 2);
+      ctx.strokeStyle = isHighRisk
+        ? "rgba(239, 68, 68, 0.4)"
+        : isWarning
+        ? "rgba(245, 158, 11, 0.4)"
+        : "rgba(56, 189, 248, 0.35)";
+      ctx.lineWidth = 0.75;
+      ctx.stroke();
+
+      // Semi-transparent glassmorphic badge background
+      ctx.fillStyle = "rgba(15, 23, 42, 0.82)";
       ctx.beginPath();
       if (ctx.roundRect) {
-        ctx.roundRect(clampedX, clampedY, badgeW, badgeH, radius);
+        ctx.roundRect(badgeX, badgeY, badgeW, badgeH, radius);
       } else {
-        ctx.rect(clampedX, clampedY, badgeW, badgeH);
+        ctx.rect(badgeX, badgeY, badgeW, badgeH);
       }
       ctx.fill();
 
       // Modern subtle border
-      ctx.lineWidth = 1.0;
+      ctx.lineWidth = 0.85;
       ctx.strokeStyle = isHighRisk
         ? "rgba(239, 68, 68, 0.75)"
         : isWarning
@@ -420,33 +432,58 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
         : "rgba(56, 189, 248, 0.4)";
       ctx.stroke();
 
-      // Subtle indicator dot
+      // Precision indicator dot
       const dotColor = isHighRisk ? "#ef4444" : isWarning ? "#f59e0b" : "#38bdf8";
       ctx.beginPath();
-      ctx.arc(clampedX + 6, clampedY + badgeH / 2, 2, 0, 2 * Math.PI);
+      ctx.arc(badgeX + 6, badgeY + badgeH / 2, 1.8, 0, 2 * Math.PI);
       ctx.fillStyle = dotColor;
       ctx.fill();
 
-      // Text
-      ctx.fillStyle = isHighRisk ? "#fecaca" : isWarning ? "#fef3c7" : "#f1f5f9";
-      ctx.fillText(text, clampedX + 12, clampedY + 12.5);
+      // Telemetry label text
+      ctx.fillStyle = isHighRisk ? "#fecaca" : isWarning ? "#fef3c7" : "#e2e8f0";
+      ctx.fillText(text, badgeX + 11.5, badgeY + 11.5);
     };
 
-    // 3. Draw Compact Measurement Labels Close to Relevant Joints
+    // 3. Biomechanical Knee Angle Arc & Telemetry Label
+    const leftHip = getPoint(23);
     const leftKnee = getPoint(25);
+    const leftAnkle = getPoint(27);
+
+    const rightHip = getPoint(24);
     const rightKnee = getPoint(26);
+    const rightAnkle = getPoint(28);
+
     const targetKnee = (leftKnee && leftKnee.visibility > 0.35) ? leftKnee : (rightKnee && rightKnee.visibility > 0.35) ? rightKnee : null;
+    const targetHip = targetKnee === leftKnee ? leftHip : rightHip;
+    const targetAnkle = targetKnee === leftKnee ? leftAnkle : rightAnkle;
 
     if (targetKnee) {
+      // Draw subtle biomechanical angle arc at knee joint if hip and ankle exist
+      if (targetHip && targetAnkle && targetHip.visibility > 0.3 && targetAnkle.visibility > 0.3) {
+        const vHip = { x: targetHip.x - targetKnee.x, y: targetHip.y - targetKnee.y };
+        const vAnkle = { x: targetAnkle.x - targetKnee.x, y: targetAnkle.y - targetKnee.y };
+        const angleHip = Math.atan2(vHip.y, vHip.x);
+        const angleAnkle = Math.atan2(vAnkle.y, vAnkle.x);
+
+        ctx.beginPath();
+        ctx.arc(targetKnee.x, targetKnee.y, 13, angleHip, angleAnkle, false);
+        ctx.strokeStyle = isValgusHighRisk
+          ? "rgba(239, 68, 68, 0.6)"
+          : isValgusWarning
+          ? "rgba(245, 158, 11, 0.6)"
+          : "rgba(56, 189, 248, 0.5)";
+        ctx.lineWidth = 0.85;
+        ctx.stroke();
+      }
+
       const kneeAngleVal = analysisResult?.knee_angle ? `${Math.round(analysisResult.knee_angle)}°` : "135°";
-      drawMeasurementBadge(`Knee angle ${kneeAngleVal}`, targetKnee.x + 8, targetKnee.y - 10, isValgusWarning, isValgusHighRisk);
+      drawMeasurementBadge(`Knee angle ${kneeAngleVal}`, targetKnee, 14, -14, isValgusWarning, isValgusHighRisk);
     }
 
-    // Secondary hip measurement label if hip stability or trunk lean is notable
-    const leftHip = getPoint(23);
+    // Secondary hip measurement label if hip stability or trunk lean deviation is detected
     if (leftHip && leftHip.visibility > 0.4 && (isTrunkWarning || isTrunkHighRisk || isHipWarning)) {
       const hipAngleVal = analysisResult?.hip_angle ? `${Math.round(analysisResult.hip_angle)}°` : "140°";
-      drawMeasurementBadge(`Hip ${hipAngleVal}`, leftHip.x + 8, leftHip.y - 10, isHipWarning || isTrunkWarning, isTrunkHighRisk);
+      drawMeasurementBadge(`Hip ${hipAngleVal}`, leftHip, 14, -12, isHipWarning || isTrunkWarning, isTrunkHighRisk);
     }
   }, [showSkeleton, analysisResult]);
 
@@ -837,12 +874,22 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
                 </div>
 
                 <div className="video-player-wrapper" style={{ position: "relative", width: "100%", height: "300px", background: "#090d16", borderRadius: "10px", overflow: "hidden" }}>
+                  {/* Subtle Viewfinder Reticles */}
+                  {showSkeleton && (
+                    <>
+                      <div className="hud-corner hud-top-left" />
+                      <div className="hud-corner hud-top-right" />
+                      <div className="hud-corner hud-bottom-left" />
+                      <div className="hud-corner hud-bottom-right" />
+                    </>
+                  )}
+
                   {/* Professional In-Video Biomechanics HUD Header */}
                   {showSkeleton && (
                     <div className="video-hud-overlay">
                       <div className="video-hud-left">
                         <span className="hud-tag">AI POSE ANALYSIS</span>
-                        <span className="hud-sub">MediaPipe Pose Tracking</span>
+                        <span className="hud-sub">MediaPipe 33D Pose Tracking</span>
                       </div>
                       <div className="video-hud-right">
                         <span className="hud-rec-dot">●</span>
@@ -850,6 +897,14 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
                           FRAME: {String(currentFrameIdx + 1).padStart(2, "0")} / {String(poseFrames.length || 30).padStart(2, "0")}
                         </span>
                       </div>
+                    </div>
+                  )}
+
+                  {/* Subtle Bottom Telemetry Bar */}
+                  {showSkeleton && (
+                    <div className="video-hud-bottom">
+                      <span className="hud-bottom-tag">MODEL: MEDIAPIPE-33D</span>
+                      <span className="hud-bottom-tag">KINEMATICS: ACTIVE</span>
                     </div>
                   )}
 
