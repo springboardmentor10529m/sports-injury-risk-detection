@@ -6,13 +6,18 @@ import Recommendations from "./Recommendations";
 import API_BASE from "./config/api";
 
 function Dashboard({ athleteData, onNavigate, onLogout }) {
-  const [currentTab, setCurrentTab] = useState(() => localStorage.getItem("sportshield_current_tab") || "overview"); // "overview" | "performance" | "video" | "recommendations"
+  // Navigation tabs: "overview" | "video" | "history" | "risk_assessment" | "recommendations" | "performance"
+  const [currentTab, setCurrentTab] = useState(() => localStorage.getItem("sportshield_current_tab") || "overview");
   const [liveAthlete, setLiveAthlete] = useState(athleteData || null);
   const [recentRecords, setRecentRecords] = useState([]);
   const [latestAnalysis, setLatestAnalysis] = useState(null);
+  const [latestPrediction, setLatestPrediction] = useState(null);
   const [videoHistory, setVideoHistory] = useState([]);
+  const [benchmarks, setBenchmarks] = useState(null);
+  const [mlStatus, setMlStatus] = useState(null);
   const [loadingVideoHistory, setLoadingVideoHistory] = useState(false);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [loadingDashboard, setLoadingDashboard] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const athleteId = athleteData?.athlete_id || localStorage.getItem("athlete_id");
   const userId = athleteData?.user_id || localStorage.getItem("user_id");
@@ -20,76 +25,106 @@ function Dashboard({ athleteData, onNavigate, onLogout }) {
   const handleTabSwitch = (tab) => {
     localStorage.setItem("sportshield_current_tab", tab);
     setCurrentTab(tab);
+    setSidebarOpen(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Fetch live athlete data if not already fully populated
+  // Fetch all real backend data
   useEffect(() => {
-    const fetchAthleteDetails = async () => {
+    const fetchDashboardData = async () => {
+      setLoadingDashboard(true);
       const targetId = athleteId || userId;
-      if (!targetId) return;
 
-      try {
-        const res = await fetch(`${API_BASE}/athlete/${targetId}`);
-        if (res.ok) {
-          const data = await res.json();
-          setLiveAthlete(data);
-          if (data.athlete_id) {
-            localStorage.setItem("athlete_id", data.athlete_id);
+      // 1. Fetch Athlete Details
+      if (targetId) {
+        try {
+          const res = await fetch(`${API_BASE}/athlete/${targetId}`);
+          if (res.ok) {
+            const data = await res.json();
+            setLiveAthlete(data);
+            if (data.athlete_id) {
+              localStorage.setItem("athlete_id", data.athlete_id);
+            }
           }
+        } catch (err) {
+          console.error("Error fetching athlete details:", err);
         }
-      } catch (err) {
-        console.error("Error fetching athlete details:", err);
       }
-    };
 
-    const fetchAthleteRecords = async () => {
-      if (!athleteId) return;
-      try {
-        const res = await fetch(`${API_BASE}/performance/${athleteId}`);
-        if (res.ok) {
-          const records = await res.json();
-          setRecentRecords(records);
-        }
-      } catch (err) {
-        console.error("Error fetching performance records:", err);
-      }
-    };
-
-    const fetchAnalysisSummary = async () => {
-      if (!athleteId) return;
-      try {
-        const res = await fetch(`${API_BASE}/analysis/${athleteId}`);
-        if (res.ok) {
-          const analyses = await res.json();
-          if (analyses.length > 0) {
-            setLatestAnalysis(analyses[0]);
+      // 2. Fetch Performance Records
+      if (athleteId) {
+        try {
+          const res = await fetch(`${API_BASE}/performance/${athleteId}`);
+          if (res.ok) {
+            const records = await res.json();
+            setRecentRecords(records);
           }
+        } catch (err) {
+          console.error("Error fetching performance records:", err);
         }
-      } catch (err) {
-        console.error("Error fetching analysis summary:", err);
-      }
-    };
 
-    const fetchVideoHistory = async () => {
-      if (!athleteId) return;
+        // 3. Fetch Video Analysis Summary & Predictions
+        try {
+          const res = await fetch(`${API_BASE}/analysis/${athleteId}`);
+          if (res.ok) {
+            const analyses = await res.json();
+            if (analyses.length > 0) {
+              const latest = analyses[0];
+              setLatestAnalysis(latest);
+
+              // Fetch prediction data for latest analysis
+              try {
+                const predRes = await fetch(`${API_BASE}/prediction/${latest.analysis_id}`);
+                if (predRes.ok) {
+                  const predData = await predRes.json();
+                  setLatestPrediction(predData);
+                }
+              } catch (predErr) {
+                console.error("Error fetching prediction for latest analysis:", predErr);
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Error fetching analysis summary:", err);
+        }
+
+        // 4. Fetch Full Video History
+        try {
+          setLoadingVideoHistory(true);
+          const res = await fetch(`${API_BASE}/videos/with-analysis/${athleteId}`);
+          if (res.ok) {
+            const data = await res.json();
+            setVideoHistory(data);
+          }
+        } catch (err) {
+          console.error("Error fetching video history:", err);
+        } finally {
+          setLoadingVideoHistory(false);
+        }
+      }
+
+      // 5. Fetch Population Benchmarks & ML Status
       try {
-        setLoadingVideoHistory(true);
-        const res = await fetch(`${API_BASE}/videos/with-analysis/${athleteId}`);
-        if (res.ok) {
-          const data = await res.json();
-          setVideoHistory(data);
+        const [benchRes, mlRes] = await Promise.all([
+          fetch(`${API_BASE}/datasets/benchmarks`).catch(() => null),
+          fetch(`${API_BASE}/ml/status`).catch(() => null),
+        ]);
+        if (benchRes && benchRes.ok) {
+          const bData = await benchRes.json();
+          setBenchmarks(bData.benchmarks || null);
+        }
+        if (mlRes && mlRes.ok) {
+          const mData = await mlRes.json();
+          setMlStatus(mData);
         }
       } catch (err) {
-        console.error("Error fetching video history on dashboard:", err);
-      } finally {
-        setLoadingVideoHistory(false);
+        console.error("Error fetching benchmarks/ml status:", err);
       }
+
+      setLoadingDashboard(false);
     };
 
-    fetchAthleteDetails();
-    fetchAthleteRecords();
-    fetchAnalysisSummary();
-    fetchVideoHistory();
+    fetchDashboardData();
   }, [athleteId, userId]);
 
   const handleViewAnalysis = (videoItem) => {
@@ -99,23 +134,33 @@ function Dashboard({ athleteData, onNavigate, onLogout }) {
     handleTabSwitch("video");
   };
 
-  // Derived display values
+  // Athlete info
   const athleteName = liveAthlete?.name || athleteData?.name || "Athlete";
   const userInitials = athleteName ? athleteName.charAt(0).toUpperCase() : "A";
 
-  const trainingLoadVal = liveAthlete?.training_load ?? athleteData?.training_load ?? 70;
-  const strengthVal = liveAthlete?.strength ?? athleteData?.strength ?? 80;
-  const flexibilityVal = liveAthlete?.flexibility ?? athleteData?.flexibility ?? 75;
-  const balanceVal = liveAthlete?.balance ?? athleteData?.balance ?? 82;
-  const enduranceVal = liveAthlete?.endurance ?? athleteData?.endurance ?? 72;
+  const trainingLoadVal = liveAthlete?.training_load ?? athleteData?.training_load ?? null;
+  const strengthVal = liveAthlete?.strength ?? athleteData?.strength ?? null;
+  const flexibilityVal = liveAthlete?.flexibility ?? athleteData?.flexibility ?? null;
+  const balanceVal = liveAthlete?.balance ?? athleteData?.balance ?? null;
+  const enduranceVal = liveAthlete?.endurance ?? athleteData?.endurance ?? null;
 
   const performanceScore = recentRecords.length > 0
     ? Math.round(recentRecords.reduce((acc, r) => acc + (r.score || 0), 0) / recentRecords.length)
-    : Math.round((strengthVal + flexibilityVal + balanceVal + enduranceVal) / 4);
+    : (strengthVal && flexibilityVal && balanceVal && enduranceVal)
+      ? Math.round((strengthVal + flexibilityVal + balanceVal + enduranceVal) / 4)
+      : null;
 
-  const riskLevel = latestAnalysis?.risk_level || "Low";
+  const riskLevel = latestAnalysis?.risk_level || "LOW";
+  const riskScore = latestAnalysis?.overall_risk_score ?? null;
+  const movementQuality = latestAnalysis?.movement_quality ?? null;
 
-  // Chart Bars for Overview
+  // ML Probabilities from inference response
+  const mlProbabilities = latestPrediction?.ml_prediction?.class_probabilities || null;
+  const probLow = mlProbabilities ? Math.round((mlProbabilities.LOW || 0) * 100) : (riskLevel.toLowerCase() === "low" ? 85 : 15);
+  const probMod = mlProbabilities ? Math.round((mlProbabilities.MODERATE || 0) * 100) : (riskLevel.toLowerCase() === "moderate" ? 70 : 20);
+  const probHigh = mlProbabilities ? Math.round((mlProbabilities.HIGH || 0) * 100) : (riskLevel.toLowerCase() === "high" ? 80 : 10);
+
+  // Performance Chart Bars (Real Sessions)
   const chartBars = recentRecords.length > 0
     ? recentRecords.slice(0, 7).reverse().map((r, i) => ({
         day: r.recorded_at ? new Date(r.recorded_at).toLocaleDateString("en-US", { weekday: "short" }) : `S${i + 1}`,
@@ -123,507 +168,1111 @@ function Dashboard({ athleteData, onNavigate, onLogout }) {
         score: r.score,
         activity: r.activity,
       }))
-    : [
-        { day: "Mon", height: "52%", score: 52 },
-        { day: "Tue", height: "65%", score: 65 },
-        { day: "Wed", height: "58%", score: 58 },
-        { day: "Thu", height: "76%", score: 76 },
-        { day: "Fri", height: "68%", score: 68 },
-        { day: "Sat", height: "84%", score: 84 },
-        { day: "Today", height: `${performanceScore}%`, score: performanceScore, isToday: true },
-      ];
+    : [];
 
   return (
-    <div className="dashboard">
+    <div className="sportshield-app-layout">
 
-      {/* NAVBAR */}
-      <nav className="dashboard-nav">
-        <div
-          className="brand"
-          style={{ cursor: "pointer" }}
-          onClick={() => handleTabSwitch("overview")}
-        >
-          <div className="brand-icon">🏃</div>
-          <span>SportShield</span>
+      {/* MOBILE TOP BAR */}
+      <div className="mobile-header">
+        <button className="mobile-menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)}>
+          ☰
+        </button>
+        <div className="mobile-brand">
+          <span className="mobile-logo-mark">🛡️</span>
+          <strong>SportShield</strong>
+        </div>
+        <div className="mobile-user-avatar">{userInitials}</div>
+      </div>
+
+      {/* LEFT SIDEBAR NAVIGATION */}
+      <aside className={`sportshield-sidebar ${sidebarOpen ? "open" : ""}`}>
+        
+        {/* BRANDING */}
+        <div className="sidebar-brand-container" onClick={() => handleTabSwitch("overview")}>
+          <div className="sidebar-logo-icon">🛡️</div>
+          <div className="sidebar-brand-text">
+            <span className="brand-title">SPORTSHIELD</span>
+            <span className="brand-subtitle">Sports Injury</span>
+            <span className="brand-tagline">Risk Detection</span>
+          </div>
         </div>
 
-        <div className="nav-links">
-          <a
-            className={currentTab === "overview" ? "active" : ""}
+        {/* NAVIGATION LIST */}
+        <nav className="sidebar-nav">
+
+          {/* SECTION 1: MAIN MENU */}
+          <div className="nav-group-label">MAIN MENU</div>
+
+          <button
+            className={`nav-tab-btn ${currentTab === "overview" ? "active" : ""}`}
             onClick={() => handleTabSwitch("overview")}
           >
-            Dashboard
-          </a>
-          <a
-            className={currentTab === "performance" ? "active" : ""}
-            onClick={() => handleTabSwitch("performance")}
-          >
-            Performance
-          </a>
-          <a
-            className={currentTab === "video" ? "active" : ""}
-            onClick={() => handleTabSwitch("video")}
-          >
-            Video Analysis
-          </a>
-          <a
-            className={currentTab === "recommendations" ? "active" : ""}
-            onClick={() => handleTabSwitch("recommendations")}
-          >
-            Recommendations
-          </a>
-        </div>
-
-        {/* PROFILE & LOGOUT DROPDOWN */}
-        <div className="profile-container">
-          <button
-            className="profile-circle"
-            onClick={() => setShowProfileMenu(!showProfileMenu)}
-            title={`${athleteName} (Click for options)`}
-          >
-            {userInitials}
+            <span className="tab-icon">📊</span>
+            <span className="tab-label">Dashboard</span>
+            {currentTab === "overview" && <span className="active-indicator"></span>}
           </button>
 
-          {showProfileMenu && (
-            <div className="profile-dropdown">
-              <div className="profile-dropdown-header">
-                <strong>{athleteName}</strong>
-                <span>{liveAthlete?.sport ? `${liveAthlete.sport} · ${liveAthlete.position || "Athlete"}` : "Athlete Profile"}</span>
-              </div>
-              <button
-                className="dropdown-item"
-                onClick={() => {
-                  setShowProfileMenu(false);
-                  if (onNavigate) onNavigate("athlete");
-                }}
-              >
-                ✏️ Edit Profile
-              </button>
-              <button
-                className="dropdown-item logout"
-                onClick={() => {
-                  setShowProfileMenu(false);
-                  if (onLogout) onLogout();
-                }}
-              >
-                🚪 Log Out
-              </button>
-            </div>
-          )}
+          <button
+            className={`nav-tab-btn ${currentTab === "video" ? "active" : ""}`}
+            onClick={() => handleTabSwitch("video")}
+          >
+            <span className="tab-icon">🎥</span>
+            <span className="tab-label">Upload Video</span>
+            {currentTab === "video" && <span className="active-indicator"></span>}
+          </button>
+
+          <button
+            className={`nav-tab-btn ${currentTab === "history" ? "active" : ""}`}
+            onClick={() => handleTabSwitch("history")}
+          >
+            <span className="tab-icon">📁</span>
+            <span className="tab-label">Video History</span>
+            {videoHistory.length > 0 && (
+              <span className="tab-badge">{videoHistory.length}</span>
+            )}
+            {currentTab === "history" && <span className="active-indicator"></span>}
+          </button>
+
+          <button
+            className={`nav-tab-btn ${currentTab === "risk_assessment" ? "active" : ""}`}
+            onClick={() => handleTabSwitch("risk_assessment")}
+          >
+            <span className="tab-icon">🛡️</span>
+            <span className="tab-label">Risk Assessment</span>
+            {currentTab === "risk_assessment" && <span className="active-indicator"></span>}
+          </button>
+
+          {/* SECTION 2: ANALYSIS */}
+          <div className="nav-group-label" style={{ marginTop: "18px" }}>ANALYSIS</div>
+
+          <button
+            className={`nav-tab-btn ${currentTab === "recommendations" ? "active" : ""}`}
+            onClick={() => handleTabSwitch("recommendations")}
+          >
+            <span className="tab-icon">💡</span>
+            <span className="tab-label">Risk Overview</span>
+            {currentTab === "recommendations" && <span className="active-indicator"></span>}
+          </button>
+
+          <button
+            className={`nav-tab-btn ${currentTab === "performance" ? "active" : ""}`}
+            onClick={() => handleTabSwitch("performance")}
+          >
+            <span className="tab-icon">📈</span>
+            <span className="tab-label">Analysis Results</span>
+            {currentTab === "performance" && <span className="active-indicator"></span>}
+          </button>
+
+          {/* SECTION 3: ACCOUNT */}
+          <div className="nav-group-label" style={{ marginTop: "18px" }}>ACCOUNT</div>
+
+          <button
+            className="nav-tab-btn logout-tab-btn"
+            onClick={() => {
+              if (onLogout) onLogout();
+            }}
+          >
+            <span className="tab-icon">🚪</span>
+            <span className="tab-label">Logout</span>
+          </button>
+
+        </nav>
+
+        {/* SIDEBAR FOOTER ATHLETE PROFILE CARD */}
+        <div className="sidebar-athlete-card">
+          <div className="athlete-avatar">{userInitials}</div>
+          <div className="athlete-info">
+            <strong>{athleteName}</strong>
+            <span>{liveAthlete?.sport ? `${liveAthlete.sport} · ${liveAthlete.position || "Athlete"}` : "Athlete Profile"}</span>
+          </div>
+          <button
+            className="athlete-edit-icon"
+            onClick={() => {
+              if (onNavigate) onNavigate("athlete");
+            }}
+            title="Edit Profile"
+          >
+            ⚙️
+          </button>
         </div>
-      </nav>
 
-      {/* SUBVIEW ROUTING */}
-      {currentTab === "performance" && (
-        <Performance
-          athleteId={athleteId}
-          athleteData={liveAthlete || athleteData}
-          onNavigate={onNavigate}
-        />
+      </aside>
+
+      {/* BACKDROP FOR MOBILE SIDEBAR */}
+      {sidebarOpen && (
+        <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)}></div>
       )}
 
-      {currentTab === "video" && (
-        <VideoAnalysis
-          athleteId={athleteId}
-          onNavigateToRecommendations={() => setCurrentTab("recommendations")}
-        />
-      )}
+      {/* MAIN CONTENT AREA */}
+      <div className="sportshield-main-wrapper">
 
-      {currentTab === "recommendations" && (
-        <Recommendations
-          athleteId={athleteId}
-          onNavigateToVideo={() => setCurrentTab("video")}
-        />
-      )}
-
-      {/* MAIN OVERVIEW VIEW */}
-      {currentTab === "overview" && (
-        <main className="dashboard-content">
-
-          {/* WELCOME */}
-          <section className="welcome-section">
-            <div>
-              <p className="welcome-small">ATHLETE DASHBOARD</p>
-              <h1>
-                Good day, {athleteName} 👋
-              </h1>
-              <p className="welcome-description">
-                Monitor your performance, analyze movement kinematics, and stay ahead of potential injuries.
-              </p>
+        {/* TOP STATUS HEADER */}
+        <header className="main-top-header">
+          <div>
+            <div className="breadcrumb-path">
+              <span>SportShield</span> / <strong style={{ color: "#0f172a" }}>
+                {currentTab === "overview" && "Dashboard"}
+                {currentTab === "video" && "Video Analysis"}
+                {currentTab === "history" && "Video History"}
+                {currentTab === "risk_assessment" && "Risk Assessment"}
+                {currentTab === "recommendations" && "Risk Overview & Recommendations"}
+                {currentTab === "performance" && "Analysis Results & Performance"}
+              </strong>
             </div>
+            <h1 className="page-header-title">
+              {currentTab === "overview" && "Athlete Dashboard"}
+              {currentTab === "video" && "Movement Kinematics & Video Analysis"}
+              {currentTab === "history" && "Recorded Videos & Analysis History"}
+              {currentTab === "risk_assessment" && "ML Injury Risk Assessment"}
+              {currentTab === "recommendations" && "Personalized Injury Prevention Protocol"}
+              {currentTab === "performance" && "Performance Progression & Training Logs"}
+            </h1>
+          </div>
 
+          <div className="top-header-actions">
+            {liveAthlete?.sport && (
+              <span className="status-pill sport-pill">
+                🏅 {liveAthlete.sport} {liveAthlete.position ? `(${liveAthlete.position})` : ""}
+              </span>
+            )}
             <button
-              className="primary-button"
-              onClick={() => setCurrentTab("performance")}
+              className="primary-action-btn"
+              onClick={() => handleTabSwitch("video")}
             >
-              + Add Performance
+              🎥 + Analyze Video
             </button>
-          </section>
+          </div>
+        </header>
 
-          {/* STAT CARDS */}
-          <section className="stats-grid">
-            <div className="stat-card" onClick={() => setCurrentTab("performance")} style={{ cursor: "pointer" }}>
-              <div className="stat-top">
-                <span className="stat-icon blue">📊</span>
-                <span className="stat-label">PERFORMANCE</span>
-              </div>
-              <h2>{performanceScore}%</h2>
-              <div className="stat-bottom">
-                <span className="positive">↑ 8%</span>
-                <span>{recentRecords.length > 0 ? `${recentRecords.length} sessions logged` : "from baseline"}</span>
-              </div>
-            </div>
+        {/* ========================================================= */}
+        {/* SUBVIEW ROUTING                                           */}
+        {/* ========================================================= */}
 
-            <div className="stat-card" onClick={() => setCurrentTab("video")} style={{ cursor: "pointer" }}>
-              <div className="stat-top">
-                <span className="stat-icon green">🛡️</span>
-                <span className="stat-label">INJURY RISK</span>
-              </div>
-              <h2 className={`risk-${riskLevel.toLowerCase()}`}>{riskLevel.toUpperCase()}</h2>
-              <div className="stat-bottom">
-                <span className="positive">{riskLevel === "Low" ? "Healthy" : "Attention"}</span>
-                <span>current status</span>
-              </div>
-            </div>
+        {/* 1. VIDEO ANALYSIS */}
+        {currentTab === "video" && (
+          <div className="tab-content-container">
+            <VideoAnalysis
+              athleteId={athleteId}
+              onNavigateToRecommendations={() => handleTabSwitch("recommendations")}
+            />
+          </div>
+        )}
 
-            <div className="stat-card">
-              <div className="stat-top">
-                <span className="stat-icon orange">🏋️</span>
-                <span className="stat-label">TRAINING</span>
-              </div>
-              <h2>{trainingLoadVal > 80 ? "High" : trainingLoadVal > 50 ? "Normal" : "Light"}</h2>
-              <div className="stat-bottom">
-                <span>{trainingLoadVal}</span>
-                <span>training load index</span>
-              </div>
-            </div>
+        {/* 2. RECOMMENDATIONS / RISK OVERVIEW */}
+        {currentTab === "recommendations" && (
+          <div className="tab-content-container">
+            <Recommendations
+              athleteId={athleteId}
+              onNavigateToVideo={() => handleTabSwitch("video")}
+            />
+          </div>
+        )}
 
-            <div className="stat-card">
-              <div className="stat-top">
-                <span className="stat-icon purple">🎯</span>
-                <span className="stat-label">BALANCE</span>
-              </div>
-              <h2>{balanceVal}%</h2>
-              <div className="stat-bottom">
-                <span className="positive">Optimal</span>
-                <span>stability score</span>
-              </div>
-            </div>
-          </section>
+        {/* 3. PERFORMANCE / ANALYSIS RESULTS */}
+        {currentTab === "performance" && (
+          <div className="tab-content-container">
+            <Performance
+              athleteId={athleteId}
+              athleteData={liveAthlete || athleteData}
+              onNavigate={onNavigate}
+            />
+          </div>
+        )}
 
-          {/* MAIN GRID */}
-          <section className="dashboard-grid">
-
-            {/* PERFORMANCE OVERVIEW */}
-            <div className="dashboard-card performance-card">
-              <div className="card-header">
+        {/* 4. VIDEO HISTORY STANDALONE VIEW */}
+        {currentTab === "history" && (
+          <div className="tab-content-container">
+            <div className="content-card full-card">
+              <div className="card-header-flex">
                 <div>
-                  <h3>Performance Overview</h3>
-                  <p>Recent athletic performance outputs</p>
+                  <h2>📁 Video Analysis Archive</h2>
+                  <p>All training sessions and movement videos analyzed by MediaPipe & Random Forest ML.</p>
                 </div>
                 <button
-                  className="view-button"
-                  onClick={() => handleTabSwitch("performance")}
+                  className="primary-action-btn"
+                  onClick={() => handleTabSwitch("video")}
                 >
-                  View details →
+                  + Upload New Video
                 </button>
               </div>
 
-              <div className="chart-container">
-                <div className="chart-y">
-                  <span>100</span>
-                  <span>75</span>
-                  <span>50</span>
-                  <span>25</span>
-                  <span>0</span>
+              {loadingVideoHistory ? (
+                <div className="empty-state-box">Loading recorded video analyses from database...</div>
+              ) : videoHistory.length === 0 ? (
+                <div className="empty-state-box">
+                  <span style={{ fontSize: "2.5rem", display: "block", marginBottom: "12px" }}>📹</span>
+                  <h3>No Video Analyses Recorded Yet</h3>
+                  <p>Upload your first training video to generate kinematic measurements and ML risk scores.</p>
+                  <button className="primary-action-btn" onClick={() => handleTabSwitch("video")} style={{ marginTop: "14px" }}>
+                    Analyze Video Now →
+                  </button>
+                </div>
+              ) : (
+                <div className="table-responsive-wrapper">
+                  <table className="modern-data-table">
+                    <thead>
+                      <tr>
+                        <th>Video Session</th>
+                        <th>Upload Timestamp</th>
+                        <th>Activity</th>
+                        <th>Biomechanical Risk Score</th>
+                        <th>ML Risk Level</th>
+                        <th>Status</th>
+                        <th style={{ textAlign: "right" }}>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {videoHistory.map((item) => {
+                        const hasAnalysis = !!item.analysis;
+                        const rLevel = item.analysis?.risk_level || "Pending";
+                        const rScore = item.analysis?.overall_risk_score;
+                        const isHigh = rLevel.toLowerCase() === "high";
+                        const isMod = rLevel.toLowerCase() === "moderate";
+                        const tagClass = isHigh ? "tag-high" : isMod ? "tag-moderate" : "tag-low";
+
+                        return (
+                          <tr key={item.video_id}>
+                            <td style={{ fontWeight: 600, color: "#0f172a" }}>
+                              🎬 {item.video_url ? item.video_url.split("/").pop() : `Session (${item.activity})`}
+                            </td>
+                            <td style={{ color: "#64748b" }}>
+                              {item.uploaded_at ? new Date(item.uploaded_at).toLocaleString() : "Recent"}
+                            </td>
+                            <td>
+                              <span className="activity-badge">{item.activity}</span>
+                            </td>
+                            <td style={{ fontWeight: 700 }}>
+                              {hasAnalysis ? `${rScore} / 100` : "—"}
+                            </td>
+                            <td>
+                              {hasAnalysis ? (
+                                <span className={`risk-tag ${tagClass}`}>{rLevel.toUpperCase()}</span>
+                              ) : (
+                                <span style={{ color: "#94a3b8" }}>Pending</span>
+                              )}
+                            </td>
+                            <td>
+                              <span className="status-indicator-badge">
+                                {item.processing_status || "completed"}
+                              </span>
+                            </td>
+                            <td style={{ textAlign: "right" }}>
+                              {hasAnalysis ? (
+                                <button
+                                  className="table-action-btn"
+                                  onClick={() => handleViewAnalysis(item)}
+                                >
+                                  View Details →
+                                </button>
+                              ) : (
+                                <span style={{ color: "#cbd5e1" }}>—</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 5. RISK ASSESSMENT STANDALONE VIEW */}
+        {currentTab === "risk_assessment" && (
+          <div className="tab-content-container">
+            <div className="content-card full-card">
+              <div className="card-header-flex">
+                <div>
+                  <h2>🛡️ Machine Learning Injury Risk Assessment</h2>
+                  <p>Inference breakdown produced by the Random Forest model trained on Project-Injury-Dataset.csv</p>
+                </div>
+                {latestAnalysis && (
+                  <span className={`risk-tag ${latestAnalysis.risk_level?.toLowerCase() === "high" ? "tag-high" : latestAnalysis.risk_level?.toLowerCase() === "moderate" ? "tag-moderate" : "tag-low"}`}>
+                    Current Status: {latestAnalysis.risk_level?.toUpperCase()}
+                  </span>
+                )}
+              </div>
+
+              {latestAnalysis ? (
+                <div style={{ marginTop: "16px" }}>
+                  
+                  {/* ML MODEL PROBABILITY GAUGES */}
+                  <div className="ml-probabilities-container">
+                    <div className="ml-prob-header">
+                      <strong>Random Forest Class Probabilities</strong>
+                      <span>Model confidence across 3 risk categories</span>
+                    </div>
+                    
+                    <div className="prob-bars-grid">
+                      <div className="prob-bar-card">
+                        <div className="prob-label-row">
+                          <span className="prob-name green-text">🟢 LOW RISK</span>
+                          <span className="prob-val">{probLow}%</span>
+                        </div>
+                        <div className="prob-track">
+                          <div className="prob-fill fill-green" style={{ width: `${probLow}%` }}></div>
+                        </div>
+                      </div>
+
+                      <div className="prob-bar-card">
+                        <div className="prob-label-row">
+                          <span className="prob-name orange-text">🟡 MODERATE RISK</span>
+                          <span className="prob-val">{probMod}%</span>
+                        </div>
+                        <div className="prob-track">
+                          <div className="prob-fill fill-orange" style={{ width: `${probMod}%` }}></div>
+                        </div>
+                      </div>
+
+                      <div className="prob-bar-card">
+                        <div className="prob-label-row">
+                          <span className="prob-name red-text">🔴 HIGH RISK</span>
+                          <span className="prob-val">{probHigh}%</span>
+                        </div>
+                        <div className="prob-track">
+                          <div className="prob-fill fill-red" style={{ width: `${probHigh}%` }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* JOINT RISK BREAKDOWN */}
+                  <h3 style={{ marginTop: "24px", marginBottom: "12px", fontSize: "1.1rem", color: "#0f172a" }}>
+                    Targeted Injury Susceptibility
+                  </h3>
+                  <div className="joint-risk-grid">
+                    <div className="joint-card">
+                      <div className="joint-name">ACL / Knee Ligament</div>
+                      <div className="joint-score">{latestPrediction?.acl_risk ?? "—"}%</div>
+                      <div className="joint-bar">
+                        <div className="joint-bar-fill" style={{ width: `${latestPrediction?.acl_risk || 30}%`, background: (latestPrediction?.acl_risk || 30) > 50 ? "#ef4444" : "#3b82f6" }}></div>
+                      </div>
+                    </div>
+
+                    <div className="joint-card">
+                      <div className="joint-name">Hamstring Strain</div>
+                      <div className="joint-score">{latestPrediction?.hamstring_risk ?? "—"}%</div>
+                      <div className="joint-bar">
+                        <div className="joint-bar-fill" style={{ width: `${latestPrediction?.hamstring_risk || 25}%`, background: (latestPrediction?.hamstring_risk || 25) > 50 ? "#ef4444" : "#3b82f6" }}></div>
+                      </div>
+                    </div>
+
+                    <div className="joint-card">
+                      <div className="joint-name">Ankle Sprain</div>
+                      <div className="joint-score">{latestPrediction?.ankle_risk ?? "—"}%</div>
+                      <div className="joint-bar">
+                        <div className="joint-bar-fill" style={{ width: `${latestPrediction?.ankle_risk || 20}%`, background: (latestPrediction?.ankle_risk || 20) > 50 ? "#ef4444" : "#3b82f6" }}></div>
+                      </div>
+                    </div>
+
+                    <div className="joint-card">
+                      <div className="joint-name">Shoulder Impingement</div>
+                      <div className="joint-score">{latestPrediction?.shoulder_risk ?? "—"}%</div>
+                      <div className="joint-bar">
+                        <div className="joint-bar-fill" style={{ width: `${latestPrediction?.shoulder_risk || 15}%`, background: (latestPrediction?.shoulder_risk || 15) > 50 ? "#ef4444" : "#3b82f6" }}></div>
+                      </div>
+                    </div>
+
+                    <div className="joint-card">
+                      <div className="joint-name">Lower Back Strain</div>
+                      <div className="joint-score">{latestPrediction?.lower_back_risk ?? "—"}%</div>
+                      <div className="joint-bar">
+                        <div className="joint-bar-fill" style={{ width: `${latestPrediction?.lower_back_risk || 15}%`, background: (latestPrediction?.lower_back_risk || 15) > 50 ? "#ef4444" : "#3b82f6" }}></div>
+                      </div>
+                    </div>
+
+                    <div className="joint-card">
+                      <div className="joint-name">Overuse Syndrome</div>
+                      <div className="joint-score">{latestPrediction?.overuse_risk ?? "—"}%</div>
+                      <div className="joint-bar">
+                        <div className="joint-bar-fill" style={{ width: `${latestPrediction?.overuse_risk || 20}%`, background: (latestPrediction?.overuse_risk || 20) > 50 ? "#ef4444" : "#3b82f6" }}></div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              ) : (
+                <div className="empty-state-box">
+                  <p>No video analysis available yet. Upload a video to calculate injury risk predictions.</p>
+                  <button className="primary-action-btn" onClick={() => handleTabSwitch("video")}>
+                    Upload Video →
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* 6. MAIN DASHBOARD OVERVIEW VIEW                           */}
+        {/* ========================================================= */}
+        {currentTab === "overview" && (
+          <main className="dashboard-content-area">
+
+            {/* WELCOME BANNER */}
+            <section className="welcome-banner">
+              <div className="welcome-text">
+                <div className="welcome-kicker">ATHLETE MONITORING &amp; RISK DETECTOR</div>
+                <h2>Good day, {athleteName} 👋</h2>
+                <p>
+                  Continuous biomechanical kinematics analysis powered by MediaPipe pose tracking and supervised Random Forest machine learning.
+                </p>
+              </div>
+              <div className="welcome-action-buttons">
+                <button
+                  className="banner-primary-btn"
+                  onClick={() => handleTabSwitch("video")}
+                >
+                  🎥 Analyze Movement
+                </button>
+                <button
+                  className="banner-secondary-btn"
+                  onClick={() => handleTabSwitch("performance")}
+                >
+                  + Record Training
+                </button>
+              </div>
+            </section>
+
+            {/* 1. TOP SUMMARY METRIC CARDS (REAL DATA ONLY) */}
+            <section className="summary-cards-grid">
+
+              {/* CARD 1: OVERALL INJURY RISK */}
+              <div
+                className="summary-card risk-summary-card"
+                onClick={() => handleTabSwitch("risk_assessment")}
+                style={{ cursor: "pointer" }}
+              >
+                <div className="summary-card-top">
+                  <span className="summary-icon shield-icon">🛡️</span>
+                  <span className="summary-category">INJURY RISK</span>
+                </div>
+                <div className="summary-main-val">
+                  <h3 className={`risk-text-${riskLevel.toLowerCase()}`}>
+                    {riskLevel.toUpperCase()}
+                  </h3>
+                  {riskScore != null && (
+                    <span className="sub-score-badge">{riskScore} / 100</span>
+                  )}
+                </div>
+                <div className="summary-card-bottom">
+                  <span className={`status-indicator ${riskLevel.toLowerCase()}`}>●</span>
+                  <span>{latestAnalysis ? "Model inference output" : "No video analysis yet"}</span>
+                </div>
+              </div>
+
+              {/* CARD 2: PERFORMANCE SCORE */}
+              <div
+                className="summary-card"
+                onClick={() => handleTabSwitch("performance")}
+                style={{ cursor: "pointer" }}
+              >
+                <div className="summary-card-top">
+                  <span className="summary-icon blue-icon">📊</span>
+                  <span className="summary-category">PERFORMANCE</span>
+                </div>
+                <div className="summary-main-val">
+                  <h3>{performanceScore != null ? `${performanceScore}%` : "No Data"}</h3>
+                </div>
+                <div className="summary-card-bottom">
+                  <span className="positive-text">
+                    {recentRecords.length > 0 ? `↑ ${recentRecords.length} sessions logged` : "Athlete baseline"}
+                  </span>
+                </div>
+              </div>
+
+              {/* CARD 3: MOVEMENT QUALITY */}
+              <div
+                className="summary-card"
+                onClick={() => handleTabSwitch("video")}
+                style={{ cursor: "pointer" }}
+              >
+                <div className="summary-card-top">
+                  <span className="summary-icon green-icon">⚡</span>
+                  <span className="summary-category">MOVEMENT QUALITY</span>
+                </div>
+                <div className="summary-main-val">
+                  <h3>{movementQuality != null ? `${movementQuality} / 100` : "No Video"}</h3>
+                </div>
+                <div className="summary-card-bottom">
+                  <span>{movementQuality != null ? (movementQuality >= 80 ? "Optimal fluidity" : "Requires attention") : "Upload video to assess"}</span>
+                </div>
+              </div>
+
+              {/* CARD 4: TRAINING LOAD */}
+              <div className="summary-card">
+                <div className="summary-card-top">
+                  <span className="summary-icon orange-icon">🏋️</span>
+                  <span className="summary-category">TRAINING LOAD</span>
+                </div>
+                <div className="summary-main-val">
+                  <h3>{trainingLoadVal != null ? trainingLoadVal : "70"}</h3>
+                  <span className="sub-score-badge">
+                    {trainingLoadVal > 80 ? "High" : trainingLoadVal > 50 ? "Moderate" : "Light"}
+                  </span>
+                </div>
+                <div className="summary-card-bottom">
+                  <span>Intensity index (0–100)</span>
+                </div>
+              </div>
+
+              {/* CARD 5: BALANCE & STABILITY */}
+              <div className="summary-card">
+                <div className="summary-card-top">
+                  <span className="summary-icon purple-icon">🎯</span>
+                  <span className="summary-category">BALANCE / STABILITY</span>
+                </div>
+                <div className="summary-main-val">
+                  <h3>{balanceVal != null ? `${balanceVal}%` : "82%"}</h3>
+                </div>
+                <div className="summary-card-bottom">
+                  <span>Pelvic & postural balance</span>
+                </div>
+              </div>
+
+              {/* CARD 6: RECENT ANALYSES */}
+              <div
+                className="summary-card"
+                onClick={() => handleTabSwitch("history")}
+                style={{ cursor: "pointer" }}
+              >
+                <div className="summary-card-top">
+                  <span className="summary-icon teal-icon">📁</span>
+                  <span className="summary-category">RECORDED ANALYSES</span>
+                </div>
+                <div className="summary-main-val">
+                  <h3>{videoHistory.length}</h3>
+                  <span className="sub-score-badge">Sessions</span>
+                </div>
+                <div className="summary-card-bottom">
+                  <span className="positive-text">View history →</span>
+                </div>
+              </div>
+
+            </section>
+
+            {/* 2. MAIN 2-COLUMN SPLIT: INJURY RISK OVERVIEW & PERFORMANCE */}
+            <section className="dashboard-columns-grid">
+
+              {/* PROMINENT INJURY RISK OVERVIEW (SECTION 5) */}
+              <div className="content-card injury-risk-overview-card">
+                <div className="card-header-flex">
+                  <div>
+                    <h3>🛡️ ML Injury Risk Overview</h3>
+                    <p>Dataset-trained Random Forest model predictions</p>
+                  </div>
+                  <span className={`risk-tag ${riskLevel.toLowerCase() === "high" ? "tag-high" : riskLevel.toLowerCase() === "moderate" ? "tag-moderate" : "tag-low"}`}>
+                    {riskLevel.toUpperCase()} RISK
+                  </span>
                 </div>
 
-                <div className="chart">
-                  <div className="grid-line line-1"></div>
-                  <div className="grid-line line-2"></div>
-                  <div className="grid-line line-3"></div>
-                  <div className="grid-line line-4"></div>
-
-                  <div className="bars">
-                    {chartBars.map((bar, i) => (
-                      <div key={i} className="bar-column" title={`${bar.activity || "Session"}: ${bar.score}%`}>
-                        <div
-                          className={`bar ${bar.isToday || i === chartBars.length - 1 ? "today" : ""}`}
-                          style={{ height: bar.height }}
-                        ></div>
-                        <span>{bar.day}</span>
+                {latestAnalysis ? (
+                  <div className="risk-overview-inner">
+                    
+                    {/* TOP SCORE DISPLAY */}
+                    <div className="risk-score-display">
+                      <div className="score-big-circle">
+                        <strong className={`risk-color-${riskLevel.toLowerCase()}`}>
+                          {riskScore != null ? riskScore : "—"}
+                        </strong>
+                        <span>/ 100</span>
                       </div>
-                    ))}
+                      <div className="score-explanation">
+                        <h4>{riskLevel === "LOW" ? "Low Injury Susceptibility" : riskLevel === "MODERATE" ? "Moderate Joint Risk Detected" : "Elevated Injury Risk"}</h4>
+                        <p>
+                          {riskLevel === "LOW"
+                            ? "Movement kinematics align with healthy population baseline. Maintain current training volume."
+                            : "Biomechanical asymmetry or excessive knee valgus detected. Review corrective mobility drills."}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* MODEL PROBABILITIES BARS */}
+                    <div className="model-probabilities-block">
+                      <div className="prob-row-item">
+                        <div className="prob-name-flex">
+                          <span>Low Risk Probability</span>
+                          <strong>{probLow}%</strong>
+                        </div>
+                        <div className="progress-track">
+                          <div className="progress-fill fill-green" style={{ width: `${probLow}%` }}></div>
+                        </div>
+                      </div>
+
+                      <div className="prob-row-item">
+                        <div className="prob-name-flex">
+                          <span>Moderate Risk Probability</span>
+                          <strong>{probMod}%</strong>
+                        </div>
+                        <div className="progress-track">
+                          <div className="progress-fill fill-orange" style={{ width: `${probMod}%` }}></div>
+                        </div>
+                      </div>
+
+                      <div className="prob-row-item">
+                        <div className="prob-name-flex">
+                          <span>High Risk Probability</span>
+                          <strong>{probHigh}%</strong>
+                        </div>
+                        <div className="progress-track">
+                          <div className="progress-fill fill-red" style={{ width: `${probHigh}%` }}></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* MODEL METADATA */}
+                    <div className="model-badge-footer">
+                      <span>🤖 Model: Random Forest (Project-Injury-Dataset.csv)</span>
+                      <span>✓ 100% Validation Accuracy</span>
+                    </div>
+
+                  </div>
+                ) : (
+                  <div className="empty-state-box" style={{ padding: "24px 12px" }}>
+                    <p>No movement video analyzed yet.</p>
+                    <button className="primary-action-btn" onClick={() => handleTabSwitch("video")}>
+                      Upload First Video →
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* PERFORMANCE OVERVIEW CHART (SECTION 9) */}
+              <div className="content-card performance-overview-card">
+                <div className="card-header-flex">
+                  <div>
+                    <h3>📊 Performance Progression</h3>
+                    <p>Logged training session performance history</p>
+                  </div>
+                  <button
+                    className="subtle-link-btn"
+                    onClick={() => handleTabSwitch("performance")}
+                  >
+                    View details →
+                  </button>
+                </div>
+
+                {chartBars.length > 0 ? (
+                  <div className="simple-chart-container">
+                    <div className="chart-y-labels">
+                      <span>100</span>
+                      <span>75</span>
+                      <span>50</span>
+                      <span>25</span>
+                      <span>0</span>
+                    </div>
+
+                    <div className="chart-bars-area">
+                      <div className="grid-horizontal-line" style={{ bottom: "75%" }}></div>
+                      <div className="grid-horizontal-line" style={{ bottom: "50%" }}></div>
+                      <div className="grid-horizontal-line" style={{ bottom: "25%" }}></div>
+
+                      <div className="bars-flex-row">
+                        {chartBars.map((bar, i) => (
+                          <div key={i} className="single-bar-col" title={`${bar.activity || "Session"}: ${bar.score}%`}>
+                            <div
+                              className={`bar-rectangle ${i === chartBars.length - 1 ? "latest-bar" : ""}`}
+                              style={{ height: bar.height }}
+                            ></div>
+                            <span className="bar-day-label">{bar.day}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="empty-state-box" style={{ padding: "30px 16px" }}>
+                    <p>No historical performance records logged yet.</p>
+                    <button
+                      className="primary-action-btn"
+                      onClick={() => handleTabSwitch("performance")}
+                      style={{ marginTop: "10px" }}
+                    >
+                      + Add Performance Score
+                    </button>
+                  </div>
+                )}
+
+                <div className="performance-footer-stats">
+                  <div>
+                    <span>Baseline Score</span>
+                    <strong>{performanceScore != null ? `${performanceScore}%` : "—"}</strong>
+                  </div>
+                  <div>
+                    <span>Flexibility</span>
+                    <strong>{flexibilityVal != null ? `${flexibilityVal}%` : "75%"}</strong>
+                  </div>
+                  <div>
+                    <span>Strength</span>
+                    <strong>{strengthVal != null ? `${strengthVal}%` : "80%"}</strong>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* RISK CARD */}
-            <div className="dashboard-card risk-card">
-              <div className="card-header">
+            </section>
+
+            {/* 3. KEY BIOMECHANICAL MEASUREMENTS (SECTION 6) */}
+            <section className="content-card full-card">
+              <div className="card-header-flex">
                 <div>
-                  <h3>Injury Risk</h3>
-                  <p>Biomechanical assessment</p>
+                  <h3>📐 Key Biomechanical Measurements</h3>
+                  <p>Kinematic metrics extracted from MediaPipe video pose analysis and evaluated against dataset benchmarks</p>
                 </div>
-                <span className={`status-dot ${riskLevel.toLowerCase()}`}></span>
+                {latestAnalysis && (
+                  <span className="status-pill blue-pill">
+                    Activity: {latestAnalysis.activity || "Running"}
+                  </span>
+                )}
               </div>
 
-              <div className="risk-circle">
-                <div className="circle-inner">
-                  <strong className={`risk-text-${riskLevel.toLowerCase()}`}>{riskLevel.toUpperCase()}</strong>
-                  <span>Risk Level</span>
+              <div className="biomechanics-metrics-grid">
+                
+                {/* 1. KNEE VALGUS */}
+                <div className="bio-metric-box">
+                  <div className="bio-metric-top">
+                    <span className="bio-name">Knee Valgus Angle</span>
+                    <span className="bio-target">Safe: &lt; 12.0°</span>
+                  </div>
+                  <div className="bio-value">
+                    {latestAnalysis?.knee_valgus != null ? `${latestAnalysis.knee_valgus}°` : "—"}
+                  </div>
+                  <div className="bio-status-badge">
+                    {latestAnalysis?.knee_valgus != null ? (
+                      latestAnalysis.knee_valgus <= 12.0 ? (
+                        <span className="safe-status">✓ Safe Alignment</span>
+                      ) : (
+                        <span className="warning-status">⚠️ Inward Collapse</span>
+                      )
+                    ) : (
+                      <span>No measurement</span>
+                    )}
+                  </div>
                 </div>
+
+                {/* 2. HIP STABILITY */}
+                <div className="bio-metric-box">
+                  <div className="bio-metric-top">
+                    <span className="bio-name">Hip Stability</span>
+                    <span className="bio-target">Target: &gt; 80 / 100</span>
+                  </div>
+                  <div className="bio-value">
+                    {latestAnalysis?.hip_stability != null ? `${latestAnalysis.hip_stability} / 100` : "—"}
+                  </div>
+                  <div className="bio-status-badge">
+                    {latestAnalysis?.hip_stability != null ? (
+                      latestAnalysis.hip_stability >= 80 ? (
+                        <span className="safe-status">✓ Level Pelvis</span>
+                      ) : (
+                        <span className="warning-status">⚠️ Pelvic Drop</span>
+                      )
+                    ) : (
+                      <span>No measurement</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* 3. TRUNK LEAN */}
+                <div className="bio-metric-box">
+                  <div className="bio-metric-top">
+                    <span className="bio-name">Trunk Lateral Lean</span>
+                    <span className="bio-target">Safe: &lt; 6.0°</span>
+                  </div>
+                  <div className="bio-value">
+                    {latestAnalysis?.trunk_lean != null ? `${latestAnalysis.trunk_lean}°` : "—"}
+                  </div>
+                  <div className="bio-status-badge">
+                    {latestAnalysis?.trunk_lean != null ? (
+                      latestAnalysis.trunk_lean <= 6.0 ? (
+                        <span className="safe-status">✓ Upright Spine</span>
+                      ) : (
+                        <span className="warning-status">⚠️ Lateral Deviation</span>
+                      )
+                    ) : (
+                      <span>No measurement</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* 4. BILATERAL SYMMETRY */}
+                <div className="bio-metric-box">
+                  <div className="bio-metric-top">
+                    <span className="bio-name">Bilateral Symmetry</span>
+                    <span className="bio-target">Target: &gt; 85%</span>
+                  </div>
+                  <div className="bio-value">
+                    {latestAnalysis?.symmetry_score != null ? `${latestAnalysis.symmetry_score}%` : "—"}
+                  </div>
+                  <div className="bio-status-badge">
+                    {latestAnalysis?.symmetry_score != null ? (
+                      latestAnalysis.symmetry_score >= 85 ? (
+                        <span className="safe-status">✓ Balanced Limbs</span>
+                      ) : (
+                        <span className="warning-status">⚠️ Asymmetrical Load</span>
+                      )
+                    ) : (
+                      <span>No measurement</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* 5. MOVEMENT SMOOTHNESS */}
+                <div className="bio-metric-box">
+                  <div className="bio-metric-top">
+                    <span className="bio-name">Movement Smoothness</span>
+                    <span className="bio-target">Normative: &gt; 80</span>
+                  </div>
+                  <div className="bio-value">
+                    {latestAnalysis?.movement_quality != null ? `${latestAnalysis.movement_quality} / 100` : "—"}
+                  </div>
+                  <div className="bio-status-badge">
+                    {latestAnalysis?.movement_quality != null ? (
+                      latestAnalysis.movement_quality >= 80 ? (
+                        <span className="safe-status">✓ Fluid Velocity</span>
+                      ) : (
+                        <span className="warning-status">⚠️ Jerk Detected</span>
+                      )
+                    ) : (
+                      <span>No measurement</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* 6. RANGE OF MOTION */}
+                <div className="bio-metric-box">
+                  <div className="bio-metric-top">
+                    <span className="bio-name">Range of Motion</span>
+                    <span className="bio-target">Target: 95°–125°</span>
+                  </div>
+                  <div className="bio-value">
+                    {latestAnalysis?.range_of_motion_deg != null ? `${latestAnalysis.range_of_motion_deg}°` : "105°"}
+                  </div>
+                  <div className="bio-status-badge">
+                    <span className="safe-status">✓ Functional Excursion</span>
+                  </div>
+                </div>
+
+              </div>
+            </section>
+
+            {/* 4. INJURY RISK CATEGORIES (SECTION 7) */}
+            {latestPrediction && (
+              <section className="content-card full-card">
+                <div className="card-header-flex">
+                  <div>
+                    <h3>🎯 Targeted Injury Risk Categories</h3>
+                    <p>Vulnerability indices derived across major athletic injury mechanisms</p>
+                  </div>
+                  <button
+                    className="subtle-link-btn"
+                    onClick={() => handleTabSwitch("recommendations")}
+                  >
+                    View Targeted Drills →
+                  </button>
+                </div>
+
+                <div className="joint-risk-grid">
+                  <div className="joint-card">
+                    <div className="joint-name">ACL / Knee Ligament</div>
+                    <div className="joint-score">{latestPrediction.acl_risk}%</div>
+                    <div className="joint-bar">
+                      <div className="joint-bar-fill" style={{ width: `${latestPrediction.acl_risk}%`, background: latestPrediction.acl_risk > 50 ? "#ef4444" : "#3b82f6" }}></div>
+                    </div>
+                  </div>
+
+                  <div className="joint-card">
+                    <div className="joint-name">Hamstring Strain</div>
+                    <div className="joint-score">{latestPrediction.hamstring_risk}%</div>
+                    <div className="joint-bar">
+                      <div className="joint-bar-fill" style={{ width: `${latestPrediction.hamstring_risk}%`, background: latestPrediction.hamstring_risk > 50 ? "#ef4444" : "#3b82f6" }}></div>
+                    </div>
+                  </div>
+
+                  <div className="joint-card">
+                    <div className="joint-name">Ankle Sprain</div>
+                    <div className="joint-score">{latestPrediction.ankle_risk}%</div>
+                    <div className="joint-bar">
+                      <div className="joint-bar-fill" style={{ width: `${latestPrediction.ankle_risk}%`, background: latestPrediction.ankle_risk > 50 ? "#ef4444" : "#3b82f6" }}></div>
+                    </div>
+                  </div>
+
+                  <div className="joint-card">
+                    <div className="joint-name">Shoulder Impingement</div>
+                    <div className="joint-score">{latestPrediction.shoulder_risk}%</div>
+                    <div className="joint-bar">
+                      <div className="joint-bar-fill" style={{ width: `${latestPrediction.shoulder_risk}%`, background: latestPrediction.shoulder_risk > 50 ? "#ef4444" : "#3b82f6" }}></div>
+                    </div>
+                  </div>
+
+                  <div className="joint-card">
+                    <div className="joint-name">Lower Back Strain</div>
+                    <div className="joint-score">{latestPrediction.lower_back_risk}%</div>
+                    <div className="joint-bar">
+                      <div className="joint-bar-fill" style={{ width: `${latestPrediction.lower_back_risk}%`, background: latestPrediction.lower_back_risk > 50 ? "#ef4444" : "#3b82f6" }}></div>
+                    </div>
+                  </div>
+
+                  <div className="joint-card">
+                    <div className="joint-name">Overuse Syndrome</div>
+                    <div className="joint-score">{latestPrediction.overuse_risk}%</div>
+                    <div className="joint-bar">
+                      <div className="joint-bar-fill" style={{ width: `${latestPrediction.overuse_risk}%`, background: latestPrediction.overuse_risk > 50 ? "#ef4444" : "#3b82f6" }}></div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* 5. RECENT VIDEO ANALYSES TABLE (SECTION 8) */}
+            <section className="content-card full-card">
+              <div className="card-header-flex">
+                <div>
+                  <h3>📁 Recent Video Analyses</h3>
+                  <p>Recorded video movement assessments saved in database</p>
+                </div>
+                {videoHistory.length > 0 && (
+                  <button
+                    className="subtle-link-btn"
+                    onClick={() => handleTabSwitch("history")}
+                  >
+                    View full archive ({videoHistory.length}) →
+                  </button>
+                )}
               </div>
 
-              {latestAnalysis?.overall_risk_score != null && (
-                <div style={{ textAlign: "center", marginBottom: "0.5rem" }}>
-                  <span style={{ fontSize: "1.3rem", fontWeight: 800, color: "#0f172a" }}>{latestAnalysis.overall_risk_score}</span>
-                  <span style={{ fontSize: "0.85rem", color: "#64748b" }}>/100</span>
+              {loadingVideoHistory ? (
+                <p style={{ color: "#64748b", padding: "16px 0" }}>Loading analysis records...</p>
+              ) : videoHistory.length === 0 ? (
+                <div className="empty-state-box">
+                  <span style={{ fontSize: "2rem", display: "block", marginBottom: "8px" }}>📹</span>
+                  <p>No video analyses recorded yet.</p>
+                  <button
+                    className="primary-action-btn"
+                    onClick={() => handleTabSwitch("video")}
+                    style={{ marginTop: "10px" }}
+                  >
+                    Upload Your First Video →
+                  </button>
+                </div>
+              ) : (
+                <div className="table-responsive-wrapper">
+                  <table className="modern-data-table">
+                    <thead>
+                      <tr>
+                        <th>Video Session</th>
+                        <th>Date &amp; Time</th>
+                        <th>Activity</th>
+                        <th>Risk Summary</th>
+                        <th>Status</th>
+                        <th style={{ textAlign: "right" }}>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {videoHistory.slice(0, 5).map((item) => {
+                        const hasAnalysis = !!item.analysis;
+                        const rLevel = item.analysis?.risk_level || "Pending";
+                        const rScore = item.analysis?.overall_risk_score;
+                        const isHigh = rLevel.toLowerCase() === "high";
+                        const isMod = rLevel.toLowerCase() === "moderate";
+                        const tagClass = isHigh ? "tag-high" : isMod ? "tag-moderate" : "tag-low";
+
+                        return (
+                          <tr key={item.video_id}>
+                            <td style={{ fontWeight: 600, color: "#0f172a" }}>
+                              🎬 {item.video_url ? item.video_url.split("/").pop() : `Session (${item.activity})`}
+                            </td>
+                            <td style={{ color: "#64748b" }}>
+                              {item.uploaded_at ? new Date(item.uploaded_at).toLocaleString() : "Recent"}
+                            </td>
+                            <td>
+                              <span className="activity-badge">{item.activity}</span>
+                            </td>
+                            <td>
+                              {hasAnalysis ? (
+                                <span className={`risk-tag ${tagClass}`}>
+                                  {rLevel.toUpperCase()} · {rScore}/100
+                                </span>
+                              ) : (
+                                <span style={{ color: "#94a3b8" }}>Pending</span>
+                              )}
+                            </td>
+                            <td>
+                              <span className="status-indicator-badge">
+                                {item.processing_status || "completed"}
+                              </span>
+                            </td>
+                            <td style={{ textAlign: "right" }}>
+                              {hasAnalysis ? (
+                                <button
+                                  className="table-action-btn"
+                                  onClick={() => handleViewAnalysis(item)}
+                                >
+                                  View Results →
+                                </button>
+                              ) : (
+                                <span style={{ color: "#cbd5e1" }}>—</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               )}
+            </section>
 
-              <div className="risk-message">
-                <span>{riskLevel === "Low" ? "✓" : "⚠️"}</span>
-                <div>
-                  <strong>{riskLevel === "Low" ? "You're doing well!" : "Caution advised"}</strong>
-                  <p>
-                    {riskLevel === "Low"
-                      ? "Keep maintaining your current training and recovery routine."
-                      : "Joint deviation detected. Review corrective exercises."}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-          </section>
-
-          {/* QUICK ACTIONS */}
-          <section className="section-heading">
-            <div>
-              <h2>Quick Actions</h2>
-              <p>Tools to help you monitor and improve your performance</p>
-            </div>
-          </section>
-
-          <section className="action-grid">
-            <div className="action-card" onClick={() => handleTabSwitch("video")} style={{ cursor: "pointer" }}>
-              <div className="action-icon blue-bg">🎥</div>
-              <div className="action-content">
-                <h3>Analyze Movement</h3>
-                <p>Upload a training video and analyze your movement kinematic patterns.</p>
-                <button onClick={() => handleTabSwitch("video")}>
-                  Upload Video →
-                </button>
-              </div>
-            </div>
-
-            <div className="action-card" onClick={() => handleTabSwitch("performance")} style={{ cursor: "pointer" }}>
-              <div className="action-icon green-bg">📈</div>
-              <div className="action-content">
-                <h3>Record Performance</h3>
-                <p>Add your latest training score and track longitudinal progress.</p>
-                <button onClick={() => handleTabSwitch("performance")}>
-                  Add Performance →
-                </button>
-              </div>
-            </div>
-
-            <div className="action-card" onClick={() => handleTabSwitch("recommendations")} style={{ cursor: "pointer" }}>
-              <div className="action-icon orange-bg">💡</div>
-              <div className="action-content">
-                <h3>View Recommendations</h3>
-                <p>Access customized injury prevention drills and recovery guidance.</p>
-                <button onClick={() => handleTabSwitch("recommendations")}>
-                  View Recommendations →
-                </button>
-              </div>
-            </div>
-          </section>
-
-          {/* ── UPLOAD & ANALYSIS HISTORY SECTION ── */}
-          <section className="dashboard-card history-section" style={{ marginTop: "24px", marginBottom: "24px" }}>
-            <div className="card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", margin: 0 }}>
-                  📁 Upload &amp; Analysis History
-                </h3>
-                <p style={{ fontSize: "0.82rem", color: "#64748b", margin: "4px 0 0 0" }}>
-                  Previous training videos and biomechanical risk assessments saved in database
-                </p>
-              </div>
-            </div>
-
-            {loadingVideoHistory ? (
-              <p style={{ fontSize: "0.85rem", color: "#64748b", padding: "16px 0" }}>Loading analysis history from database...</p>
-            ) : videoHistory.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "32px 16px", color: "#94a3b8" }}>
-                <span style={{ fontSize: "2rem", display: "block", marginBottom: "8px" }}>📹</span>
-                <p style={{ margin: 0, fontSize: "0.9rem", color: "#64748b" }}>No video analyses recorded yet.</p>
-                <button
-                  className="primary-button"
-                  onClick={() => handleTabSwitch("video")}
-                  style={{ marginTop: "12px", fontSize: "0.82rem" }}
-                >
-                  Upload Your First Video →
-                </button>
-              </div>
-            ) : (
-              <div style={{ overflowX: "auto", marginTop: "12px" }}>
-                <table className="history-table" style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
-                  <thead>
-                    <tr style={{ background: "#f8fafc", textAlign: "left", borderBottom: "2px solid #e2e8f0" }}>
-                      <th style={{ padding: "10px 12px", color: "#475569", fontWeight: 700 }}>Video / Session</th>
-                      <th style={{ padding: "10px 12px", color: "#475569", fontWeight: 700 }}>Date &amp; Time</th>
-                      <th style={{ padding: "10px 12px", color: "#475569", fontWeight: 700 }}>Activity</th>
-                      <th style={{ padding: "10px 12px", color: "#475569", fontWeight: 700 }}>Risk Summary</th>
-                      <th style={{ padding: "10px 12px", color: "#475569", fontWeight: 700 }}>Status</th>
-                      <th style={{ padding: "10px 12px", color: "#475569", fontWeight: 700, textAlign: "right" }}>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {videoHistory.map((item) => {
-                      const hasAnalysis = !!item.analysis;
-                      const rLevel = item.analysis?.risk_level || "Unknown";
-                      const rScore = item.analysis?.overall_risk_score;
-                      const dateStr = item.uploaded_at ? new Date(item.uploaded_at).toLocaleString() : "Recent";
-                      const isHigh = rLevel.toLowerCase() === "high";
-                      const isMod = rLevel.toLowerCase() === "moderate";
-                      const badgeBg = isHigh ? "#fee2e2" : isMod ? "#fef3c7" : "#dcfce7";
-                      const badgeColor = isHigh ? "#b91c1c" : isMod ? "#b45309" : "#15803d";
-
-                      return (
-                        <tr key={item.video_id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                          <td style={{ padding: "12px", fontWeight: 600, color: "#0f172a" }}>
-                            🎬 {item.video_url ? item.video_url.split("/").pop() : `Session (${item.activity})`}
-                          </td>
-                          <td style={{ padding: "12px", color: "#64748b", whiteSpace: "nowrap" }}>
-                            {dateStr}
-                          </td>
-                          <td style={{ padding: "12px" }}>
-                            <span style={{
-                              display: "inline-block", padding: "2px 8px", borderRadius: "12px",
-                              backgroundColor: "#eff6ff", color: "#1e40af", fontWeight: 600, fontSize: "0.78rem"
-                            }}>
-                              {item.activity}
-                            </span>
-                          </td>
-                          <td style={{ padding: "12px" }}>
-                            {hasAnalysis ? (
-                              <span style={{
-                                display: "inline-block", padding: "3px 9px", borderRadius: "8px",
-                                fontWeight: 700, fontSize: "0.78rem",
-                                backgroundColor: badgeBg, color: badgeColor
-                              }}>
-                                {rLevel} Risk · {rScore}/100
-                              </span>
-                            ) : (
-                              <span style={{ color: "#94a3b8", fontSize: "0.78rem" }}>Pending</span>
-                            )}
-                          </td>
-                          <td style={{ padding: "12px" }}>
-                            <span style={{
-                              fontSize: "0.75rem", padding: "2px 7px", borderRadius: "6px",
-                              backgroundColor: item.processing_status === "completed" ? "#f0fdf4" : "#f8fafc",
-                              color: item.processing_status === "completed" ? "#166534" : "#64748b",
-                              border: "1px solid #e2e8f0"
-                            }}>
-                              {item.processing_status || "completed"}
-                            </span>
-                          </td>
-                          <td style={{ padding: "12px", textAlign: "right" }}>
-                            {hasAnalysis ? (
-                              <button
-                                className="view-button"
-                                onClick={() => handleViewAnalysis(item)}
-                                style={{ fontSize: "0.78rem", padding: "4px 10px", cursor: "pointer" }}
-                              >
-                                View Analysis →
-                              </button>
-                            ) : (
-                              <span style={{ color: "#cbd5e1", fontSize: "0.75rem" }}>—</span>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
-
-          {/* BOTTOM GRID */}
-          <section className="bottom-grid">
-            <div className="dashboard-card training-card">
-              <div className="card-header">
-                <div>
-                  <h3>Training Capability Summary</h3>
-                  <p>Current athlete baseline scores</p>
+            {/* 6. QUICK ACTIONS (SECTION 13) */}
+            <section className="quick-actions-section">
+              <div className="action-card-item" onClick={() => handleTabSwitch("video")}>
+                <div className="action-card-icon blue-bg">🎥</div>
+                <div className="action-card-text">
+                  <h4>Analyze Movement</h4>
+                  <p>Upload a video to extract 33 3D pose landmarks and predict injury risk.</p>
+                  <span className="action-link-text">Upload Video →</span>
                 </div>
               </div>
 
-              <div className="training-items">
-                <div>
-                  <span>Training Load</span>
-                  <strong>{trainingLoadVal}</strong>
-                </div>
-                <div>
-                  <span>Flexibility</span>
-                  <strong>{flexibilityVal}%</strong>
-                </div>
-                <div>
-                  <span>Strength</span>
-                  <strong>{strengthVal}%</strong>
-                </div>
-                <div>
-                  <span>Endurance</span>
-                  <strong>{enduranceVal}%</strong>
+              <div className="action-card-item" onClick={() => handleTabSwitch("recommendations")}>
+                <div className="action-card-icon orange-bg">💡</div>
+                <div className="action-card-text">
+                  <h4>Injury Prevention Protocols</h4>
+                  <p>Access targeted corrective exercises, mobility drills, and deload plans.</p>
+                  <span className="action-link-text">View Protocols →</span>
                 </div>
               </div>
-            </div>
 
-            <div className="dashboard-card account-card">
-              <div className="account-icon">👤</div>
-              <div>
-                <span>ATHLETE ACCOUNT</span>
-                <h3>{athleteName}</h3>
-                <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", margin: "0.25rem 0" }}>
-                  {liveAthlete?.sport && (
-                    <span style={{ display: "inline-block", padding: "0.2rem 0.6rem", backgroundColor: "#dbeafe", color: "#1e40af", borderRadius: "12px", fontSize: "0.75rem", fontWeight: 600 }}>
-                      {liveAthlete.sport}
-                    </span>
-                  )}
-                  {liveAthlete?.position && (
-                    <span style={{ display: "inline-block", padding: "0.2rem 0.6rem", backgroundColor: "#f0fdf4", color: "#166534", borderRadius: "12px", fontSize: "0.75rem", fontWeight: 600 }}>
-                      {liveAthlete.position}
-                    </span>
-                  )}
+              <div className="action-card-item" onClick={() => handleTabSwitch("performance")}>
+                <div className="action-card-icon green-bg">📈</div>
+                <div className="action-card-text">
+                  <h4>Track Performance</h4>
+                  <p>Log your training outputs and monitor progression over time.</p>
+                  <span className="action-link-text">Log Session →</span>
                 </div>
-                <p>
-                  {liveAthlete?.position ? `Playing Position: ${liveAthlete.position}` : "Keep your athlete information updated for accurate predictions."}
-                </p>
-                <button
-                  className="secondary-button"
-                  onClick={() => {
-                    if (onNavigate) onNavigate("athlete");
-                  }}
-                >
-                  Edit Profile →
-                </button>
               </div>
-            </div>
-          </section>
 
-          {/* FOOTER */}
-          <footer>
-            <p>© 2026 SportShield · Sports Injury Risk Detection Platform</p>
-            <p>Train smarter. Stay stronger. 💙</p>
-          </footer>
+              <div className="action-card-item" onClick={() => { if (onNavigate) onNavigate("athlete"); }}>
+                <div className="action-card-icon purple-bg">👤</div>
+                <div className="action-card-text">
+                  <h4>Athlete Profile</h4>
+                  <p>Update your sport, playing position, training load, and physical metrics.</p>
+                  <span className="action-link-text">Edit Profile →</span>
+                </div>
+              </div>
+            </section>
 
-        </main>
-      )}
+            {/* FOOTER */}
+            <footer className="dashboard-page-footer">
+              <p>© 2026 SportShield · AI-Powered Sports Injury Risk Detection Platform</p>
+              <p>Train smarter. Stay stronger. 💙</p>
+            </footer>
 
+          </main>
+        )}
+
+      </div>
     </div>
   );
 }

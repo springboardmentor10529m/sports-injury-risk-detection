@@ -888,8 +888,44 @@ def get_prediction(analysis_id: str, db: Session = Depends(get_db)):
         InjuryPrediction.analysis_id == analysis_uuid
     ).first()
 
+    analysis_record = db.query(AnalysisResult).filter(
+        AnalysisResult.analysis_id == analysis_uuid
+    ).first()
+
+    ml_eval = None
+    if analysis_record:
+        try:
+            rpe_fatigue = (analysis_record.fatigue_score / 10.0) if analysis_record.fatigue_score else 5.0
+            ml_eval = ml_interface.predict_risk(
+                features={
+                    "knee_valgus_angle_deg": analysis_record.knee_valgus or 12.0,
+                    "hip_stability_score": analysis_record.hip_stability or 80.0,
+                    "trunk_lateral_flexion_deg": analysis_record.trunk_lean or 8.0,
+                    "range_of_motion_deg": 105.0,
+                    "bilateral_symmetry_pct": analysis_record.symmetry_score or 85.0,
+                    "movement_smoothness_score": analysis_record.movement_quality or 80.0,
+                    "rpe_fatigue_score": rpe_fatigue,
+                }
+            )
+        except Exception as err:
+            print(f"Prediction ML eval note: {err}")
+
     if not prediction:
-        raise HTTPException(status_code=404, detail="Prediction not found for this analysis")
+        if not analysis_record:
+            raise HTTPException(status_code=404, detail="Prediction not found for this analysis")
+        return {
+            "prediction_id": None,
+            "analysis_id": str(analysis_record.analysis_id),
+            "acl_risk": 30.0,
+            "hamstring_risk": 25.0,
+            "ankle_risk": 20.0,
+            "shoulder_risk": 15.0,
+            "lower_back_risk": 15.0,
+            "overuse_risk": 20.0,
+            "overall_risk_score": analysis_record.overall_risk_score,
+            "risk_level": analysis_record.risk_level,
+            "ml_prediction": ml_eval
+        }
 
     return {
         "prediction_id": str(prediction.prediction_id),
@@ -899,7 +935,10 @@ def get_prediction(analysis_id: str, db: Session = Depends(get_db)):
         "ankle_risk": prediction.ankle_risk,
         "shoulder_risk": prediction.shoulder_risk,
         "lower_back_risk": prediction.lower_back_risk,
-        "overuse_risk": prediction.overuse_risk
+        "overuse_risk": prediction.overuse_risk,
+        "overall_risk_score": analysis_record.overall_risk_score if analysis_record else None,
+        "risk_level": analysis_record.risk_level if analysis_record else None,
+        "ml_prediction": ml_eval
     }
 
 
