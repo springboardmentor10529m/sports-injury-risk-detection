@@ -4,7 +4,8 @@ from .views import (
     AthleteProfileView,
     AthleteVideoUploadView,
     AthleteVideoDeleteView,
-    AthleteVideoListView
+    AthleteVideoListView,
+    NotificationListView
 )
 
 
@@ -33,5 +34,11 @@ urlpatterns = [
         AthleteVideoDeleteView.as_view(),
         name="delete-video"
     ),
+
+    path(
+        "notifications/",
+        NotificationListView.as_view(),
+        name="athlete-notifications",
+),
 
 ]

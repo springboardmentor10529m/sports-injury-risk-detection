@@ -5,10 +5,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import AthleteProfile, AthleteVideo
+from .models import AthleteProfile, AthleteVideo, Notification
 from .serializers import (
     AthleteProfileSerializer,
-    AthleteVideoSerializer
+    AthleteVideoSerializer,
+    NotificationSerializer,
 )
 
 
@@ -185,7 +186,22 @@ class AthleteVideoUploadView(APIView):
                     ]
                 )
                 
+            # Create injury-risk notification for medium/high risk
+            if video.risk_level in ["Medium", "High"]:
 
+                Notification.objects.create(
+                    athlete=athlete,
+                    notification_type="injury_risk",
+                    title=f"Injury Risk Alert: {video.risk_level}",
+                    message=(
+                        f"Your latest sports video assessment detected "
+                        f"{video.risk_level.lower()} injury risk "
+                        f"with a risk score of {video.risk_score}/100. "
+                        f"Review the movement analysis and corrective recommendations."
+                    ),
+                )   
+
+            
             if not processing_result["success"]:
 
                 return Response(
@@ -333,6 +349,37 @@ class AthleteVideoListView(APIView):
             videos,
             many=True,
             context={"request": request}
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
+        )    
+
+class NotificationListView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        try:
+            athlete = AthleteProfile.objects.get(
+                user=request.user
+            )
+
+        except AthleteProfile.DoesNotExist:
+            return Response(
+                {"error": "Athlete profile not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        notifications = Notification.objects.filter(
+            athlete=athlete
+        ).order_by("-created_at")
+
+        serializer = NotificationSerializer(
+            notifications,
+            many=True
         )
 
         return Response(

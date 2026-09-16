@@ -623,6 +623,22 @@
 
             </div>
 
+            <!-- Notifications -->
+
+            <div class="profile-card">
+
+                <h2>
+                    Notifications
+                </h2>
+
+                <div
+                    id="notificationsContent"
+                    class="profile-loading"
+                >
+                    Loading notifications...
+                </div>
+
+            </div>
 
             <!-- Statistics -->
 
@@ -730,6 +746,10 @@
                 "videosContent"
             );
 
+        const notificationsContent =
+            document.getElementById(
+                "notificationsContent"
+            );
 
         /*
          * Profile status
@@ -2058,6 +2078,204 @@
 
         }
 
+        /*
+         * Load notifications
+         */
+
+        async function loadNotifications() {
+
+            try {
+
+                const response =
+                    await fetch(
+                        "http://127.0.0.1:8000/api/athlete/notifications/",
+                        {
+                            method: "GET",
+
+                            headers: {
+                                "Authorization":
+                                    "Token " + authToken,
+
+                                "Content-Type":
+                                    "application/json"
+                            }
+                        }
+                    );
+
+
+                /*
+                 * Authentication failed
+                 */
+
+                if (response.status === 401) {
+
+                    localStorage.removeItem(
+                        "authToken"
+                    );
+
+                    localStorage.removeItem(
+                        "user"
+                    );
+
+                    alert(
+                        "Your login session has expired. Please login again."
+                    );
+
+                    window.location.href =
+                        "login.html";
+
+                    return;
+
+                }
+
+
+                /*
+                 * Other error
+                 */
+
+                if (!response.ok) {
+
+                    notificationsContent.innerHTML =
+                        `<p class="video-error">
+                            Unable to load notifications.
+                        </p>`;
+
+                    return;
+
+                }
+
+
+                const notifications =
+                    await response.json();
+
+
+                /*
+                 * No notifications
+                 */
+
+                if (notifications.length === 0) {
+
+                    notificationsContent.innerHTML =
+                        `<p class="video-empty">
+                            No notifications yet.
+                        </p>`;
+
+                    return;
+
+                }
+
+
+                /*
+                 * Create notification list
+                 */
+
+                notificationsContent.innerHTML = "";
+
+                const notificationList =
+                    document.createElement("div");
+
+                notificationList.className =
+                    "video-list";
+
+
+                notifications.forEach(
+                    function(notification) {
+
+                        const notificationItem =
+                            document.createElement("div");
+
+                        notificationItem.className =
+                            "video-item";
+
+
+                        const notificationInfo =
+                            document.createElement("div");
+
+                        notificationInfo.className =
+                            "video-info";
+
+
+                        const title =
+                            document.createElement("div");
+
+                        title.className =
+                            "video-name";
+
+                        title.textContent =
+                            notification.title;
+
+
+                        const message =
+                            document.createElement("div");
+
+                        message.className =
+                            "video-date";
+
+                        message.textContent =
+                            notification.message;
+
+
+                        const date =
+                            document.createElement("div");
+
+                        date.className =
+                            "video-date";
+
+                        date.textContent =
+                            new Date(
+                                notification.created_at
+                            ).toLocaleString();
+
+
+                        notificationInfo.appendChild(
+                            title
+                        );
+
+                        notificationInfo.appendChild(
+                            message
+                        );
+
+                        notificationInfo.appendChild(
+                            date
+                        );
+
+
+                        notificationItem.appendChild(
+                            notificationInfo
+                        );
+
+
+                        notificationList.appendChild(
+                            notificationItem
+                        );
+
+                    }
+                );
+
+
+                notificationsContent.appendChild(
+                    notificationList
+                );
+
+                }
+
+
+                catch (error) {
+
+                    console.error(
+                        "Notification loading error:",
+                        error
+                    );
+
+                    notificationsContent.innerHTML =
+                        `<p class="video-error">
+                            Unable to connect to the server.
+                            Please make sure Django is running.
+                    </p>`;
+
+                }
+
+            }
 
         /*
          * Convert gender
@@ -2219,7 +2437,7 @@
          */
 
         loadVideos();
-
+        loadNotifications();
     </script>
 
 </body>

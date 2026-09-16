@@ -143,3 +143,41 @@ class AthleteVideo(models.Model):
     )
     def __str__(self):
         return f"{self.athlete.full_name} - {self.video.name}"
+
+class Notification(models.Model):
+
+    NOTIFICATION_TYPES = [
+        ("injury_risk", "Injury Risk"),
+        ("movement_alert", "High-Risk Movement"),
+        ("training_load", "Training Load Warning"),
+        ("recovery", "Recovery Reminder"),
+        ("assessment", "Assessment Completion"),
+    ]
+
+    athlete = models.ForeignKey(
+        AthleteProfile,
+        on_delete=models.CASCADE,
+        related_name="notifications"
+    )
+
+    notification_type = models.CharField(
+        max_length=30,
+        choices=NOTIFICATION_TYPES
+    )
+
+    title = models.CharField(
+        max_length=200
+    )
+
+    message = models.TextField()
+
+    is_read = models.BooleanField(
+        default=False
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return f"{self.athlete.full_name} - {self.title}"    
