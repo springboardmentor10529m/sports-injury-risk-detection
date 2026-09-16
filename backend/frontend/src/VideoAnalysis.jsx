@@ -611,6 +611,15 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
     // Process single video frame -> detect with MediaPipe or match timestamp -> draw on canvas
     const processCurrentVideoFrame = () => {
       if (!video || !canvas) return;
+
+      // Ensure canvas internal coordinate space matches the actual rendered box
+      const clientW = canvas.clientWidth || video.clientWidth || 640;
+      const clientH = canvas.clientHeight || video.clientHeight || 360;
+      if (clientW > 0 && clientH > 0 && (canvas.width !== clientW || canvas.height !== clientH)) {
+        canvas.width = clientW;
+        canvas.height = clientH;
+      }
+
       const currentTime = video.currentTime || 0;
       const nowMs = performance.now();
 

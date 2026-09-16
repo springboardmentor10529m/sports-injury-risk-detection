@@ -19,7 +19,7 @@ def ensure_pose_landmarker_model() -> str:
     return model_path
 
 
-def extract_pose_landmarks_from_video(video_path: str, max_frames: int = 120) -> Dict[str, Any]:
+def extract_pose_landmarks_from_video(video_path: str, max_frames: int = 240) -> Dict[str, Any]:
     """
     Reads a real-life video file frame-by-frame, performs pose estimation using MediaPipe PoseLandmarker,
     and extracts 3D body keypoint trajectories across sampled frames.
