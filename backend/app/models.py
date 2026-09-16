@@ -195,6 +195,7 @@ class AthleteProfile(Base):
     # Days since most recent injury; None = no prior injury.
     days_since_last_injury: Mapped[int] = mapped_column(Integer, nullable=True)
     current_pain_flag: Mapped[bool] = mapped_column(Boolean, default=False)
+    injury_context: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
     # Training load factors - feeds the 15% term.
     weekly_training_hours: Mapped[float] = mapped_column(Float, default=0.0)

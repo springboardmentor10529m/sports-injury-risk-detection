@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import AfterValidator, BaseModel, EmailStr, Field
 
@@ -78,7 +78,21 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 
+class InjuryContext(BaseModel):
+    """Optional self-reported context; not additional scoring inputs."""
+    body_area: str = Field(default="", max_length=100)
+    side: Literal["unknown", "left", "right", "both", "not_applicable"] = "unknown"
+    injury_type: str = Field(default="", max_length=150)
+    timeframe: str = Field(default="", max_length=100)
+    recovery_status: Literal["unknown", "recovered", "recovering", "ongoing"] = "unknown"
+    limitations: str = Field(default="", max_length=1000)
+    pain_location: str = Field(default="", max_length=100)
+    pain_severity: int | None = Field(default=None, ge=0, le=10)
+    clinician_restrictions: str = Field(default="", max_length=1000)
+
+
 class AthleteProfileOut(BaseModel):
+    injury_context: InjuryContext | None = None
     id: str
     sport: str
     position: str | None
@@ -144,6 +158,7 @@ class UserOut(BaseModel):
 
 
 class AthleteProfileUpdate(BaseModel):
+    injury_context: InjuryContext | None = None
     sport: str | None = None
     position: str | None = None
     age: int | None = None

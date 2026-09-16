@@ -116,6 +116,25 @@ def test_auth_throttle_and_closed_registration(client):
     assert response.headers["retry-after"] == "60"
 
 
+def test_injury_context_persists_and_is_account_scoped(client):
+    first = register(client, "first@example.com")
+    second = register(client, "second@example.com")
+    details = {"body_area": "knee", "side": "right", "injury_type": "unknown",
+               "timeframe": "2025", "recovery_status": "recovering", "pain_severity": 0,
+               "limitations": "Avoiding deep bends", "clinician_restrictions": "As advised at appointment"}
+    before = client.get("/api/athlete/profile", headers=first).json()
+    response = client.patch("/api/athlete/profile", headers=first, json={"injury_context": details})
+    assert response.status_code == 200
+    stored = client.get("/api/athlete/profile", headers=first).json()
+    assert stored["injury_context"]["pain_severity"] == 0
+    assert stored["injury_context"]["body_area"] == "knee"
+    assert stored["previous_injury_count"] == before["previous_injury_count"]
+    assert client.get("/api/athlete/profile", headers=second).json()["injury_context"] is None
+    for invalid in [{"pain_severity": 11}, {"side": "invalid"}, {"limitations": "x" * 1001}]:
+        assert client.patch("/api/athlete/profile", headers=first, json={"injury_context": invalid}).status_code == 422
+    assert client.patch("/api/athlete/profile", headers=first, json={"injury_context": None}).json()["injury_context"] is None
+
+
 def test_worker_terminates_on_lost_lock(monkeypatch):
     child = Mock()
     child.is_alive.side_effect = [True, True, False]

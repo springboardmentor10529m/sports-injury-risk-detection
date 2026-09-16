@@ -6,9 +6,10 @@ export default function Profile() {
   const [profile, setProfile] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    getProfile().then((res) => setProfile(res.data));
+    getProfile().then((res) => setProfile(res.data)).catch(() => setError("Could not load your profile. Please refresh to retry."));
   }, []);
 
   function set(key, value) {
@@ -18,8 +19,10 @@ export default function Profile() {
 
   async function handleSave() {
     setSaving(true);
+    setError("");
     try {
       const payload = {
+        injury_context: profile.injury_context || null,
         sport: profile.sport,
         position: profile.position,
         age: Number(profile.age),
@@ -36,19 +39,26 @@ export default function Profile() {
       const res = await updateProfile(payload);
       setProfile(res.data);
       setSaved(true);
+    } catch (err) {
+      setError(err.response?.data?.detail || "Could not save your profile. Please try again.");
     } finally {
       setSaving(false);
     }
   }
 
-  if (!profile) return <p style={{ color: "var(--text-dim)" }}>Loading...</p>;
+  if (!profile) return <p style={{ color: "var(--text-dim)" }}>{error || "Loading..."}</p>;
+
+  const context = profile.injury_context || {};
+  function setContext(key, value) {
+    set("injury_context", { ...context, [key]: value });
+  }
 
   return (
     <div style={{ maxWidth: 600 }}>
       <div className="eyebrow" style={{ marginBottom: 6 }}>Account</div>
       <h1 style={{ fontSize: 26, marginBottom: 4 }}>My Profile</h1>
       <p style={{ color: "var(--text-dim)", marginBottom: 24 }}>
-        These fields feed the historical-injury (20%) and training-load (15%) terms of your risk score.
+        Keep your training and injury information up to date. Injury count, recency, pain flag and workload inform the current rule-based score. Additional injury details are saved as context only.
       </p>
 
       <div className="card animate-in">
@@ -107,6 +117,40 @@ export default function Profile() {
           </div>
         </div>
 
+        <section style={{ borderTop: "1px solid var(--border)", marginTop: 20, paddingTop: 20 }}>
+          <h2 style={{ fontSize: 18 }}>Injury and symptom details</h2>
+          <p style={{ fontSize: 13, color: "var(--text-dim)", marginBottom: 18 }}>
+            Optional, self-reported details about your most recent or most relevant injury and current symptoms.
+            Leave unknown details blank. These fields do not change your score or generate additional recommendations.
+          </p>
+          {[["body_area", "Injured body area", "For example: knee, ankle, shoulder", 100],
+            ["injury_type", "Injury type (if known)", "Use a diagnosed type, or leave blank if unknown", 150],
+            ["timeframe", "When did it happen?", "Approximate month/year or timeframe", 100],
+            ["pain_location", "Current pain location (if any)", "For example: outside of right knee", 100]].map(([key, label, placeholder, max]) =>
+            <div className="field" key={key}><label htmlFor={key}>{label}</label>
+              <input id={key} maxLength={max} value={context[key] || ""} placeholder={placeholder} onChange={e => setContext(key, e.target.value)} />
+            </div>)}
+          <div className="field-row">
+            <div className="field"><label htmlFor="injury-side">Injury side</label>
+              <select id="injury-side" value={context.side || "unknown"} onChange={e => setContext("side", e.target.value)}>
+                <option value="unknown">Unknown / not provided</option><option value="left">Left</option><option value="right">Right</option><option value="both">Both</option><option value="not_applicable">Not applicable</option>
+              </select></div>
+            <div className="field"><label htmlFor="recovery">Recovery status</label>
+              <select id="recovery" value={context.recovery_status || "unknown"} onChange={e => setContext("recovery_status", e.target.value)}>
+                <option value="unknown">Unknown / not provided</option><option value="recovered">Recovered</option><option value="recovering">Recovering</option><option value="ongoing">Ongoing issue</option>
+              </select></div>
+          </div>
+          <div className="field"><label htmlFor="pain-severity">Current pain severity (0 = none, 10 = worst; blank = unknown)</label>
+            <select id="pain-severity" value={context.pain_severity ?? ""} onChange={e => setContext("pain_severity", e.target.value === "" ? null : Number(e.target.value))}>
+              <option value="">Not provided</option>{Array.from({ length: 11 }, (_, n) => <option key={n} value={n}>{n}</option>)}
+            </select></div>
+          {[["limitations", "Current movement or training limitations"], ["clinician_restrictions", "Restrictions provided by your clinician (if any)"]].map(([key, label]) =>
+            <div className="field" key={key}><label htmlFor={key}>{label}</label>
+              <textarea id={key} rows={3} maxLength={1000} value={context[key] || ""} onChange={e => setContext(key, e.target.value)} />
+            </div>)}
+          <p style={{ fontSize: 12, color: "var(--text-dim)" }}>Saving updates your profile, not previous analysis reports. The application does not diagnose injuries or clear you to return to sport.</p>
+        </section>
+        {error && <p role="alert" className="error-banner">{error}</p>}
         <button className="btn btn-primary" disabled={saving} onClick={handleSave}>
           {saving ? "Saving..." : saved ? "Saved ✓" : "Save changes"}
         </button>
