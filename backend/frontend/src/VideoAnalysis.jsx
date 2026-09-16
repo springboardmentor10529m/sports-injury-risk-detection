@@ -1028,28 +1028,6 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
         {!processing && analysisResult && predictionResult && (
           <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
 
-            {/* VISUAL ARCHITECTURE PIPELINE FLOW */}
-            <div className="va-card" style={{ padding: "14px 20px", background: "linear-gradient(90deg, #f8fafc, #eff6ff)", border: "1px solid #bfdbfe" }}>
-              <div style={{ fontSize: "0.72rem", fontWeight: 800, color: "#2563eb", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "8px" }}>
-                AI PIPELINE EXECUTION TRACE
-              </div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px", fontSize: "0.8rem", fontWeight: 600, color: "#334155" }}>
-                <span>📹 Video Input</span>
-                <span style={{ color: "#94a3b8" }}>→</span>
-                <span>🦴 MediaPipe 33 Pose Landmarks</span>
-                <span style={{ color: "#94a3b8" }}>→</span>
-                <span>📐 7 Kinematic Features</span>
-                <span style={{ color: "#94a3b8" }}>→</span>
-                <span>🤖 Random Forest Inference</span>
-                <span style={{ color: "#94a3b8" }}>→</span>
-                <span style={{ color: riskColour(predictionResult.risk_level), fontWeight: 800 }}>
-                  🛡️ {predictionResult.risk_level} Risk ({predictionResult.overall_risk_score}/100)
-                </span>
-                <span style={{ color: "#94a3b8" }}>→</span>
-                <span>💡 Targeted Prevention</span>
-              </div>
-            </div>
-
             {/* TOP GRID: VIDEO PLAYER WITH SKELETON CANVAS OVERLAY (LEFT) + OVERALL RISK (RIGHT) */}
             <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "20px", alignItems: "stretch" }}>
 
@@ -1074,40 +1052,6 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
                 </div>
 
                 <div className="video-player-wrapper" style={{ position: "relative", width: "100%", height: "300px", background: "#090d16", borderRadius: "10px", overflow: "hidden" }}>
-                  {/* Subtle Viewfinder Reticles */}
-                  {showSkeleton && (
-                    <>
-                      <div className="hud-corner hud-top-left" />
-                      <div className="hud-corner hud-top-right" />
-                      <div className="hud-corner hud-bottom-left" />
-                      <div className="hud-corner hud-bottom-right" />
-                    </>
-                  )}
-
-                  {/* Professional In-Video Biomechanics HUD Header */}
-                  {showSkeleton && (
-                    <div className="video-hud-overlay">
-                      <div className="video-hud-left">
-                        <span className="hud-tag">AI POSE ANALYSIS</span>
-                        <span className="hud-sub">MediaPipe 33D Pose Tracking</span>
-                      </div>
-                      <div className="video-hud-right">
-                        <span className="hud-rec-dot">●</span>
-                        <span className="hud-frame">
-                          FRAME: {String(currentFrameIdx + 1).padStart(2, "0")} / {String(poseFrames.length || 30).padStart(2, "0")}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Subtle Bottom Telemetry Bar */}
-                  {showSkeleton && (
-                    <div className="video-hud-bottom">
-                      <span className="hud-bottom-tag">MODEL: MEDIAPIPE-33D</span>
-                      <span className="hud-bottom-tag">KINEMATICS: ACTIVE</span>
-                    </div>
-                  )}
-
                   {videoPreviewUrl ? (
                     <video
                       ref={videoRef}
