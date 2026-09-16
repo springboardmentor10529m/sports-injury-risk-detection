@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Float, Text, DateTime, Integer
+from sqlalchemy import Column, String, Float, Text, DateTime, Integer, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from database import Base
 
@@ -115,6 +115,8 @@ class AnalysisResult(Base):
 
     overall_risk_score = Column(Float)
     risk_level = Column(String)
+
+    pose_frames = Column(JSON, nullable=True)
 
     created_at = Column(DateTime)
 

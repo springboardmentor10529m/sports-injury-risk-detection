@@ -27,6 +27,7 @@ def init_database() -> None:
         try:
             conn.execute(text("ALTER TABLE athletes ADD COLUMN IF NOT EXISTS training_level VARCHAR(50);"))
             conn.execute(text("ALTER TABLE athletes ADD COLUMN IF NOT EXISTS gender VARCHAR(50);"))
+            conn.execute(text("ALTER TABLE analysis_results ADD COLUMN IF NOT EXISTS pose_frames JSON;"))
             conn.commit()
         except Exception as e:
             print(f"Column check note: {e}")

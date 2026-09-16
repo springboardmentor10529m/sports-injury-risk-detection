@@ -597,53 +597,18 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
   useEffect(() => {
     if (!analysisResult) return;
 
-    let localFrames = poseFrames;
-
-    // Generate smooth reference kinematic pose frames if poseFrames not in memory
-    if (!localFrames || localFrames.length === 0) {
-      const baseFrames = [];
-      for (let i = 0; i < 30; i++) {
-        const phase = (i / 30) * Math.PI * 2;
-        const kneeFlex = Math.sin(phase) * 0.08;
-        const hipShift = Math.cos(phase) * 0.02;
-        const ankleY = 0.88 + Math.sin(phase) * 0.03;
-
-        baseFrames.push({
-          frame_index: i,
-          timestamp: (i / 30) * 3.0,
-          landmarks: {
-            0: { x: 0.5, y: 0.15, visibility: 0.95 },
-            11: { x: 0.42, y: 0.28, visibility: 0.95 },
-            12: { x: 0.58, y: 0.28, visibility: 0.95 },
-            13: { x: 0.38 + Math.cos(phase) * 0.03, y: 0.42, visibility: 0.9 },
-            14: { x: 0.62 - Math.cos(phase) * 0.03, y: 0.42, visibility: 0.9 },
-            15: { x: 0.35 + Math.cos(phase) * 0.04, y: 0.55, visibility: 0.9 },
-            16: { x: 0.65 - Math.cos(phase) * 0.04, y: 0.55, visibility: 0.9 },
-            23: { x: 0.44 + hipShift, y: 0.52, visibility: 0.95 },
-            24: { x: 0.56 + hipShift, y: 0.52, visibility: 0.95 },
-            25: { x: 0.43 - kneeFlex * 0.4, y: 0.70 + kneeFlex, visibility: 0.95 },
-            26: { x: 0.57 + kneeFlex * 0.4, y: 0.70 - kneeFlex * 0.5, visibility: 0.95 },
-            27: { x: 0.42, y: ankleY, visibility: 0.95 },
-            28: { x: 0.58, y: 0.88 - Math.sin(phase) * 0.02, visibility: 0.95 },
-            31: { x: 0.40, y: ankleY + 0.04, visibility: 0.9 },
-            32: { x: 0.60, y: 0.92, visibility: 0.9 }
-          }
-        });
-      }
-      localFrames = baseFrames;
-    }
+    const localFrames = poseFrames || [];
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const totalFramesCount = localFrames.length;
     let isRunning = true;
     let rvfcId = null;
     let rafId = null;
     let lastRenderedTime = -1;
 
-    // Process single video frame -> detect with MediaPipe -> draw on canvas
+    // Process single video frame -> detect with MediaPipe or match timestamp -> draw on canvas
     const processCurrentVideoFrame = () => {
       if (!video || !canvas) return;
       const currentTime = video.currentTime || 0;
@@ -651,6 +616,7 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
 
       let activeLandmarks = null;
       let newResultReceived = false;
+      let matchedFrameIdx = 0;
 
       // 1. Direct MediaPipe Pose Landmark Detection from active video frame pixels
       if (poseLandmarkerRef.current && video.readyState >= 2) {
@@ -661,7 +627,6 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
             newResultReceived = true;
           }
         } catch (detErr) {
-          // If timestamp collision occurs during rapid playback
           try {
             const res = poseLandmarkerRef.current.detectForVideo(video, nowMs + 1);
             if (res && res.landmarks && res.landmarks.length > 0 && res.landmarks[0].length > 0) {
@@ -672,30 +637,27 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
         }
       }
 
-      // 2. Trajectory frame lookup by video timestamp if client detector is warming up
-      if (!activeLandmarks && localFrames && localFrames.length > 0) {
-        let frameIdx = 0;
-        if (video.duration && video.duration > 0 && !isNaN(video.duration)) {
-          const progress = Math.max(0, Math.min(1, currentTime / video.duration));
-          frameIdx = Math.min(totalFramesCount - 1, Math.floor(progress * totalFramesCount));
-        } else {
-          let bestDiff = Infinity;
-          for (let i = 0; i < localFrames.length; i++) {
-            const fTime = localFrames[i].timestamp ?? (i * (1 / 30));
-            const diff = Math.abs(fTime - currentTime);
-            if (diff < bestDiff) {
-              bestDiff = diff;
-              frameIdx = i;
-            }
+      // 2. Trajectory frame lookup strictly by video timestamp / currentTime
+      if (localFrames && localFrames.length > 0) {
+        let bestDiff = Infinity;
+        for (let i = 0; i < localFrames.length; i++) {
+          const fTime = (localFrames[i].timestamp !== undefined && localFrames[i].timestamp !== null)
+            ? Number(localFrames[i].timestamp)
+            : (i * (1 / 30));
+          const diff = Math.abs(fTime - currentTime);
+          if (diff < bestDiff) {
+            bestDiff = diff;
+            matchedFrameIdx = i;
           }
         }
-        const serverFrame = localFrames[frameIdx];
-        if (serverFrame && serverFrame.landmarks) {
-          activeLandmarks = serverFrame.landmarks;
+
+        // If client detector did not provide landmarks, use the timestamp-matched frame
+        if (!activeLandmarks && localFrames[matchedFrameIdx]?.landmarks) {
+          activeLandmarks = localFrames[matchedFrameIdx].landmarks;
         }
       }
 
-      // 3. Render skeleton onto canvas for this exact frame
+      // 3. Render skeleton onto canvas for this exact video frame
       if (activeLandmarks) {
         drawPoseSkeleton(activeLandmarks, canvas, canvas.width, canvas.height, video);
       } else {
@@ -704,22 +666,22 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
       }
 
       // 4. Update HUD frame index based on exact playback time
-      const videoFps = 30;
-      const totalVideoFrames = Math.max(1, Math.floor((video.duration || 1) * videoFps));
-      const currentFrameNumber = Math.min(
-        totalVideoFrames,
-        Math.max(1, Math.floor(currentTime * videoFps) + 1)
-      );
-      setCurrentFrameIdx(currentFrameNumber - 1);
+      if (localFrames.length > 0) {
+        setCurrentFrameIdx(matchedFrameIdx);
+      } else {
+        const videoFps = 30;
+        const currentFrameNumber = Math.max(0, Math.floor(currentTime * videoFps));
+        setCurrentFrameIdx(currentFrameNumber);
+      }
 
-      // 5. DEBUG LOGS: Print real-time synchronization telemetry
+      // 5. DEBUG LOGS: Real-time synchronization telemetry
       if (Math.abs(currentTime - lastRenderedTime) > 0.05 || !video.paused) {
         lastRenderedTime = currentTime;
-        console.log(`[MediaPipe Pose Tracking] video.currentTime: ${currentTime.toFixed(3)}s | processed timestamp: ${nowMs.toFixed(0)}ms | newResultReceived: ${newResultReceived} | Frame: ${currentFrameNumber}/${totalVideoFrames}`);
+        console.log(`[MediaPipe Pose Tracking] video.currentTime: ${currentTime.toFixed(3)}s | processed timestamp: ${nowMs.toFixed(0)}ms | newResultReceived: ${newResultReceived} | Frame: ${(matchedFrameIdx || 0) + 1}/${localFrames.length || 1}`);
       }
     };
 
-    // Callback when hardware presents a new video frame
+    // Callback when hardware presents a new video frame (requestVideoFrameCallback)
     const onVideoFramePresented = () => {
       if (!isRunning) return;
       processCurrentVideoFrame();
@@ -769,7 +731,7 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
       processCurrentVideoFrame();
     };
 
-    // Initial frame-0 render
+    // Initial render for frame-0 / current position
     if (video) {
       processCurrentVideoFrame();
       video.addEventListener("play", handlePlay);
@@ -1181,6 +1143,7 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
                       muted
                       loop
                       playsInline
+                      crossOrigin="anonymous"
                       style={{
                         width: "100%", height: "100%", objectFit: "contain",
                         position: "absolute", top: 0, left: 0, zIndex: 1

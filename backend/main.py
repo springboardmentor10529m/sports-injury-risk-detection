@@ -523,6 +523,7 @@ def create_analysis(
         movement_quality=biomechanics["movement_quality"],
         overall_risk_score=final_risk_score,
         risk_level=final_risk_level,
+        pose_frames=frames_data,
         created_at=datetime.utcnow()
     )
 
@@ -1004,6 +1005,7 @@ def get_videos_with_analysis(athlete_id: str, db: Session = Depends(get_db)):
                 "movement_quality": analysis.movement_quality,
                 "overall_risk_score": analysis.overall_risk_score,
                 "risk_level": analysis.risk_level,
+                "pose_frames": analysis.pose_frames or [],
                 "created_at": analysis.created_at.isoformat() if analysis.created_at else None,
                 "prediction": {
                     "prediction_id": str(prediction.prediction_id),
@@ -1076,6 +1078,7 @@ def get_analysis_detail(analysis_id: str, db: Session = Depends(get_db)):
         "movement_quality": analysis.movement_quality,
         "overall_risk_score": analysis.overall_risk_score,
         "risk_level": analysis.risk_level,
+        "pose_frames": analysis.pose_frames or [],
         "created_at": analysis.created_at.isoformat() if analysis.created_at else None,
         "prediction": {
             "prediction_id": str(prediction.prediction_id),
