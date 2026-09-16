@@ -154,11 +154,11 @@ function Dashboard({ athleteData, onNavigate, onLogout }) {
   const riskScore = latestAnalysis?.overall_risk_score ?? null;
   const movementQuality = latestAnalysis?.movement_quality ?? null;
 
-  // ML Probabilities from inference response
+  // ML Probabilities strictly from Random Forest inference response
   const mlProbabilities = latestPrediction?.ml_prediction?.class_probabilities || null;
-  const probLow = mlProbabilities ? Math.round((mlProbabilities.LOW || 0) * 100) : (riskLevel.toLowerCase() === "low" ? 85 : 15);
-  const probMod = mlProbabilities ? Math.round((mlProbabilities.MODERATE || 0) * 100) : (riskLevel.toLowerCase() === "moderate" ? 70 : 20);
-  const probHigh = mlProbabilities ? Math.round((mlProbabilities.HIGH || 0) * 100) : (riskLevel.toLowerCase() === "high" ? 80 : 10);
+  const probLow = mlProbabilities && mlProbabilities.LOW != null ? Math.round(mlProbabilities.LOW * 100) : null;
+  const probMod = mlProbabilities && mlProbabilities.MODERATE != null ? Math.round(mlProbabilities.MODERATE * 100) : null;
+  const probHigh = mlProbabilities && mlProbabilities.HIGH != null ? Math.round(mlProbabilities.HIGH * 100) : null;
 
   // Performance Chart Bars (Real Sessions)
   const chartBars = recentRecords.length > 0
@@ -506,37 +506,43 @@ function Dashboard({ athleteData, onNavigate, onLogout }) {
                       <span>Model confidence across 3 risk categories</span>
                     </div>
                     
-                    <div className="prob-bars-grid">
-                      <div className="prob-bar-card">
-                        <div className="prob-label-row">
-                          <span className="prob-name green-text">🟢 LOW RISK</span>
-                          <span className="prob-val">{probLow}%</span>
+                    {probLow != null ? (
+                      <div className="prob-bars-grid">
+                        <div className="prob-bar-card">
+                          <div className="prob-label-row">
+                            <span className="prob-name green-text">🟢 LOW RISK</span>
+                            <span className="prob-val">{probLow}%</span>
+                          </div>
+                          <div className="prob-track">
+                            <div className="prob-fill fill-green" style={{ width: `${probLow}%` }}></div>
+                          </div>
                         </div>
-                        <div className="prob-track">
-                          <div className="prob-fill fill-green" style={{ width: `${probLow}%` }}></div>
-                        </div>
-                      </div>
 
-                      <div className="prob-bar-card">
-                        <div className="prob-label-row">
-                          <span className="prob-name orange-text">🟡 MODERATE RISK</span>
-                          <span className="prob-val">{probMod}%</span>
+                        <div className="prob-bar-card">
+                          <div className="prob-label-row">
+                            <span className="prob-name orange-text">🟡 MODERATE RISK</span>
+                            <span className="prob-val">{probMod}%</span>
+                          </div>
+                          <div className="prob-track">
+                            <div className="prob-fill fill-orange" style={{ width: `${probMod}%` }}></div>
+                          </div>
                         </div>
-                        <div className="prob-track">
-                          <div className="prob-fill fill-orange" style={{ width: `${probMod}%` }}></div>
-                        </div>
-                      </div>
 
-                      <div className="prob-bar-card">
-                        <div className="prob-label-row">
-                          <span className="prob-name red-text">🔴 HIGH RISK</span>
-                          <span className="prob-val">{probHigh}%</span>
-                        </div>
-                        <div className="prob-track">
-                          <div className="prob-fill fill-red" style={{ width: `${probHigh}%` }}></div>
+                        <div className="prob-bar-card">
+                          <div className="prob-label-row">
+                            <span className="prob-name red-text">🔴 HIGH RISK</span>
+                            <span className="prob-val">{probHigh}%</span>
+                          </div>
+                          <div className="prob-track">
+                            <div className="prob-fill fill-red" style={{ width: `${probHigh}%` }}></div>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    ) : (
+                      <p style={{ margin: 0, fontSize: "0.85rem", color: "#64748b" }}>
+                        ML Probability Confidence: {latestPrediction?.ml_probability ? `${Math.round(latestPrediction.ml_probability * 100)}%` : "Model Inference Complete"}
+                      </p>
+                    )}
                   </div>
 
                   {/* JOINT RISK BREAKDOWN */}
@@ -791,37 +797,43 @@ function Dashboard({ athleteData, onNavigate, onLogout }) {
                     </div>
 
                     {/* MODEL PROBABILITIES BARS */}
-                    <div className="model-probabilities-block">
-                      <div className="prob-row-item">
-                        <div className="prob-name-flex">
-                          <span>Low Risk Probability</span>
-                          <strong>{probLow}%</strong>
+                    {probLow != null ? (
+                      <div className="model-probabilities-block">
+                        <div className="prob-row-item">
+                          <div className="prob-name-flex">
+                            <span>Low Risk Probability</span>
+                            <strong>{probLow}%</strong>
+                          </div>
+                          <div className="progress-track">
+                            <div className="progress-fill fill-green" style={{ width: `${probLow}%` }}></div>
+                          </div>
                         </div>
-                        <div className="progress-track">
-                          <div className="progress-fill fill-green" style={{ width: `${probLow}%` }}></div>
-                        </div>
-                      </div>
 
-                      <div className="prob-row-item">
-                        <div className="prob-name-flex">
-                          <span>Moderate Risk Probability</span>
-                          <strong>{probMod}%</strong>
+                        <div className="prob-row-item">
+                          <div className="prob-name-flex">
+                            <span>Moderate Risk Probability</span>
+                            <strong>{probMod}%</strong>
+                          </div>
+                          <div className="progress-track">
+                            <div className="progress-fill fill-orange" style={{ width: `${probMod}%` }}></div>
+                          </div>
                         </div>
-                        <div className="progress-track">
-                          <div className="progress-fill fill-orange" style={{ width: `${probMod}%` }}></div>
-                        </div>
-                      </div>
 
-                      <div className="prob-row-item">
-                        <div className="prob-name-flex">
-                          <span>High Risk Probability</span>
-                          <strong>{probHigh}%</strong>
-                        </div>
-                        <div className="progress-track">
-                          <div className="progress-fill fill-red" style={{ width: `${probHigh}%` }}></div>
+                        <div className="prob-row-item">
+                          <div className="prob-name-flex">
+                            <span>High Risk Probability</span>
+                            <strong>{probHigh}%</strong>
+                          </div>
+                          <div className="progress-track">
+                            <div className="progress-fill fill-red" style={{ width: `${probHigh}%` }}></div>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div style={{ padding: "8px 0", fontSize: "0.82rem", color: "#64748b" }}>
+                        ML Probability Confidence: {latestPrediction?.ml_probability ? `${Math.round(latestPrediction.ml_probability * 100)}%` : "Model Inference Complete"}
+                      </div>
+                    )}
 
                     {/* MODEL METADATA */}
                     <div className="model-badge-footer">
