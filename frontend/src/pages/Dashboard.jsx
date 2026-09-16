@@ -17,21 +17,22 @@ export default function Dashboard() {
 
   useEffect(() => {
     let active = true;
-    const refresh = () => Promise.all([getDashboardSummary(), listVideos()])
-      .then(([s, v]) => {
+    const refresh = () => {
+      getDashboardSummary().then((s) => {
         if (!active) return;
         setSummary(s.data);
-        setVideos(v.data);
         setError("");
       })
       .catch(() => { if (active) setError("Could not refresh your data. Please retry shortly."); })
       .finally(() => { if (active) setLoading(false); });
+      listVideos().then((v) => { if (active) setVideos(v.data); })
+        .catch(() => { if (active) setError("Could not refresh recent analyses. Please retry shortly."); });
+    };
     refresh();
     const timer = setInterval(refresh, 15000);
     return () => { active = false; clearInterval(timer); };
   }, []);
 
-  if (loading) return <p style={{ color: "var(--text-dim)" }}>Loading your movement data...</p>;
   const recommendationSource = videos.find((item) => item.id === summary?.latest_video_id);
 
   return (
@@ -55,7 +56,11 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      {!summary?.has_data ? (
+      {loading || (!summary && error) ? (
+        <div className="card" role="status" aria-busy={loading} style={{ marginBottom: 20 }}>
+          {loading ? "Fetching your latest assessment…" : "Your assessment is temporarily unavailable."}
+        </div>
+      ) : !summary?.has_data ? (
         <div className="card empty-state">
           <div className="empty-state-icon"><Sparkles size={22} /></div>
           <h3 style={{ fontSize: 16, marginBottom: 4 }}>No analyses yet</h3>

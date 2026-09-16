@@ -1,11 +1,18 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { getMe, login as loginApi, clearDataCache } from "../api/client";
+import { getMe, login as loginApi, clearDataCache, getDashboardSummary, listVideos } from "../api/client";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user?.role === "athlete") {
+      // Warm the same account-scoped cache without delaying login or navigation.
+      Promise.allSettled([getDashboardSummary(), listVideos()]);
+    }
+  }, [user?.id, user?.role]);
 
   useEffect(() => {
     const token = localStorage.getItem("injuryguard_token");
