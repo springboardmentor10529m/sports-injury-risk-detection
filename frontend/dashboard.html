@@ -419,24 +419,62 @@
         }
 
         .view-video-btn,
-        .delete-video-btn {
-            border: none;
-            padding: 9px 16px;
-            border-radius: 7px;
+        .delete-video-btn
+        .generate-report-btn {
+            border: none !important;
+            padding: 9px 16px !important;
+            border-radius: 7px !important;
             cursor: pointer;
             font-weight: 600;
+            font-size: 14px;
+
+            background: #dbeafe !important;
+            color: #2563eb !important;
+
+            transition: background 0.2s ease,
+                        transform 0.2s ease;
         }
 
+        .generate-report-btn:hover {
+            background: #bfdbfe !important;
+            transform: translateY(-1px);
+        }
+        .video-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
         .view-video-btn {
             background: #eff6ff;
             color: #2563eb;
         }
 
         .delete-video-btn {
+
+            border: none;
+
+            padding: 9px 16px;
+
+            border-radius: 7px;
+
+            cursor: pointer;
+
+            font-weight: 600;
+
             background: #fee2e2;
+
             color: #dc2626;
+
+            transition: 0.2s ease;
+
         }
 
+        .delete-video-btn:hover {
+
+            background: #fecaca;
+
+        }
         .view-video-btn:hover {
             background: #dbeafe;
         }
@@ -554,7 +592,8 @@
             }
 
             .view-video-btn,
-            .delete-video-btn {
+            .delete-video-btn
+            .generate-report-btn {
                 flex: 1;
             }
 
@@ -1451,7 +1490,54 @@
                 const videos =
                     await response.json();
 
+                /* =========================
+                    UPDATE DASHBOARD STATISTICS
+                ========================= */
 
+                document.getElementById(
+                    "totalAssessments"
+                ).textContent =
+                    videos.length;
+
+
+                if (videos.length > 0) {
+
+                    const latestVideo =
+                        videos[0];
+
+
+                    document.getElementById(
+                        "lastAssessment"
+                    ).textContent =
+                        new Date(
+                            latestVideo.uploaded_at
+                        ).toLocaleDateString();
+
+
+                    document.getElementById(
+                        "currentRisk"
+                    ).textContent =
+                        latestVideo.risk_level
+                            ? latestVideo.risk_level
+                                + " ("
+                                + latestVideo.risk_score
+                                + "/100)"
+                            : "Not available";
+
+                } else {
+
+                    document.getElementById(
+                        "lastAssessment"
+                    ).textContent =
+                        "—";
+
+
+                    document.getElementById(
+                        "currentRisk"
+                    ).textContent =
+                        "—";
+
+                }
                 /*
                  * No videos
                  */
@@ -2031,7 +2117,15 @@
 
                     deleteButton.textContent =
                         "Delete";
+                    
+                    const reportButton =
+                        document.createElement("button");
 
+                    reportButton.className =
+                        "generate-report-btn";
+
+                    reportButton.textContent =
+                        "📄 Generate Report";
 
     
 
@@ -2087,6 +2181,22 @@
                         }
                     );
 
+                    
+                    reportButton.addEventListener(
+                        "click",
+                        function() {
+
+                            const reportUrl =
+                                "report.html?id=" +
+                                encodeURIComponent(video.id);
+
+                            window.open(
+                                reportUrl,
+                                "_blank"
+                            );
+
+                        }
+                    );
 
                     /*
                      * Delete video
@@ -2238,7 +2348,10 @@
                     actions.appendChild(
                         deleteButton
                     );
-
+                    
+                    actions.appendChild(
+                        reportButton
+                    );
 
                     videoItem.appendChild(
                         videoInfo

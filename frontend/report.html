@@ -1,0 +1,1618 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Smart Athlete - Assessment Report
+    </title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f7fb;
+            color: #1f2937;
+            margin: 0;
+            padding: 30px;
+        }
+
+        .report-container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* =========================
+           TOP BAR
+        ========================= */
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+
+        .back-button,
+        .print-button {
+            border: none;
+            padding: 11px 18px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .back-button {
+            background: white;
+            color: #1f2937;
+            border: 1px solid #e5e7eb;
+        }
+
+        .print-button {
+            background: #2563eb;
+            color: white;
+        }
+
+        .back-button:hover,
+        .print-button:hover {
+            opacity: 0.9;
+        }
+
+        /* =========================
+           HEADER
+        ========================= */
+
+        .report-header {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            margin-bottom: 20px;
+        }
+
+        .brand {
+            color: #2563eb;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .report-header h1 {
+            margin: 0;
+            font-size: 30px;
+        }
+
+        .report-header p {
+            margin: 8px 0 0;
+            color: #6b7280;
+        }
+
+        /* =========================
+           SECTION
+        ========================= */
+
+        .report-section {
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            margin-bottom: 20px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .section-header h2 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .section-description {
+            color: #6b7280;
+            font-size: 13px;
+            margin: 5px 0 0;
+        }
+
+        /* =========================
+           INFORMATION GRID
+        ========================= */
+
+        .report-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+        }
+
+        .report-item {
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 10px;
+            border: 1px solid #eef2f7;
+        }
+
+        .report-item span {
+            display: block;
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 7px;
+        }
+
+        .report-item strong {
+            font-size: 16px;
+        }
+
+        /* =========================
+           RISK SUMMARY
+        ========================= */
+
+        .risk-summary {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            align-items: center;
+        }
+
+        .risk-score-box {
+            text-align: center;
+            padding: 25px;
+            background: #f8fafc;
+            border-radius: 14px;
+        }
+
+        .risk-score {
+            font-size: 52px;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+
+        .risk-label {
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 7px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            background: #f3f4f6;
+        }
+
+        .risk-meter {
+            width: 100%;
+            height: 12px;
+            background: #e5e7eb;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+
+        .risk-meter-fill {
+            height: 100%;
+            width: 0%;
+            background: #2563eb;
+            border-radius: 20px;
+            transition: width 1s ease;
+        }
+
+        .risk-details h3 {
+            margin-top: 0;
+            font-size: 17px;
+        }
+
+        /* =========================
+           RISK FACTORS
+        ========================= */
+
+        .factor-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .factor-card {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .factor-number {
+            min-width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #2563eb;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        /* =========================
+           SCORE CARDS
+        ========================= */
+
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+        }
+
+        .score-card {
+            padding: 20px;
+            border-radius: 12px;
+            background: #f8fafc;
+            border: 1px solid #eef2f7;
+        }
+
+        .score-card-title {
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 10px;
+        }
+
+        .score-value {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .score-bar {
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .score-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: #2563eb;
+            border-radius: 20px;
+            transition: width 1s ease;
+        }
+
+        /* =========================
+           BREAKDOWN
+        ========================= */
+
+        .breakdown-list {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .breakdown-item {
+            padding: 5px 0;
+        }
+
+        .breakdown-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .breakdown-score {
+            font-weight: 700;
+        }
+
+        .breakdown-bar {
+            width: 100%;
+            height: 10px;
+            background: #e5e7eb;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .breakdown-fill {
+            height: 100%;
+            width: 0%;
+            background: #2563eb;
+            border-radius: 20px;
+            transition: width 1s ease;
+        }
+
+        /* =========================
+           RECOMMENDATIONS
+        ========================= */
+
+        .recommendation-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .recommendation-group {
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .recommendation-header {
+            padding: 15px 17px;
+            background: #f8fafc;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+        }
+
+        .recommendation-header:hover {
+            background: #f1f5f9;
+        }
+
+        .recommendation-content {
+            display: none;
+            padding: 15px 20px;
+            background: white;
+        }
+
+        .recommendation-content.active {
+            display: block;
+        }
+
+        .recommendation-content ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .recommendation-content li {
+            margin-bottom: 8px;
+            color: #4b5563;
+            line-height: 1.5;
+        }
+
+        .arrow {
+            transition: transform 0.2s ease;
+        }
+
+        .arrow.open {
+            transform: rotate(180deg);
+        }
+
+        /* =========================
+           FOOTER
+        ========================= */
+
+        .report-footer {
+            text-align: center;
+            color: #6b7280;
+            font-size: 12px;
+            padding: 10px 0 20px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+
+        .error-message {
+            background: white;
+            padding: 30px;
+            border-radius: 14px;
+            text-align: center;
+            color: #b91c1c;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        }
+
+        /* =========================
+           MOBILE
+        ========================= */
+
+        @media (max-width: 800px) {
+
+            body {
+                padding: 15px;
+            }
+
+            .risk-summary {
+                grid-template-columns: 1fr;
+            }
+
+            .score-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .report-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .top-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .back-button,
+            .print-button {
+                width: 100%;
+            }
+
+        }
+
+        /* =========================
+           PRINT
+        ========================= */
+
+        @media print {
+
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .top-bar {
+                display: none;
+            }
+
+            .report-section,
+            .report-header {
+                box-shadow: none;
+                border: 1px solid #e5e7eb;
+                break-inside: avoid;
+            }
+
+            .recommendation-content {
+                display: block !important;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+    <div class="report-container">
+
+        <!-- TOP BAR -->
+
+        <div class="top-bar">
+
+            <button
+                class="back-button"
+                onclick="goBack()"
+            >
+                ← Back to Dashboard
+            </button>
+
+            <button
+                class="print-button"
+                onclick="window.print()"
+            >
+                🖨 Print / Save as PDF
+            </button>
+
+            <button class="excel-button" onclick="exportExcel()">
+                📊 Export Excel
+            </button>
+
+        </div>
+
+
+        <!-- HEADER -->
+
+        <div class="report-header">
+
+            <div class="brand">
+                Smart Athlete
+            </div>
+
+            <h1>
+                Injury Risk Assessment Report
+            </h1>
+
+            <p>
+                Detailed analysis of the selected athlete video assessment
+            </p>
+
+        </div>
+
+
+        <!-- ASSESSMENT INFORMATION -->
+
+        <div class="report-section">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>
+                        Assessment Information
+                    </h2>
+
+                    <p class="section-description">
+                        Basic information about this assessment
+                    </p>
+                </div>
+
+            </div>
+
+            <div class="report-grid">
+
+                <div class="report-item">
+
+                    <span>
+                        Assessment ID
+                    </span>
+
+                    <strong id="assessmentId">
+                        Loading...
+                    </strong>
+
+                </div>
+
+
+                <div class="report-item">
+
+                    <span>
+                        Assessment Date
+                    </span>
+
+                    <strong id="assessmentDate">
+                        Loading...
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- RISK ASSESSMENT -->
+
+        <div class="report-section">
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2>
+                        Risk Assessment
+                    </h2>
+
+                    <p class="section-description">
+                        Overall injury risk identified by the assessment
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="risk-summary">
+
+                <div class="risk-score-box">
+
+                    <div class="risk-label">
+                        Overall Risk Score
+                    </div>
+
+                    <div
+                        class="risk-score"
+                        id="riskScoreValue"
+                    >
+                        --
+                    </div>
+
+                    <div
+                        class="risk-badge"
+                        id="riskBadge"
+                    >
+                        Loading...
+                    </div>
+
+                    <div class="risk-meter">
+
+                        <div
+                            class="risk-meter-fill"
+                            id="riskMeterFill"
+                        ></div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="risk-details">
+
+                    <h3>
+                        Risk Factors
+                    </h3>
+
+                    <div
+                        class="factor-list"
+                        id="riskFactors"
+                    >
+                        <div class="loading">
+                            Loading...
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- MOVEMENT ANALYSIS -->
+
+        <div class="report-section">
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2>
+                        Movement Analysis
+                    </h2>
+
+                    <p class="section-description">
+                        Scores derived from biomechanical and movement analysis
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="score-grid">
+
+
+                <div class="score-card">
+
+                    <div class="score-card-title">
+                        Movement Quality
+                    </div>
+
+                    <div
+                        class="score-value"
+                        id="movementQuality"
+                    >
+                        --
+                    </div>
+
+                    <div class="score-bar">
+
+                        <div
+                            class="score-bar-fill"
+                            id="movementQualityBar"
+                        ></div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="score-card">
+
+                    <div class="score-card-title">
+                        Biomechanical Efficiency
+                    </div>
+
+                    <div
+                        class="score-value"
+                        id="biomechanicalEfficiency"
+                    >
+                        --
+                    </div>
+
+                    <div class="score-bar">
+
+                        <div
+                            class="score-bar-fill"
+                            id="biomechanicalEfficiencyBar"
+                        ></div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="score-card">
+
+                    <div class="score-card-title">
+                        Movement Anomaly
+                    </div>
+
+                    <div
+                        class="score-value"
+                        id="movementAnomalyScore"
+                    >
+                        --
+                    </div>
+
+                    <div class="score-bar">
+
+                        <div
+                            class="score-bar-fill"
+                            id="movementAnomalyBar"
+                        ></div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="score-card">
+
+                    <div class="score-card-title">
+                        Early Movement Quality
+                    </div>
+
+                    <div
+                        class="score-value"
+                        id="earlyMovementQuality"
+                    >
+                        --
+                    </div>
+
+                    <div class="score-bar">
+
+                        <div
+                            class="score-bar-fill"
+                            id="earlyMovementQualityBar"
+                        ></div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="score-card">
+
+                    <div class="score-card-title">
+                        Late Movement Quality
+                    </div>
+
+                    <div
+                        class="score-value"
+                        id="lateMovementQuality"
+                    >
+                        --
+                    </div>
+
+                    <div class="score-bar">
+
+                        <div
+                            class="score-bar-fill"
+                            id="lateMovementQualityBar"
+                        ></div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- RISK FACTOR BREAKDOWN -->
+
+        <div class="report-section">
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2>
+                        Risk Factor Breakdown
+                    </h2>
+
+                    <p class="section-description">
+                        Individual factors contributing to the assessment
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div
+                class="breakdown-list"
+                id="breakdownList"
+            >
+
+                <div class="loading">
+                    Loading...
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- RECOMMENDATIONS -->
+
+        <div class="report-section">
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2>
+                        Corrective Recommendations
+                    </h2>
+
+                    <p class="section-description">
+                        Recommendations generated from the assessment results
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div
+                class="recommendation-list"
+                id="recommendationList"
+            >
+
+                <div class="loading">
+                    Loading...
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- FOOTER -->
+
+        <div class="report-footer">
+
+            Smart Athlete • Injury Risk Assessment Report
+
+        </div>
+
+    </div>
+
+
+<script>
+
+    /* =========================
+       AUTHENTICATION
+    ========================= */
+
+    const authToken =
+        localStorage.getItem("authToken");
+
+
+    /* =========================
+       ASSESSMENT ID
+    ========================= */
+
+    const urlParams =
+        new URLSearchParams(
+            window.location.search
+        );
+
+
+    const assessmentId =
+        urlParams.get("id");
+
+
+    document.getElementById(
+        "assessmentId"
+    ).textContent =
+        assessmentId || "Not available";
+
+
+    /* =========================
+       BACK BUTTON
+    ========================= */
+
+    function goBack() {
+
+        window.close();
+
+        setTimeout(
+            function() {
+
+                window.location.href =
+                    "dashboard.html";
+
+            },
+            100
+        );
+
+    }
+
+
+    /* =========================
+       SCORE BAR
+    ========================= */
+
+    function setScore(
+        elementId,
+        barId,
+        score
+    ) {
+
+        const value =
+            Number(score);
+
+        if (
+            Number.isNaN(value)
+        ) {
+            document.getElementById(
+                elementId
+            ).textContent =
+                "Not available";
+
+            return;
+        }
+
+        document.getElementById(
+            elementId
+        ).textContent =
+            value + "/100";
+
+
+        document.getElementById(
+            barId
+        ).style.width =
+            Math.max(
+                0,
+                Math.min(
+                    value,
+                    100
+                )
+            ) + "%";
+
+    }
+
+
+    /* =========================
+       RISK BADGE
+    ========================= */
+
+    function setRiskDisplay(
+        level,
+        score
+    ) {
+
+        const riskScore =
+            Number(score);
+
+
+        document.getElementById(
+            "riskScoreValue"
+        ).textContent =
+            Number.isNaN(riskScore)
+                ? "--"
+                : riskScore + "/100";
+
+
+        const badge =
+            document.getElementById(
+                "riskBadge"
+            );
+
+
+        badge.textContent =
+            level || "Not available";
+
+
+        document.getElementById(
+            "riskMeterFill"
+        ).style.width =
+            (
+                Math.max(
+                    0,
+                    Math.min(
+                        riskScore || 0,
+                        100
+                    )
+                )
+            ) + "%";
+
+    }
+
+
+    /* =========================
+       RISK FACTORS
+    ========================= */
+
+    function renderRiskFactors(
+        factors
+    ) {
+
+        const container =
+            document.getElementById(
+                "riskFactors"
+            );
+
+
+        if (
+            !Array.isArray(factors)
+            || factors.length === 0
+        ) {
+
+            container.innerHTML =
+                "<div class='report-item'>No risk factors reported.</div>";
+
+            return;
+
+        }
+
+
+        container.innerHTML =
+            factors
+                .map(
+                    function(
+                        factor,
+                        index
+                    ) {
+
+                        return `
+                            <div class="factor-card">
+
+                                <div class="factor-number">
+                                    ${index + 1}
+                                </div>
+
+                                <div>
+                                    ${factor}
+                                </div>
+
+                            </div>
+                        `;
+
+                    }
+                )
+                .join("");
+
+    }
+
+
+    /* =========================
+       RISK BREAKDOWN
+    ========================= */
+
+    function renderRiskBreakdown(
+        breakdown
+    ) {
+
+        const container =
+            document.getElementById(
+                "breakdownList"
+            );
+
+
+        const labels = {
+
+            biomechanical_deviation:
+                "Biomechanical Deviation",
+
+            historical_injury:
+                "Historical Injury",
+
+            movement_asymmetry:
+                "Movement Asymmetry",
+
+            training_load:
+                "Training Load",
+
+            fatigue_indicator:
+                "Fatigue Indicator"
+
+        };
+
+
+        const keys = Object.keys(
+            labels
+        );
+
+
+        container.innerHTML =
+            keys
+                .map(
+                    function(key) {
+
+                        const item =
+                            breakdown[key];
+
+
+                        if (!item) {
+                            return "";
+                        }
+
+
+                        const score =
+                            Number(
+                                item.score
+                            );
+
+
+                        return `
+                            <div class="breakdown-item">
+
+                                <div class="breakdown-header">
+
+                                    <span>
+                                        ${labels[key]}
+                                    </span>
+
+                                    <span class="breakdown-score">
+                                        ${score}/100
+                                    </span>
+
+                                </div>
+
+                                <div class="breakdown-bar">
+
+                                    <div
+                                        class="breakdown-fill"
+                                        style="width: ${score}%"
+                                    ></div>
+
+                                </div>
+
+                            </div>
+                        `;
+
+                    }
+                )
+                .join("");
+
+    }
+
+
+    /* =========================
+       RECOMMENDATIONS
+    ========================= */
+
+    function renderRecommendations(
+        recommendations
+    ) {
+
+        const container =
+            document.getElementById(
+                "recommendationList"
+            );
+
+
+        const labels = {
+
+            exercise_recommendations:
+                "Exercise Recommendations",
+
+            mobility_suggestions:
+                "Mobility Suggestions",
+
+            strengthening_recommendations:
+                "Strengthening Recommendations",
+
+            recovery_planning:
+                "Recovery Planning",
+
+            training_modifications:
+                "Training Modifications"
+
+        };
+
+
+        const keys =
+            Object.keys(labels);
+
+
+        const groups =
+            keys
+                .filter(
+                    function(key) {
+
+                        return (
+                            Array.isArray(
+                                recommendations[key]
+                            )
+                            &&
+                            recommendations[key]
+                                .length > 0
+                        );
+
+                    }
+                );
+
+
+        if (
+            groups.length === 0
+        ) {
+
+            container.innerHTML =
+                "<div class='report-item'>No recommendations available.</div>";
+
+            return;
+
+        }
+
+
+        container.innerHTML =
+            groups
+                .map(
+                    function(key, index) {
+
+                        const items =
+                            recommendations[key];
+
+
+                        return `
+                            <div class="recommendation-group">
+
+                                <div
+                                    class="recommendation-header"
+                                    onclick="toggleRecommendation(this)"
+                                >
+
+                                    <span>
+                                        ${labels[key]}
+                                    </span>
+
+                                    <span class="arrow">
+                                        ▼
+                                    </span>
+
+                                </div>
+
+                                <div
+                                    class="recommendation-content ${index === 0 ? "active" : ""}"
+                                >
+
+                                    <ul>
+
+                                        ${items
+                                            .map(
+                                                function(item) {
+
+                                                    return `
+                                                        <li>
+                                                            ${item}
+                                                        </li>
+                                                    `;
+
+                                                }
+                                            )
+                                            .join("")
+                                        }
+
+                                    </ul>
+
+                                </div>
+
+                            </div>
+                        `;
+
+                    }
+                )
+                .join("");
+
+    }
+
+
+    /* =========================
+       TOGGLE RECOMMENDATIONS
+    ========================= */
+
+    function toggleRecommendation(
+        header
+    ) {
+
+        const content =
+            header.nextElementSibling;
+
+
+        const arrow =
+            header.querySelector(
+                ".arrow"
+            );
+
+
+        content.classList.toggle(
+            "active"
+        );
+
+
+        arrow.classList.toggle(
+            "open"
+        );
+
+    }
+
+
+    /* =========================
+       LOAD ASSESSMENT
+    ========================= */
+
+    async function loadAssessment() {
+
+        if (!authToken) {
+
+            document.body.innerHTML = `
+                <div class="error-message">
+                    Authentication required.
+                    Please log in again.
+                </div>
+            `;
+
+            return;
+
+        }
+
+
+        if (!assessmentId) {
+
+            document.body.innerHTML = `
+                <div class="error-message">
+                    Assessment ID not available.
+                </div>
+            `;
+
+            return;
+
+        }
+
+
+        try {
+
+            const response =
+                await fetch(
+                    "http://127.0.0.1:8000/api/athlete/videos/"
+                    + assessmentId
+                    + "/",
+                    {
+                        method: "GET",
+
+                        headers: {
+
+                            "Authorization":
+                                "Token " + authToken,
+
+                            "Content-Type":
+                                "application/json"
+
+                        }
+
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Unable to load assessment. Status: "
+                    + response.status
+                );
+
+            }
+
+
+            const video =
+                await response.json();
+
+
+            /* =========================
+               BASIC INFORMATION
+            ========================= */
+
+            document.getElementById(
+                "assessmentDate"
+            ).textContent =
+                new Date(
+                    video.uploaded_at
+                ).toLocaleString();
+
+
+            /* =========================
+               RISK
+            ========================= */
+
+            setRiskDisplay(
+                video.risk_level,
+                video.risk_score
+            );
+
+
+            renderRiskFactors(
+                video.risk_factors
+            );
+
+
+            /* =========================
+               MOVEMENT
+            ========================= */
+
+            const breakdown =
+                video.risk_breakdown || {};
+
+
+            setScore(
+                "movementQuality",
+                "movementQualityBar",
+                breakdown.movement_quality_score
+            );
+
+
+            setScore(
+                "biomechanicalEfficiency",
+                "biomechanicalEfficiencyBar",
+                breakdown.biomechanical_efficiency_score
+            );
+
+
+            setScore(
+                "earlyMovementQuality",
+                "earlyMovementQualityBar",
+                breakdown.early_movement_quality_score
+            );
+
+
+            setScore(
+                "lateMovementQuality",
+                "lateMovementQualityBar",
+                breakdown.late_movement_quality_score
+            );
+
+
+            setScore(
+                "movementAnomalyScore",
+                "movementAnomalyBar",
+                video.movement_anomaly_score
+            );
+
+
+            /* =========================
+               RISK BREAKDOWN
+            ========================= */
+
+            renderRiskBreakdown(
+                breakdown
+            );
+
+
+            /* =========================
+               RECOMMENDATIONS
+            ========================= */
+
+            renderRecommendations(
+                video.recommendations || {}
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "Assessment loading error:",
+                error
+            );
+
+
+            document.body.innerHTML = `
+                <div class="error-message">
+
+                    <h2>
+                        Unable to Load Report
+                    </h2>
+
+                    <p>
+                        ${error.message}
+                    </p>
+
+                </div>
+            `;
+
+        }
+
+    }
+
+
+    /* =========================
+       START
+    ========================= */
+
+    loadAssessment();
+
+
+async function exportExcel() {
+
+    const authToken =
+        localStorage.getItem("authToken");
+
+    if (!authToken) {
+        alert("Please log in again.");
+        return;
+    }
+
+    try {
+
+        const response = await fetch(
+            "http://127.0.0.1:8000/api/athlete/videos/"
+            + assessmentId
+            + "/export-excel/",
+            {
+                headers: {
+                    "Authorization":
+                        "Token " + authToken
+                }
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                "Excel export failed."
+            );
+        }
+
+        const blob =
+            await response.blob();
+
+        const downloadUrl =
+            window.URL.createObjectURL(blob);
+
+        const link =
+            document.createElement("a");
+
+        link.href = downloadUrl;
+
+        link.download =
+            "smart_athlete_assessment_"
+            + assessmentId
+            + ".xlsx";
+
+        document.body.appendChild(link);
+
+        link.click();
+
+        link.remove();
+
+        window.URL.revokeObjectURL(
+            downloadUrl
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Excel export error:",
+            error
+        );
+
+        alert(
+            "Unable to export the Excel report."
+        );
+    }
+}
+</script>
+
+</body>
+
+</html>

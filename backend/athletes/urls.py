@@ -5,7 +5,8 @@ from .views import (
     AthleteVideoUploadView,
     AthleteVideoDeleteView,
     AthleteVideoListView,
-    NotificationListView
+    NotificationListView,
+    AthleteVideoExcelExportView
 )
 
 
@@ -27,6 +28,12 @@ urlpatterns = [
     "videos/",
     AthleteVideoListView.as_view(),
     name="video-list"
+    ),
+
+    path(
+    "videos/<int:video_id>/export-excel/",
+    AthleteVideoExcelExportView.as_view(),
+    name="video-export-excel"
     ),
     
     path(

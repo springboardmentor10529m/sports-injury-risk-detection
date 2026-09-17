@@ -5,6 +5,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from django.http import HttpResponse
+from openpyxl import Workbook
+
+from rest_framework.views import APIView
+
 from .models import AthleteProfile, AthleteVideo, Notification
 from .serializers import (
     AthleteProfileSerializer,
@@ -253,6 +258,50 @@ class AthleteVideoDeleteView(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    # GET - Retrieve one assessment belonging to the logged-in athlete
+    def get(self, request, video_id):
+
+        try:
+
+            athlete = AthleteProfile.objects.get(
+                user=request.user
+            )
+
+        except AthleteProfile.DoesNotExist:
+
+            return Response(
+                {
+                    "error": "Athlete profile not found."
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        try:
+
+            video = AthleteVideo.objects.get(
+                id=video_id,
+                athlete=athlete
+            )
+
+        except AthleteVideo.DoesNotExist:
+
+            return Response(
+                {
+                    "error": "Assessment not found."
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = AthleteVideoSerializer(
+            video,
+            context={"request": request}
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
+        )
+
     # DELETE - Delete a video belonging to the logged-in athlete
     def delete(self, request, video_id):
 
@@ -287,6 +336,7 @@ class AthleteVideoDeleteView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
+        
         # Delete uploaded video file
         if video.video:
 
@@ -404,3 +454,152 @@ class NotificationListView(APIView):
             serializer.data,
             status=status.HTTP_200_OK
         )    
+
+class AthleteVideoExcelExportView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, video_id):
+
+        try:
+            athlete = AthleteProfile.objects.get(
+                user=request.user
+            )
+
+        except AthleteProfile.DoesNotExist:
+            return Response(
+                {"error": "Athlete profile not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        try:
+            video = AthleteVideo.objects.get(
+                id=video_id,
+                athlete=athlete
+            )
+
+        except AthleteVideo.DoesNotExist:
+            return Response(
+                {"error": "Assessment not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = "Assessment Report"
+
+        breakdown = video.risk_breakdown or {}
+        recommendations = video.recommendations or {}
+
+        sheet.append(["SMART ATHLETE - ASSESSMENT REPORT"])
+        sheet.append([])
+
+        sheet.append(["Assessment ID", video.id])
+        sheet.append([
+            "Assessment Date",
+            video.uploaded_at.replace(tzinfo=None)
+            if video.uploaded_at
+            else "N/A"
+        ])        
+        sheet.append(["Risk Level", video.risk_level])
+        sheet.append(["Risk Score", f"{video.risk_score}/100"])
+
+        sheet.append([])
+
+        sheet.append(["MOVEMENT ANALYSIS"])
+        sheet.append([
+            "Movement Quality",
+            breakdown.get("movement_quality_score", "N/A")
+        ])
+        sheet.append([
+            "Biomechanical Efficiency",
+            breakdown.get("biomechanical_efficiency_score", "N/A")
+        ])
+        sheet.append([
+            "Early Movement Quality",
+            breakdown.get("early_movement_quality_score", "N/A")
+        ])
+        sheet.append([
+            "Late Movement Quality",
+            breakdown.get("late_movement_quality_score", "N/A")
+        ])
+        sheet.append([
+            "Movement Anomaly Score",
+            video.movement_anomaly_score
+            if video.movement_anomaly_score is not None
+            else "N/A"
+        ])
+
+        sheet.append([])
+
+        sheet.append(["RISK FACTORS"])
+
+        for factor in (video.risk_factors or []):
+            sheet.append([factor])
+
+        sheet.append([])
+
+        sheet.append(["RISK FACTOR BREAKDOWN"])
+
+        for key, value in breakdown.items():
+
+            if isinstance(value, dict):
+
+                sheet.append([
+                    key.replace("_", " ").title(),
+                    value.get("score", "N/A"),
+                    value.get("weight", "N/A"),
+                    value.get("weighted_contribution", "N/A")
+                ])
+
+        sheet.append([])
+
+        sheet.append(["CORRECTIVE RECOMMENDATIONS"])
+
+        for category, items in recommendations.items():
+
+            sheet.append([
+                category.replace("_", " ").title()
+            ])
+
+            for item in items:
+                sheet.append(["", item])
+
+        # Basic formatting
+        for cell in sheet[1]:
+            cell.font = cell.font.copy(bold=True)
+
+        for column in sheet.columns:
+
+            max_length = 0
+            column_letter = column[0].column_letter
+
+            for cell in column:
+
+                if cell.value is not None:
+                    max_length = max(
+                        max_length,
+                        len(str(cell.value))
+                    )
+
+            sheet.column_dimensions[
+                column_letter
+            ].width = min(max_length + 3, 60)
+
+        response = HttpResponse(
+            content_type=(
+                "application/vnd.openxmlformats-officedocument."
+                "spreadsheetml.sheet"
+            )
+        )
+
+        response[
+            "Content-Disposition"
+        ] = (
+            f'attachment; filename="smart_athlete_assessment_'
+            f'{video.id}.xlsx"'
+        )
+
+        workbook.save(response)
+
+        return response    
