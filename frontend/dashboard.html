@@ -42,6 +42,7 @@
         }
 
         .user-section {
+            position: relative;
             display: flex;
             align-items: center;
             gap: 20px;
@@ -55,6 +56,69 @@
             cursor: pointer;
             padding: 5px;
         }
+
+        .notification-dropdown {
+            position: absolute;
+            top: 55px;
+            right: 0;
+            width: 340px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border: 1px solid #e5e7eb;
+            display: none;
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .notification-dropdown-header {
+            padding: 16px 18px;
+            font-size: 16px;
+            font-weight: 600;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .notification-dropdown-content {
+            max-height: 320px;
+            overflow-y: auto;
+        }
+        
+        .notification-item {
+            padding: 14px 18px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .notification-item:hover {
+            background: #f8fafc;
+        }
+
+        .notification-item-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+
+        .notification-item-message {
+            font-size: 13px;
+            line-height: 1.5;
+            color: #6b7280;
+        }
+
+        .notification-dropdown-footer {
+            padding: 13px 18px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: #2563eb;
+            border-top: 1px solid #e5e7eb;
+            cursor: pointer;
+        }
+
+        .notification-dropdown-footer:hover {
+            background: #eff6ff;
+        }
+
 
         .notification-count {
             position: absolute;
@@ -535,6 +599,29 @@
                 </span>
             </button>
 
+            <div
+                class="notification-dropdown"
+                id="notificationDropdown"
+            >
+                <div class="notification-dropdown-header">
+                    Notifications
+                </div>
+
+                <div
+                    class="notification-dropdown-content"
+                    id="notificationDropdownContent"
+                >
+                    Loading notifications...
+                </div>
+
+                <div
+                    class="notification-dropdown-footer"
+                    id="viewAllNotifications"
+                >
+                    View All Notifications
+                </div>
+            </div>
+
             <a
                 href="#"
                 class="logout-btn"
@@ -668,7 +755,10 @@
 
             <!-- Notifications -->
 
-            <div class="profile-card">
+            <div 
+                class="profile-card"
+                id="notificationsSection"
+            >
 
                 <h2>
                     Notifications
@@ -802,8 +892,62 @@
         const notificationCount =
             document.getElementById(
                 "notificationCount"
-            );    
+            );   
+        const notificationDropdownContent =
+            document.getElementById(
+                "notificationDropdownContent"
+            );     
+        const notificationDropdown =
+            document.getElementById(
+                "notificationDropdown"
+            );
 
+        const viewAllNotifications =
+            document.getElementById(
+                "viewAllNotifications"
+            );
+
+        viewAllNotifications.addEventListener(
+            "click",
+            function() {
+
+                notificationDropdown.style.display =
+                    "none";
+
+                document.getElementById(
+                    "notificationsSection"
+                ).scrollIntoView({
+                    behavior: "smooth"
+                });
+            }
+        );    
+
+        notificationBell.addEventListener(
+            "click",
+            function(event) {
+
+                event.stopPropagation();
+
+                const isVisible =
+                    notificationDropdown.style.display === "block";
+
+                notificationDropdown.style.display =
+                    isVisible ? "none" : "block";
+            }
+        );
+
+        document.addEventListener(
+            "click",
+            function(event) {
+
+                if (
+                    !notificationDropdown.contains(event.target) &&
+                    !notificationBell.contains(event.target)
+                ) {
+                    notificationDropdown.style.display = "none";
+                }
+            }
+        );
         /*
          * Profile status
          */
@@ -2207,7 +2351,41 @@
                     ).length;
 
                 notificationCount.textContent =
-                    unreadCount;    
+                    unreadCount;  
+                
+                if (notifications.length === 0) {
+
+                    notificationDropdownContent.innerHTML =
+                        "<p style='padding: 18px; text-align: center;'>No notifications</p>";
+
+                } else {
+
+                    notificationDropdownContent.innerHTML =
+                        notifications
+                            .slice(0, 5)
+                            .map(notification => `
+                                <div style="
+                                    padding: 14px 18px;
+                                    border-bottom: 1px solid #e5e7eb;
+                                ">
+                                    <div style="
+                                        font-weight: 600;
+                                        margin-bottom: 4px;
+                                    ">
+                                        ${notification.title}
+                                    </div>
+
+                                    <div style="
+                                        font-size: 13px;
+                                        color: #6b7280;
+                                        line-height: 1.4;
+                                    ">
+                                        ${notification.message}
+                                    </div>
+                                </div>
+                            `)
+                            .join("");
+                }    
 
                 /*
                  * No notifications
