@@ -356,10 +356,21 @@ export default function VideoUploadPage() {
       ? batchAnalysisResult.videos[parseInt(activeResultTab, 10)]
       : batchAnalysisResult?.videos?.[0] || null;
 
+  const resolveMediaUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("blob:")) {
+      return url;
+    }
+    const backendBase = import.meta.env.VITE_API_BASE_URL
+      ? import.meta.env.VITE_API_BASE_URL.replace(/\/api\/v1\/?$/, "")
+      : "";
+    return `${backendBase}${url}`;
+  };
+
   const hasRealAnnotation = Boolean(activeAnalyzedVideo && activeAnalyzedVideo.annotated_video_url);
   const currentPlayingUrl =
     hasRealAnnotation && displayMode === "annotated"
-      ? activeAnalyzedVideo.annotated_video_url
+      ? resolveMediaUrl(activeAnalyzedVideo.annotated_video_url)
       : activeVideoItem?.previewUrl || null;
 
   return (
