@@ -1,12 +1,12 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { loginUser } from "../services/authService";
 import { AuthContext } from "../context/AuthContext";
+import BrandLogo from "../components/BrandLogo";
 import {
   Activity,
   User,
   Users,
-  Stethoscope,
   Lock,
   Mail,
   ArrowRight,
@@ -20,8 +20,13 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { login } = useContext(AuthContext);
+  const { login, logout } = useContext(AuthContext);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Clear any residual session when opening login screen
+    logout();
+  }, []);
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
@@ -34,8 +39,6 @@ export default function LoginPage() {
 
       if (role === "coach") {
         navigate("/coach-dashboard");
-      } else if (role === "physio") {
-        navigate("/physio-dashboard");
       } else {
         navigate("/athlete-profile");
       }
@@ -64,13 +67,6 @@ export default function LoginPage() {
       icon: Users,
       color: "#06b6d4",
     },
-    {
-      id: "physio",
-      title: "Physiotherapist",
-      desc: "Rehab & Clinical Cases",
-      icon: Stethoscope,
-      color: "#a855f7",
-    },
   ];
 
   return (
@@ -95,21 +91,9 @@ export default function LoginPage() {
         }}
       >
         {/* Header Branding */}
-        <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-          <div
-            style={{
-              width: "52px",
-              height: "52px",
-              borderRadius: "14px",
-              background: "linear-gradient(135deg, #0284c7 0%, #10b981 100%)",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 0 25px rgba(6, 182, 212, 0.4)",
-              marginBottom: "1rem",
-            }}
-          >
-            <Activity color="#ffffff" size={30} />
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "2rem", textAlign: "center" }}>
+          <div style={{ marginBottom: "0.75rem" }}>
+            <BrandLogo size={52} showText={false} />
           </div>
           <h1
             style={{
@@ -122,7 +106,7 @@ export default function LoginPage() {
           >
             Kinetic<span style={{ color: "#38bdf8" }}>AI</span> Sign In
           </h1>
-          <p style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+          <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", margin: 0 }}>
             Select your portal role to access your dashboard
           </p>
         </div>
@@ -162,7 +146,7 @@ export default function LoginPage() {
           >
             I am signing in as:
           </label>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
             {roleOptions.map((opt) => {
               const Icon = opt.icon;
               const isSelected = role === opt.id;

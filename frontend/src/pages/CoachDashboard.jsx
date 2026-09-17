@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { getAllAthletes } from "../services/athleteService";
+import { Link, useNavigate } from "react-router-dom";
+import { getAllAthletes, updateAthleteCoachNotes } from "../services/athleteService";
 import MetricCard from "../components/MetricCard";
 import {
   Users,
@@ -11,14 +12,21 @@ import {
   ShieldAlert,
   Dumbbell,
   Sparkles,
+  FileText,
+  Save,
+  Check,
 } from "lucide-react";
 
 export default function CoachDashboard() {
+  const navigate = useNavigate();
   const [squad, setSquad] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSport, setSelectedSport] = useState("all");
   const [selectedAthlete, setSelectedAthlete] = useState(null);
+  const [editNotes, setEditNotes] = useState("");
+  const [savingNotes, setSavingNotes] = useState(false);
+  const [savedSuccess, setSavedSuccess] = useState(false);
 
   useEffect(() => {
     fetchSquad();
@@ -34,6 +42,30 @@ export default function CoachDashboard() {
       setSquad([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSelectAthlete = (ath) => {
+    setSelectedAthlete(ath);
+    setEditNotes(ath.coachNotes || "");
+    setSavedSuccess(false);
+  };
+
+  const handleSaveNotes = async () => {
+    if (!selectedAthlete) return;
+    try {
+      setSavingNotes(true);
+      await updateAthleteCoachNotes(selectedAthlete.id, editNotes);
+      setSavedSuccess(true);
+      setSelectedAthlete((prev) => ({ ...prev, coachNotes: editNotes }));
+      setSquad((prev) =>
+        prev.map((a) => (a.id === selectedAthlete.id ? { ...a, coachNotes: editNotes } : a))
+      );
+      setTimeout(() => setSavedSuccess(false), 3000);
+    } catch (err) {
+      console.error("Failed to save coach notes:", err);
+    } finally {
+      setSavingNotes(false);
     }
   };
 
@@ -222,7 +254,7 @@ export default function CoachDashboard() {
               Squad Telemetry Roster
             </h3>
             <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "2px" }}>
-              Click any athlete to view their biometrics and screening history
+              Click any athlete to inspect vitals and provide coaching guidance
             </p>
           </div>
 
@@ -325,7 +357,7 @@ export default function CoachDashboard() {
                       }}
                       onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.03)")}
                       onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-                      onClick={() => setSelectedAthlete(ath)}
+                      onClick={() => handleSelectAthlete(ath)}
                     >
                       <td style={{ padding: "12px 10px", fontWeight: "600", color: "#ffffff" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -393,7 +425,7 @@ export default function CoachDashboard() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedAthlete(ath);
+                            handleSelectAthlete(ath);
                           }}
                           className="btn-subtle"
                           style={{ padding: "4px 10px", fontSize: "0.75rem" }}
@@ -419,7 +451,7 @@ export default function CoachDashboard() {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            backgroundColor: "rgba(0, 0, 0, 0.82)",
             backdropFilter: "blur(8px)",
             display: "flex",
             alignItems: "center",
@@ -427,55 +459,158 @@ export default function CoachDashboard() {
             zIndex: 1000,
             padding: "1rem",
           }}
+          onClick={() => setSelectedAthlete(null)}
         >
-          <div className="glass-panel" style={{ width: "100%", maxWidth: "550px", padding: "2rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+          <div
+            className="glass-panel"
+            style={{
+              width: "100%",
+              maxWidth: "580px",
+              padding: "2rem",
+              maxHeight: "90vh",
+              overflowY: "auto",
+              boxShadow: "0 20px 50px rgba(0,0,0,0.8), 0 0 25px rgba(6, 182, 212, 0.15)",
+              border: "1px solid rgba(6, 182, 212, 0.3)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <h3 style={{ fontSize: "1.3rem", fontWeight: "800", color: "#ffffff", margin: 0 }}>
-                  {selectedAthlete.name || selectedAthlete.email}
-                </h3>
-                <span className={Number(selectedAthlete.riskScore) >= 60 ? "badge-high-risk" : "badge-low-risk"}>
-                  {selectedAthlete.riskStatus}
-                </span>
+                <div
+                  style={{
+                    width: "38px",
+                    height: "38px",
+                    borderRadius: "10px",
+                    backgroundColor: "rgba(6, 182, 212, 0.15)",
+                    color: "#06b6d4",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontWeight: "800",
+                    fontSize: "1.1rem",
+                  }}
+                >
+                  {selectedAthlete.name ? selectedAthlete.name.charAt(0).toUpperCase() : "A"}
+                </div>
+                <div>
+                  <h3 style={{ fontSize: "1.25rem", fontWeight: "800", color: "#ffffff", margin: 0 }}>
+                    {selectedAthlete.name || selectedAthlete.email}
+                  </h3>
+                  <div style={{ fontSize: "0.78rem", color: "var(--text-dim)" }}>
+                    {selectedAthlete.email} • {selectedAthlete.phone || "No phone logged"}
+                  </div>
+                </div>
               </div>
+
               <button
                 onClick={() => setSelectedAthlete(null)}
-                style={{ background: "transparent", border: "none", color: "#94a3b8", fontSize: "1.5rem", cursor: "pointer" }}
+                style={{ background: "transparent", border: "none", color: "#94a3b8", fontSize: "1.5rem", cursor: "pointer", padding: "4px" }}
               >
                 ×
               </button>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "1.5rem", fontSize: "0.88rem" }}>
-              <div style={{ padding: "10px", backgroundColor: "rgba(10,15,29,0.8)", borderRadius: "8px" }}>
-                <span style={{ color: "var(--text-dim)", fontSize: "0.75rem", display: "block" }}>Sport & Position</span>
-                <strong>{selectedAthlete.sport || "N/A"} ({selectedAthlete.position || "N/A"})</strong>
+            {/* Vitals & Telemetry Grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "1.25rem", fontSize: "0.85rem" }}>
+              <div style={{ padding: "10px 12px", backgroundColor: "rgba(10,15,29,0.8)", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <span style={{ color: "var(--text-dim)", fontSize: "0.72rem", display: "block" }}>Sport & Position</span>
+                <strong style={{ color: "#ffffff" }}>{selectedAthlete.sport || "N/A"} ({selectedAthlete.position || "N/A"})</strong>
               </div>
-              <div style={{ padding: "10px", backgroundColor: "rgba(10,15,29,0.8)", borderRadius: "8px" }}>
-                <span style={{ color: "var(--text-dim)", fontSize: "0.75rem", display: "block" }}>Training Load</span>
+              <div style={{ padding: "10px 12px", backgroundColor: "rgba(10,15,29,0.8)", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <span style={{ color: "var(--text-dim)", fontSize: "0.72rem", display: "block" }}>Training Workload</span>
                 <strong style={{ color: "#38bdf8" }}>{selectedAthlete.trainingLoad || 0} / 100</strong>
               </div>
-              <div style={{ padding: "10px", backgroundColor: "rgba(10,15,29,0.8)", borderRadius: "8px" }}>
-                <span style={{ color: "var(--text-dim)", fontSize: "0.75rem", display: "block" }}>Strength / Flex</span>
+              <div style={{ padding: "10px 12px", backgroundColor: "rgba(10,15,29,0.8)", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <span style={{ color: "var(--text-dim)", fontSize: "0.72rem", display: "block" }}>Strength / Flexibility</span>
                 <strong style={{ color: "#34d399" }}>{selectedAthlete.strength || 0}% / {selectedAthlete.flexibility || 0}%</strong>
               </div>
-              <div style={{ padding: "10px", backgroundColor: "rgba(10,15,29,0.8)", borderRadius: "8px" }}>
-                <span style={{ color: "var(--text-dim)", fontSize: "0.75rem", display: "block" }}>Last Assessment</span>
-                <strong>{selectedAthlete.lastAssessment}</strong>
+              <div style={{ padding: "10px 12px", backgroundColor: "rgba(10,15,29,0.8)", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <span style={{ color: "var(--text-dim)", fontSize: "0.72rem", display: "block" }}>Screening Risk Level</span>
+                <strong style={{ color: Number(selectedAthlete.riskScore) >= 60 ? "#f43f5e" : Number(selectedAthlete.riskScore) >= 30 ? "#fbbf24" : "#34d399" }}>
+                  {selectedAthlete.riskStatus} {selectedAthlete.riskScore > 0 ? `(${Math.round(selectedAthlete.riskScore)}%)` : ""}
+                </strong>
               </div>
             </div>
 
-            {selectedAthlete.coachNotes && (
-              <div style={{ padding: "12px", backgroundColor: "rgba(15, 23, 42, 0.8)", borderRadius: "8px", border: "1px solid rgba(255, 255, 255, 0.08)", marginBottom: "1.5rem" }}>
-                <strong style={{ color: "#f59e0b", fontSize: "0.85rem" }}>Coach Observations:</strong>
-                <p style={{ margin: "4px 0 0 0", color: "#cbd5e1", fontSize: "0.85rem" }}>
-                  {selectedAthlete.coachNotes}
-                </p>
+            {/* Interactive Coach & Performance Guidance Editor */}
+            <div style={{ marginBottom: "1.5rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                <label style={{ fontSize: "0.82rem", fontWeight: "700", color: "#f59e0b", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <Sparkles size={14} color="#f59e0b" /> Coach Observations & Prescription:
+                </label>
+                {savedSuccess && (
+                  <span style={{ fontSize: "0.75rem", color: "#34d399", display: "flex", alignItems: "center", gap: "4px", fontWeight: "700" }}>
+                    <Check size={13} /> Saved to Database
+                  </span>
+                )}
               </div>
-            )}
+              <textarea
+                value={editNotes}
+                onChange={(e) => setEditNotes(e.target.value)}
+                placeholder="Enter coach observations, modified drill volume, or tactical instructions for this athlete..."
+                rows={3}
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                  backgroundColor: "rgba(15, 23, 42, 0.8)",
+                  border: "1px solid rgba(245, 158, 11, 0.3)",
+                  borderRadius: "8px",
+                  color: "#ffffff",
+                  fontSize: "0.85rem",
+                  resize: "vertical",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+              />
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "6px" }}>
+                <button
+                  type="button"
+                  disabled={savingNotes}
+                  onClick={handleSaveNotes}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    padding: "6px 14px",
+                    borderRadius: "6px",
+                    fontSize: "0.78rem",
+                    fontWeight: "700",
+                    cursor: savingNotes ? "not-allowed" : "pointer",
+                    backgroundColor: "rgba(245, 158, 11, 0.2)",
+                    border: "1px solid #f59e0b",
+                    color: "#f59e0b",
+                  }}
+                >
+                  <Save size={13} /> {savingNotes ? "Saving..." : "Save Guidance"}
+                </button>
+              </div>
+            </div>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
-              <button onClick={() => setSelectedAthlete(null)} className="btn-subtle">
+            {/* Modal Actions */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "1rem", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+              {selectedAthlete.riskStatus !== "Not Screened" ? (
+                <Link
+                  to="/analysis-report"
+                  className="btn-primary"
+                  style={{
+                    textDecoration: "none",
+                    padding: "8px 14px",
+                    fontSize: "0.82rem",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <FileText size={14} /> View Biomechanical Report
+                </Link>
+              ) : (
+                <span style={{ fontSize: "0.78rem", color: "var(--text-dim)" }}>
+                  No video screening recorded yet
+                </span>
+              )}
+
+              <button onClick={() => setSelectedAthlete(null)} className="btn-subtle" style={{ padding: "8px 16px" }}>
                 Close
               </button>
             </div>
@@ -485,3 +620,4 @@ export default function CoachDashboard() {
     </div>
   );
 }
+

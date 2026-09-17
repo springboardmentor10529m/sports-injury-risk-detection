@@ -255,17 +255,270 @@ button {
 
 /* Print Styles for Assessment Reports */
 @media print {
+  @page {
+    margin: 8mm 12mm;
+    size: portrait;
+  }
+
+  *,
+  *::before,
+  *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  html,
   body {
     background: #ffffff !important;
-    color: #000000 !important;
+    background-image: none !important;
+    color: #0f172a !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-family: var(--font-sans) !important;
   }
-  .navbar-container, .no-print {
+
+  nav,
+  header,
+  footer,
+  .navbar-container,
+  .no-print,
+  button,
+  .btn-subtle {
     display: none !important;
   }
+
+  .printable-area {
+    padding: 0 !important;
+    margin: 0 auto !important;
+    max-width: 100% !important;
+    background: #ffffff !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: #0f172a !important;
+  }
+
   .glass-panel {
     background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
     box-shadow: none !important;
     color: #0f172a !important;
   }
+
+  /* Prevent awkward page cuts */
+  .report-section,
+  .report-header,
+  .report-telemetry-grid,
+  .report-chart-container,
+  .report-injury-section,
+  .report-rehab-section,
+  .report-injury-card,
+  .report-rehab-card {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Header Typography & Logo */
+  .report-header {
+    border-bottom: 2px solid #e2e8f0 !important;
+    padding-bottom: 1rem !important;
+    margin-bottom: 1.5rem !important;
+  }
+
+  .brand-kinetic-text {
+    color: #0f172a !important;
+  }
+
+  .brand-badge-text {
+    background-color: #e0f2fe !important;
+    color: #0369a1 !important;
+    border: 1px solid #bae6fd !important;
+  }
+
+  .report-main-title {
+    color: #0f172a !important;
+    font-weight: 800 !important;
+  }
+
+  .report-meta-text {
+    color: #475569 !important;
+  }
+
+  .report-meta-text span {
+    color: #0284c7 !important;
+    font-weight: 600 !important;
+  }
+
+  /* Athlete Profile Card */
+  .report-athlete-profile-card {
+    background-color: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 10px !important;
+  }
+
+  .athlete-profile-label {
+    color: #64748b !important;
+  }
+
+  .athlete-profile-name {
+    color: #0f172a !important;
+  }
+
+  .athlete-profile-sport {
+    color: #334155 !important;
+  }
+
+  .athlete-profile-date {
+    color: #64748b !important;
+  }
+
+  /* Score Gauge & Weighted Index */
+  .report-gauge-card {
+    background-color: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+  }
+
+  .report-gauge-title {
+    color: #475569 !important;
+  }
+
+  .risk-gauge-bg-arc {
+    stroke: #e2e8f0 !important;
+  }
+
+  .risk-score-value {
+    color: #0f172a !important;
+  }
+
+  .risk-score-sublabel {
+    color: #64748b !important;
+  }
+
+  .risk-score-desc {
+    color: #334155 !important;
+  }
+
+  .report-weighted-card {
+    background-color: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+  }
+
+  .report-weighted-text {
+    color: #475569 !important;
+  }
+
+  .report-weighted-text span {
+    color: #1e293b !important;
+    font-weight: 600 !important;
+  }
+
+  /* 4-Metric Kinematic Matrix */
+  .report-matrix-card {
+    background-color: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+  }
+
+  .report-matrix-title {
+    color: #0f172a !important;
+  }
+
+  .report-benchmark-badge {
+    background-color: #e2e8f0 !important;
+    color: #475569 !important;
+  }
+
+  .feature-card {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+  }
+
+  .feature-card-title {
+    color: #334155 !important;
+  }
+
+  .feature-benchmark-tag {
+    background-color: #f1f5f9 !important;
+    color: #475569 !important;
+    border: 1px solid #e2e8f0 !important;
+  }
+
+  /* Time-Series Chart */
+  .report-chart-container {
+    background-color: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+  }
+
+  .chart-title {
+    color: #0f172a !important;
+  }
+
+  .chart-subtitle {
+    color: #475569 !important;
+  }
+
+  .recharts-cartesian-grid line {
+    stroke: #e2e8f0 !important;
+  }
+
+  .recharts-text,
+  .recharts-axis-tick text {
+    fill: #475569 !important;
+    font-weight: 500 !important;
+  }
+
+  .recharts-legend-item-text {
+    color: #1e293b !important;
+    font-weight: 600 !important;
+  }
+
+  /* Injury Breakdown */
+  .section-title {
+    color: #0f172a !important;
+  }
+
+  .report-injury-card {
+    background-color: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+  }
+
+  .injury-card-title {
+    color: #0f172a !important;
+  }
+
+  .injury-card-trigger {
+    color: #64748b !important;
+  }
+
+  .injury-card-trigger span {
+    color: #1e293b !important;
+    font-weight: 600 !important;
+  }
+
+  /* Rehabilitation Protocols */
+  .report-rehab-card {
+    background-color: #f0fdf4 !important;
+    border: 1px solid #86efac !important;
+  }
+
+  .rehab-card-title {
+    color: #065f46 !important;
+    font-weight: 800 !important;
+  }
+
+  .rehab-card-exercise {
+    color: #16a34a !important;
+    font-weight: 700 !important;
+  }
+
+  .rehab-card-focus {
+    color: #334155 !important;
+    font-weight: 500 !important;
+  }
 }
+
+
+

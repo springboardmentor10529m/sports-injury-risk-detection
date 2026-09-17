@@ -1,13 +1,13 @@
 import React, { useContext } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import BrandLogo from "./BrandLogo";
 import {
   Activity,
   User,
   Video,
   FileText,
   Users,
-  Stethoscope,
   LogOut,
 } from "lucide-react";
 
@@ -36,35 +36,26 @@ export default function Navbar() {
     ];
   } else if (currentRole === "coach") {
     navLinks = [
-      { to: "/coach-dashboard", label: "Squad Roster & Workload", icon: Users },
-      { to: "/analysis-report", label: "Screening Reports", icon: FileText },
-    ];
-  } else if (currentRole === "physio") {
-    navLinks = [
-      { to: "/physio-dashboard", label: "Clinical Rehab & RTP", icon: Stethoscope },
-      { to: "/analysis-report", label: "Screening Reports", icon: FileText },
+      { to: "/coach-dashboard", label: "Squad Roster", icon: Users },
+      { to: "/upload", label: "Motion Screening", icon: Video },
+      { to: "/analysis-report", label: "Biomechanical Reports", icon: FileText },
     ];
   }
 
-  const roleHome =
-    currentRole === "coach"
-      ? "/coach-dashboard"
-      : currentRole === "physio"
-      ? "/physio-dashboard"
-      : "/athlete-profile";
+  const roleHome = currentRole === "coach" ? "/coach-dashboard" : "/athlete-profile";
 
   return (
     <nav
-      className="navbar-container"
+      className="no-print"
       style={{
-        backgroundColor: "rgba(10, 15, 29, 0.9)",
+        backgroundColor: "rgba(7, 11, 20, 0.85)",
         backdropFilter: "blur(16px)",
         WebkitBackdropFilter: "blur(16px)",
         borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
         position: "sticky",
         top: 0,
-        zIndex: 100,
-        padding: "0 1.5rem",
+        zIndex: 50,
+        padding: "0.75rem 2rem",
       }}
     >
       <div
@@ -72,9 +63,8 @@ export default function Navbar() {
           maxWidth: "1400px",
           margin: "0 auto",
           display: "flex",
-          alignItems: "center",
           justifyContent: "space-between",
-          height: "68px",
+          alignItems: "center",
         }}
       >
         {/* Brand Logo */}
@@ -83,53 +73,10 @@ export default function Navbar() {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "10px",
             textDecoration: "none",
           }}
         >
-          <div
-            style={{
-              width: "38px",
-              height: "38px",
-              borderRadius: "10px",
-              background: "linear-gradient(135deg, #0284c7 0%, #10b981 100%)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 0 15px rgba(6, 182, 212, 0.4)",
-            }}
-          >
-            <Activity color="#ffffff" size={22} />
-          </div>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <span
-                style={{
-                  fontSize: "1.1rem",
-                  fontWeight: "800",
-                  letterSpacing: "-0.02em",
-                  color: "#ffffff",
-                }}
-              >
-                KINETIC<span style={{ color: "#38bdf8" }}>AI</span>
-              </span>
-              <span
-                style={{
-                  fontSize: "0.65rem",
-                  backgroundColor: "rgba(56, 189, 248, 0.15)",
-                  color: "#38bdf8",
-                  padding: "1px 6px",
-                  borderRadius: "4px",
-                  fontWeight: "700",
-                }}
-              >
-                {currentRole.toUpperCase()}
-              </span>
-            </div>
-            <p style={{ fontSize: "0.7rem", color: "var(--text-dim)", margin: 0 }}>
-              Sports Injury Risk Detection
-            </p>
-          </div>
+          <BrandLogo size={38} badgeText={currentRole.toUpperCase()} />
         </Link>
 
         {/* Navigation Tabs (Strictly Role-Specific) */}
@@ -200,8 +147,6 @@ export default function Navbar() {
                 backgroundColor:
                   currentRole === "coach"
                     ? "#06b6d4"
-                    : currentRole === "physio"
-                    ? "#a855f7"
                     : "#10b981",
                 display: "flex",
                 alignItems: "center",
@@ -231,8 +176,6 @@ export default function Navbar() {
                   color:
                     currentRole === "coach"
                       ? "#38bdf8"
-                      : currentRole === "physio"
-                      ? "#c084fc"
                       : "#34d399",
                   textTransform: "uppercase",
                   letterSpacing: "0.03em",

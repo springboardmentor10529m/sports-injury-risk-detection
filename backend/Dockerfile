@@ -8,12 +8,15 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # Set work directory
 WORKDIR /app
 
-# Install system dependencies (build tools, PostgreSQL client, OpenGL & glib for OpenCV/MediaPipe)
+# Install system dependencies (build tools, PostgreSQL client, OpenGL, EGL, & ffmpeg for MediaPipe/OpenCV)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     libgl1 \
+    libegl1 \
+    libgles2 \
     libglib2.0-0 \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies

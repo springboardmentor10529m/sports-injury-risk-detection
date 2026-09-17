@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { registerUser } from "../services/authService";
-import { Activity, User, Users, Stethoscope, Mail, Lock, UserCheck, ArrowRight, ShieldCheck } from "lucide-react";
+import { AuthContext } from "../context/AuthContext";
+import BrandLogo from "../components/BrandLogo";
+import { Activity, User, Users, Mail, Lock, UserCheck, ArrowRight, ShieldCheck } from "lucide-react";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -11,23 +13,37 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const { logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const handleRegister = async (e) => {
+  useEffect(() => {
+    // Clear any residual session when opening register screen
+    logout();
+  }, []);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    setLoading(true);
 
+    if (!name.trim()) {
+      setError("Please provide your full name.");
+      return;
+    }
+
+    setLoading(true);
     try {
-      await registerUser(name, email, password, role);
-      navigate("/login");
+      await registerUser({
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        password,
+        role,
+      });
+      // Redirect to login after successful registration
+      navigate("/login?registered=true");
     } catch (err) {
-      if (!err.response) {
-        // Network fallback
-        navigate("/login");
-      } else {
-        setError(err.response?.data?.detail || "Registration failed. Please try again.");
-      }
+      setError(
+        err.response?.data?.detail || "Registration failed. Please check your info and try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -36,7 +52,6 @@ export default function RegisterPage() {
   const roleOptions = [
     { id: "athlete", title: "Athlete", icon: User, color: "#10b981" },
     { id: "coach", title: "Coach", icon: Users, color: "#06b6d4" },
-    { id: "physio", title: "Physiotherapist", icon: Stethoscope, color: "#a855f7" },
   ];
 
   return (
@@ -46,7 +61,8 @@ export default function RegisterPage() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "2rem 1rem",
+        padding: "2rem 1.5rem",
+        position: "relative",
         backgroundColor: "var(--bg-main)",
       }}
     >
@@ -60,21 +76,10 @@ export default function RegisterPage() {
           zIndex: 10,
         }}
       >
-        <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-          <div
-            style={{
-              width: "52px",
-              height: "52px",
-              borderRadius: "14px",
-              background: "linear-gradient(135deg, #10b981 0%, #06b6d4 100%)",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 0 25px rgba(16, 185, 129, 0.4)",
-              marginBottom: "1rem",
-            }}
-          >
-            <Activity color="#ffffff" size={30} />
+        {/* Header Branding */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "2rem", textAlign: "center" }}>
+          <div style={{ marginBottom: "0.75rem" }}>
+            <BrandLogo size={52} showText={false} />
           </div>
           <h1
             style={{
@@ -87,8 +92,8 @@ export default function RegisterPage() {
           >
             Create Account
           </h1>
-          <p style={{ fontSize: "0.9rem", color: "var(--text-muted)" }}>
-            Join the KineticAI Injury Prevention & Performance Network
+          <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", margin: 0 }}>
+            Join the KineticAI Sports Movement Assessment Platform
           </p>
         </div>
 
@@ -170,7 +175,7 @@ export default function RegisterPage() {
             >
               Select Your Role:
             </label>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
               {roleOptions.map((opt) => {
                 const Icon = opt.icon;
                 const isSelected = role === opt.id;

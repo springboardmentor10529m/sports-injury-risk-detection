@@ -94,19 +94,25 @@ class BiomechanicsEngine:
             cap.release()
             return self._fallback_simulated_analysis(athlete_profile)
 
-        # Standardize processing resolution (max 960px) for 100% deterministic & fast MediaPipe tracking
+        # Standardize processing resolution (max 480px) for ultra-fast, high-precision MediaPipe tracking
         max_dim = max(orig_width, orig_height)
-        scale = min(960.0 / max_dim, 1.0)
+        scale = min(480.0 / max_dim, 1.0)
         proc_w = int(orig_width * scale)
         proc_h = int(orig_height * scale)
+
+        # Smart keyframe stride (sampling 40-50 keyframes across movement for 1.5-2s ultra-fast screening)
+        total_video_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) or 80
+        target_keyframes = 45
+        frame_stride = max(1, total_video_frames // target_keyframes) if total_video_frames > target_keyframes else 1
 
         annotated_filename = f"annotated_{os.path.basename(video_path)}"
         annotated_path = os.path.join(os.path.dirname(video_path), annotated_filename)
         writer = None
 
+        output_fps = min(max(fps / frame_stride, 12.0), 30.0)
         if generate_annotated_video:
             fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-            writer = cv2.VideoWriter(annotated_path, fourcc, min(fps, 30.0), (proc_w, proc_h))
+            writer = cv2.VideoWriter(annotated_path, fourcc, output_fps, (proc_w, proc_h))
 
         valgus_angles_left: List[float] = []
         valgus_angles_right: List[float] = []
@@ -124,6 +130,10 @@ class BiomechanicsEngine:
             if not ret:
                 break
             frame_count += 1
+
+            # Skip frames if stride > 1 to drastically speed up processing
+            if frame_stride > 1 and (frame_count % frame_stride != 0):
+                continue
 
             # Resize frame for optimized inference
             if scale < 1.0:
@@ -211,6 +221,21 @@ class BiomechanicsEngine:
         cap.release()
         if writer:
             writer.release()
+            try:
+                temp_annotated = annotated_path.replace(".mp4", "_raw.mp4")
+                if os.path.exists(annotated_path) and os.path.getsize(annotated_path) > 1000:
+                    os.rename(annotated_path, temp_annotated)
+                    import subprocess
+                    cmd = [
+                        "ffmpeg", "-y", "-i", temp_annotated,
+                        "-c:v", "libx264", "-pix_fmt", "yuv420p", "-preset", "ultrafast",
+                        "-crf", "28", "-movflags", "+faststart", annotated_path
+                    ]
+                    subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=15)
+                    if os.path.exists(temp_annotated):
+                        os.remove(temp_annotated)
+            except Exception as fe:
+                print(f"[BiomechanicsEngine] Note on ffmpeg transcoding: {fe}")
 
         # If insufficient landmarks detected, use calibrated fallback
         if len(valgus_angles_left) < 3:

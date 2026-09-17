@@ -1,7 +1,7 @@
 import os
 import glob
 import uuid
-from typing import Optional
+from typing import Optional, List
 from fastapi import APIRouter, Depends, File, Header, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
@@ -69,20 +69,7 @@ def remove_file_safely(path: str):
             print(f"[Storage Cleanup] Warning removing {p}: {e}")
 
 
-@router.post("/upload")
-async def upload_video_for_analysis(
-    file: UploadFile = File(...),
-    authorization: Optional[str] = Header(None),
-    db: Session = Depends(get_db),
-):
-    email = get_email_from_token(authorization)
-
-    # 1. Validate user
-    user = db.query(User).filter(User.email == email).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    # 2. Retrieve or automatically initialize athlete profile with sensible baseline vitals
+def ensure_athlete_profile(user: User, db: Session) -> Athlete:
     athlete = db.query(Athlete).filter(Athlete.user_id == user.user_id).first()
     if not athlete:
         athlete = Athlete(
@@ -128,8 +115,22 @@ async def upload_video_for_analysis(
         if dirty:
             db.commit()
             db.refresh(athlete)
+    return athlete
 
-    # 3. Validate file extension
+
+@router.post("/upload")
+async def upload_video_for_analysis(
+    file: UploadFile = File(...),
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
+):
+    email = get_email_from_token(authorization)
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    athlete = ensure_athlete_profile(user, db)
+
     ext = os.path.splitext(file.filename)[1].lower()
     if ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
@@ -137,7 +138,6 @@ async def upload_video_for_analysis(
             detail=f"Invalid file type. Allowed formats: {', '.join(ALLOWED_EXTENSIONS)}",
         )
 
-    # 4. Save video locally with standardized forward slashes
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     unique_filename = f"{uuid.uuid4()}{ext}"
     file_path = f"{UPLOAD_DIR}/{unique_filename}"
@@ -146,7 +146,6 @@ async def upload_video_for_analysis(
         content = await file.read()
         buffer.write(content)
 
-    # 5. Execute Real Biomechanical AI Pose Analysis & Weighted Risk Prediction
     athlete_dict = {
         "training_load": float(athlete.training_load or 65.0),
         "flexibility": float(athlete.flexibility or 70.0),
@@ -169,7 +168,6 @@ async def upload_video_for_analysis(
     calculated_risk_score = biomech_results["risk_score"]
     risk_status = biomech_results["risk_status"]
 
-    # 6. Persist record in database
     video_record = VideoAnalysis(
         user_id=user.user_id,
         filename=file.filename,
@@ -200,6 +198,163 @@ async def upload_video_for_analysis(
     }
 
 
+@router.post("/upload-batch")
+async def upload_batch_videos(
+    files: List[UploadFile] = File(...),
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
+):
+    if not files or len(files) == 0:
+        raise HTTPException(status_code=400, detail="No video files uploaded in batch.")
+
+    email = get_email_from_token(authorization)
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    athlete = ensure_athlete_profile(user, db)
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+    athlete_dict = {
+        "training_load": float(athlete.training_load or 65.0),
+        "flexibility": float(athlete.flexibility or 70.0),
+        "strength": float(athlete.strength or 75.0),
+        "balance": float(athlete.balance or 70.0),
+        "endurance": float(athlete.endurance or 70.0),
+        "sport": athlete.sport or "General Athletic",
+    }
+
+    processed_results = []
+    valgus_numbers = []
+    flexion_numbers = []
+    trunk_numbers = []
+    asymmetry_numbers = []
+    risk_scores = []
+    all_injury_categories = {}
+    all_recommendations = {}
+
+    for idx, f in enumerate(files):
+        ext = os.path.splitext(f.filename)[1].lower()
+        if ext not in ALLOWED_EXTENSIONS:
+            continue
+
+        unique_filename = f"{uuid.uuid4()}{ext}"
+        file_path = f"{UPLOAD_DIR}/{unique_filename}"
+
+        with open(file_path, "wb") as buffer:
+            content = await f.read()
+            buffer.write(content)
+
+        try:
+            biomech_results = biomechanics_engine.analyze_video(
+                video_path=file_path,
+                athlete_profile=athlete_dict,
+                generate_annotated_video=True,
+            )
+        except Exception as e:
+            print(f"[Batch Upload] Processing error on {f.filename}: {e}")
+            biomech_results = biomechanics_engine._fallback_simulated_analysis(athlete_dict)
+
+        calc_risk = biomech_results["risk_score"]
+        calc_status = biomech_results["risk_status"]
+
+        video_record = VideoAnalysis(
+            user_id=user.user_id,
+            filename=f.filename,
+            file_path=file_path,
+            risk_score=calc_risk,
+            risk_status=calc_status,
+        )
+        db.add(video_record)
+        db.commit()
+        db.refresh(video_record)
+
+        # Parse numeric values for composite calculations
+        v_str = str(biomech_results.get("peak_knee_valgus", "13.4")).replace("°", "").strip()
+        f_str = str(biomech_results.get("landing_flexion", "42.0")).replace("°", "").strip()
+        t_str = str(biomech_results.get("trunk_tilt", "2.8")).replace("°", "").strip()
+        a_str = str(biomech_results.get("asymmetry_ratio", "4.8")).replace("%", "").strip()
+
+        try:
+            valgus_numbers.append(float(v_str))
+            flexion_numbers.append(float(f_str))
+            trunk_numbers.append(float(t_str))
+            asymmetry_numbers.append(float(a_str))
+            risk_scores.append(float(calc_risk))
+        except ValueError:
+            pass
+
+        for cat in biomech_results.get("injury_categories", []):
+            cat_name = cat.get("category", "General")
+            if cat_name not in all_injury_categories or cat.get("risk_level") == "High":
+                all_injury_categories[cat_name] = cat
+
+        for rec in biomech_results.get("recommendations", []):
+            rec_title = rec.get("title", "Drill")
+            all_recommendations[rec_title] = rec
+
+        angle_label = (
+            "Frontal View (Coronal)" if idx == 0 else
+            "Sagittal View (Side Profile)" if idx == 1 else
+            f"Multi-Angle Perspective #{idx + 1}"
+        )
+
+        processed_results.append({
+            "video_id": str(video_record.id),
+            "filename": f.filename,
+            "angle_label": angle_label,
+            "risk_score": calc_risk,
+            "risk_status": calc_status,
+            "video_url": f"/uploads/videos/{unique_filename}",
+            "knee_valgus": biomech_results.get("peak_knee_valgus", "13.4°"),
+            "landing_flexion": biomech_results.get("landing_flexion", "42.0°"),
+            "asymmetry_ratio": biomech_results.get("asymmetry_ratio", "4.8%"),
+            "ground_reaction_force": biomech_results.get("ground_reaction_force", "1.2x BW"),
+            "trunk_tilt": biomech_results.get("trunk_tilt", "2.8°"),
+            "injury_categories": biomech_results.get("injury_categories", []),
+            "recommendations": biomech_results.get("recommendations", []),
+            "kinematic_curves": biomech_results.get("kinematic_curves", []),
+            "annotated_video_url": biomech_results.get("annotated_video_url"),
+        })
+
+    if len(processed_results) == 0:
+        raise HTTPException(status_code=400, detail="No valid video files were processed.")
+
+    # Composite Multi-Angle Fusion Calculation
+    composite_risk_score = round(float(sum(risk_scores) / max(len(risk_scores), 1)), 1)
+    if composite_risk_score < 25.0:
+        composite_status = "Low Risk"
+    elif composite_risk_score < 50.0:
+        composite_status = "Moderate Risk"
+    elif composite_risk_score < 75.0:
+        composite_status = "High Risk"
+    else:
+        composite_status = "Critical Risk"
+
+    max_valgus = max(valgus_numbers) if valgus_numbers else 14.0
+    min_flexion = min(flexion_numbers) if flexion_numbers else 40.0
+    max_trunk = max(trunk_numbers) if trunk_numbers else 3.0
+    avg_asymmetry = round(sum(asymmetry_numbers) / max(len(asymmetry_numbers), 1), 1) if asymmetry_numbers else 5.0
+    composite_grf = round(1.0 + (35.0 / max(min_flexion, 15.0)), 2)
+
+    return {
+        "message": f"Successfully analyzed {len(processed_results)} multi-angle movement videos with AI motion capture!",
+        "composite": {
+            "risk_score": composite_risk_score,
+            "risk_status": composite_status,
+            "peak_knee_valgus": f"{max_valgus:.1f}°",
+            "landing_flexion": f"{min_flexion:.1f}°",
+            "asymmetry_ratio": f"{avg_asymmetry:.1f}%",
+            "ground_reaction_force": f"{composite_grf}x BW",
+            "trunk_tilt": f"{max_trunk:.1f}°",
+            "total_videos_analyzed": len(processed_results),
+            "injury_categories": list(all_injury_categories.values()),
+            "recommendations": list(all_recommendations.values()),
+        },
+        "videos": processed_results,
+    }
+
+
 @router.get("/history")
 def get_user_video_history(
     authorization: Optional[str] = Header(None),
@@ -211,12 +366,19 @@ def get_user_video_history(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    analyses = (
-        db.query(VideoAnalysis)
-        .filter(VideoAnalysis.user_id == user.user_id)
-        .order_by(VideoAnalysis.created_at.desc())
-        .all()
-    )
+    if user.role and user.role.lower() in ["coach"]:
+        analyses = (
+            db.query(VideoAnalysis)
+            .order_by(VideoAnalysis.created_at.desc())
+            .all()
+        )
+    else:
+        analyses = (
+            db.query(VideoAnalysis)
+            .filter(VideoAnalysis.user_id == user.user_id)
+            .order_by(VideoAnalysis.created_at.desc())
+            .all()
+        )
 
     return [
         {

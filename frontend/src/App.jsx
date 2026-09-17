@@ -13,14 +13,12 @@ import RegisterPage from "./pages/RegisterPage";
 import AthleteProfilePage from "./pages/AthleteProfilePage";
 import VideoUploadPage from "./pages/VideoUploadPage";
 import CoachDashboard from "./pages/CoachDashboard";
-import PhysioDashboard from "./pages/PhysioDashboard";
 import AnalysisReportPage from "./pages/AnalysisReportPage";
 
 // Helper to get default home path for current role
 const getRoleHome = (role) => {
   const r = (role || "athlete").toLowerCase();
   if (r === "coach") return "/coach-dashboard";
-  if (r === "physio") return "/physio-dashboard";
   return "/athlete-profile";
 };
 
@@ -47,48 +45,17 @@ const RoleProtectedLayout = ({ children, allowedRoles = [] }) => {
   );
 };
 
-// Public Route (If user is already logged in, redirect them directly to their role dashboard)
-const PublicOnlyRoute = ({ children }) => {
-  const { user } = useContext(AuthContext);
-
-  if (user) {
-    const currentRole = (user?.role || "athlete").toLowerCase();
-    return <Navigate to={getRoleHome(currentRole)} replace />;
-  }
-
-  return children;
-};
-
 function App() {
   return (
     <AuthProvider>
       <Router>
         <Routes>
-          {/* Public Landing Page & Auth Routes (Redirect to Portal if already authenticated) */}
-          <Route
-            path="/"
-            element={
-              <PublicOnlyRoute>
-                <LandingPage />
-              </PublicOnlyRoute>
-            }
-          />
-          <Route
-            path="/login"
-            element={
-              <PublicOnlyRoute>
-                <LoginPage />
-              </PublicOnlyRoute>
-            }
-          />
-          <Route
-            path="/register"
-            element={
-              <PublicOnlyRoute>
-                <RegisterPage />
-              </PublicOnlyRoute>
-            }
-          />
+          {/* Public Landing Page */}
+          <Route path="/" element={<LandingPage />} />
+
+          {/* Authentication Routes: Always open the clean login/register forms */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
 
           {/* Athlete-Only Routes */}
           <Route
@@ -118,27 +85,17 @@ function App() {
             }
           />
 
-          {/* Physio-Only Routes */}
-          <Route
-            path="/physio-dashboard"
-            element={
-              <RoleProtectedLayout allowedRoles={["physio"]}>
-                <PhysioDashboard />
-              </RoleProtectedLayout>
-            }
-          />
-
-          {/* Assessment Report Route (Available to Athlete, Coach, Physio) */}
+          {/* Assessment Report Route (Available to Athlete & Coach) */}
           <Route
             path="/analysis-report"
             element={
-              <RoleProtectedLayout allowedRoles={["athlete", "coach", "physio"]}>
+              <RoleProtectedLayout allowedRoles={["athlete", "coach"]}>
                 <AnalysisReportPage />
               </RoleProtectedLayout>
             }
           />
 
-          {/* Fallback */}
+          {/* Fallback to Landing Page */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>

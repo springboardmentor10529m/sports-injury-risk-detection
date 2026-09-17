@@ -216,3 +216,33 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Node & Frontend dependencies
+node_modules/
+**/node_modules/
+frontend/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-debug.log*
+
+# Frontend build outputs
+dist/
+dist-ssr/
+frontend/dist/
+*.local
+
+# Editor & OS files
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Uploaded test videos and user binaries (keep demo file)
+backend/uploads/videos/*.mp4
+!backend/uploads/videos/demo_jump_landing.mp4
+

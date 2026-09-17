@@ -24,12 +24,27 @@ export const getAssessmentDetails = async (videoId) => {
   return response.data;
 };
 
-// Upload video for biomechanical analysis
+// Upload single video for biomechanical analysis
 export const uploadVideoForAnalysis = async (file) => {
   const formData = new FormData();
   formData.append("file", file);
 
   const response = await api.post("/videos/upload", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data;
+};
+
+// Upload multiple / batch videos for multi-angle biomechanical analysis
+export const uploadBatchVideosForAnalysis = async (files) => {
+  const formData = new FormData();
+  for (let i = 0; i < files.length; i++) {
+    formData.append("files", files[i]);
+  }
+
+  const response = await api.post("/videos/upload-batch", formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
@@ -43,7 +58,7 @@ export const deleteVideoAnalysis = async (videoId) => {
   return response.data;
 };
 
-// Fetch all registered athletes for Coach and Physio dashboards
+// Fetch all registered athletes for Coach dashboard
 export const getAllAthletes = async () => {
   try {
     const response = await api.get("/athletes/all");
@@ -53,3 +68,12 @@ export const getAllAthletes = async () => {
     return [];
   }
 };
+
+// Update coach notes / observations for a specific athlete
+export const updateAthleteCoachNotes = async (athleteId, coachNotes) => {
+  const response = await api.put(`/athletes/${athleteId}/notes`, {
+    coach_notes: coachNotes,
+  });
+  return response.data;
+};
+

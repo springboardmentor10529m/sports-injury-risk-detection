@@ -170,7 +170,7 @@ def run_all_checks():
     auth_token = "bearer-token-aadrika@gmail.com"
     test_athlete_profile_and_vitals(auth_token)
 
-    print("\n--- 3. COACH & PHYSIO SQUAD ROSTER ---")
+    print("\n--- 3. COACH SQUAD ROSTER ---")
     test_coach_squad_roster("bearer-token-belly@gmail.com")
 
     print("\n--- 4. AI COMPUTER VISION POSE & BIOMECHANICS ENGINE ---")

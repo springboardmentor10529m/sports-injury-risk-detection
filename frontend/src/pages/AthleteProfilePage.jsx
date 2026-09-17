@@ -1166,7 +1166,7 @@ export default function AthleteProfilePage() {
                   <textarea
                     rows={2}
                     name="coach_notes"
-                    placeholder="Any notes from coach or physiotherapist..."
+                    placeholder="Any notes or guidance from coach..."
                     value={profileData.coach_notes || ""}
                     onChange={handleInputChange}
                     style={{

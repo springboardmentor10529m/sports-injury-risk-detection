@@ -13,7 +13,7 @@ class RegisterRequest(BaseModel):
     name: str
     email: EmailStr
     password: str
-    role: str  # 'athlete', 'coach', or 'physio'
+    role: str  # 'athlete' or 'coach'
 
 
 class LoginRequest(BaseModel):

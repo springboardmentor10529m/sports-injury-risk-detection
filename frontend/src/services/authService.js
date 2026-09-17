@@ -24,18 +24,21 @@ export const loginUser = async (email, password, role) => {
   });
 
   if (response.data.access_token) {
-    localStorage.setItem("user", JSON.stringify(response.data));
+    // Store in sessionStorage so closing the tab/browser securely ends the session
+    sessionStorage.setItem("user", JSON.stringify(response.data));
+    localStorage.removeItem("user");
   }
   return response.data;
 };
 
 export const logoutUser = () => {
+  sessionStorage.removeItem("user");
   localStorage.removeItem("user");
 };
 
 export const getCurrentUser = () => {
   try {
-    const item = localStorage.getItem("user");
+    const item = sessionStorage.getItem("user") || localStorage.getItem("user");
     return item ? JSON.parse(item) : null;
   } catch {
     return null;

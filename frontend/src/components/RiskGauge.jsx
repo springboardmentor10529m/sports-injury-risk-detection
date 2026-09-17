@@ -1,7 +1,7 @@
 import React from "react";
 import { AlertTriangle, CheckCircle, ShieldAlert } from "lucide-react";
 
-export default function RiskGauge({ score = 0, size = 180, showLabel = true }) {
+export default function RiskGauge({ score = 0, status = null, size = 180, showLabel = true }) {
   // Clamp score between 0 and 100
   const normalizedScore = Math.min(Math.max(Number(score) || 0, 0), 100);
   
@@ -21,17 +21,25 @@ export default function RiskGauge({ score = 0, size = 180, showLabel = true }) {
     desc: "Biomechanical patterns within optimal thresholds.",
   };
 
-  if (normalizedScore >= 60) {
+  // Harmonized standard threshold logic: >= 50 is High Risk, >= 25 is Moderate Risk, < 25 is Low Risk
+  const isHigh = status
+    ? status.toLowerCase().includes("high") || status.toLowerCase().includes("critical")
+    : normalizedScore >= 50;
+  const isMod = status
+    ? status.toLowerCase().includes("mod")
+    : (normalizedScore >= 25 && normalizedScore < 50);
+
+  if (isHigh) {
     riskTier = {
-      label: "High Risk",
+      label: status || "High Risk",
       color: "#f43f5e",
       glow: "rgba(244, 63, 94, 0.3)",
       icon: ShieldAlert,
       desc: "Critical biomechanical stress detected. Immediate review advised.",
     };
-  } else if (normalizedScore >= 30) {
+  } else if (isMod) {
     riskTier = {
-      label: "Moderate Risk",
+      label: status || "Moderate Risk",
       color: "#f59e0b",
       glow: "rgba(245, 158, 11, 0.3)",
       icon: AlertTriangle,
@@ -52,6 +60,7 @@ export default function RiskGauge({ score = 0, size = 180, showLabel = true }) {
         >
           {/* Background Arc */}
           <circle
+            className="risk-gauge-bg-arc"
             cx={size / 2}
             cy={size / 2}
             r={radius}
@@ -93,6 +102,7 @@ export default function RiskGauge({ score = 0, size = 180, showLabel = true }) {
           }}
         >
           <span
+            className="risk-score-value"
             style={{
               fontSize: size > 150 ? "2.2rem" : "1.6rem",
               fontWeight: "800",
@@ -104,7 +114,7 @@ export default function RiskGauge({ score = 0, size = 180, showLabel = true }) {
             {Math.round(normalizedScore)}
             <span style={{ fontSize: "1rem", color: riskTier.color }}>%</span>
           </span>
-          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: "4px" }}>
+          <span className="risk-score-sublabel" style={{ fontSize: "0.75rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: "4px" }}>
             Injury Risk
           </span>
         </div>
@@ -129,7 +139,7 @@ export default function RiskGauge({ score = 0, size = 180, showLabel = true }) {
             <IconComponent size={14} />
             <span>{riskTier.label}</span>
           </div>
-          <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", maxWidth: "220px", marginTop: "6px", lineHeight: "1.3" }}>
+          <p className="risk-score-desc" style={{ fontSize: "0.8rem", color: "var(--text-muted)", maxWidth: "220px", marginTop: "6px", lineHeight: "1.3" }}>
             {riskTier.desc}
           </p>
         </div>

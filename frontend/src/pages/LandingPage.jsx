@@ -1,12 +1,12 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import BrandLogo from "../components/BrandLogo";
 import {
   Activity,
   Shield,
   Video,
   Users,
-  Stethoscope,
   Sparkles,
   ArrowRight,
   CheckCircle2,
@@ -25,31 +25,35 @@ export default function LandingPage() {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const currentRole = (user?.role || "athlete").toLowerCase();
-  const dashboardLink =
-    currentRole === "coach"
-      ? "/coach-dashboard"
-      : currentRole === "physio"
-      ? "/physio-dashboard"
-      : "/athlete-profile";
+  useEffect(() => {
+    // If logged in, redirect straight to their portal dashboard
+    if (user) {
+      if (user.role === "coach") {
+        navigate("/coach-dashboard");
+      } else {
+        navigate("/athlete-profile");
+      }
+    }
+  }, [user, navigate]);
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "var(--bg-main)", color: "#ffffff" }}>
-      {/* Top Header Navbar */}
+    <div style={{ backgroundColor: "#070b14", color: "#ffffff", minHeight: "100vh", overflowX: "hidden" }}>
+      {/* Navigation Bar */}
       <header
         style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 100,
+          borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
           backgroundColor: "rgba(7, 11, 20, 0.85)",
           backdropFilter: "blur(16px)",
-          borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-          padding: "0 1.5rem",
+          WebkitBackdropFilter: "blur(16px)",
+          position: "sticky",
+          top: 0,
+          zIndex: 50,
+          padding: "0 2rem",
         }}
       >
         <div
           style={{
-            maxWidth: "1350px",
+            maxWidth: "1300px",
             margin: "0 auto",
             height: "72px",
             display: "flex",
@@ -58,51 +62,12 @@ export default function LandingPage() {
           }}
         >
           {/* Logo */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div
-              style={{
-                width: "40px",
-                height: "40px",
-                borderRadius: "12px",
-                background: "linear-gradient(135deg, #0284c7 0%, #10b981 100%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 0 20px rgba(6, 182, 212, 0.4)",
-              }}
-            >
-              <Activity color="#ffffff" size={24} />
-            </div>
-            <div>
-              <span style={{ fontSize: "1.2rem", fontWeight: "800", letterSpacing: "-0.02em", color: "#ffffff" }}>
-                KINETIC<span style={{ color: "#38bdf8" }}>AI</span>
-              </span>
-              <span
-                style={{
-                  fontSize: "0.65rem",
-                  backgroundColor: "rgba(56, 189, 248, 0.15)",
-                  color: "#38bdf8",
-                  padding: "2px 6px",
-                  borderRadius: "4px",
-                  fontWeight: "700",
-                  marginLeft: "6px",
-                }}
-              >
-                PRO
-              </span>
-            </div>
-          </div>
+          <Link to="/" style={{ textDecoration: "none" }}>
+            <BrandLogo size={40} badgeText="PRO" />
+          </Link>
 
           {/* Center Nav Links */}
           <nav style={{ display: "flex", gap: "2rem", alignItems: "center" }}>
-            <a
-              href="#features"
-              style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: "0.9rem", fontWeight: "500" }}
-              onMouseOver={(e) => (e.currentTarget.style.color = "#38bdf8")}
-              onMouseOut={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
-            >
-              Capabilities
-            </a>
             <a
               href="#how-it-works"
               style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: "0.9rem", fontWeight: "500" }}
@@ -121,21 +86,14 @@ export default function LandingPage() {
             </a>
           </nav>
 
-          {/* Right Action Buttons */}
+          {/* Right Action Button */}
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <Link
               to="/login"
-              className="btn-subtle"
-              style={{ textDecoration: "none", padding: "8px 16px", fontSize: "0.85rem" }}
-            >
-              Sign In
-            </Link>
-            <Link
-              to="/register"
               className="btn-primary"
-              style={{ textDecoration: "none", padding: "8px 18px", fontSize: "0.85rem" }}
+              style={{ textDecoration: "none", padding: "10px 22px", fontSize: "0.9rem", fontWeight: "600" }}
             >
-              Get Started
+              Sign In to Portal
             </Link>
           </div>
         </div>
@@ -196,28 +154,24 @@ export default function LandingPage() {
               maxWidth: "540px",
             }}
           >
-            KineticAI transforms regular video footage into 33-point 3D joint kinematic tracking, fatigue load telemetry, and predictive injury screening for Athletes, Coaches, and Physiotherapists.
+            KineticAI transforms regular video footage into 33-point 3D joint kinematic tracking, fatigue load telemetry, and predictive injury screening for Athletes and Coaches.
           </p>
 
           <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginBottom: "2.5rem" }}>
             <Link
-              to="/register"
+              to="/login"
               className="btn-emerald"
               style={{
-                padding: "14px 28px",
-                fontSize: "1rem",
+                padding: "14px 32px",
+                fontSize: "1.05rem",
                 textDecoration: "none",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
                 boxShadow: "0 6px 20px rgba(16, 185, 129, 0.35)",
               }}
             >
-              Start Free Assessment <ArrowRight size={18} />
-            </Link>
-            <Link
-              to="/login"
-              className="btn-subtle"
-              style={{ padding: "14px 24px", fontSize: "1rem", textDecoration: "none" }}
-            >
-              Sign In to Portal
+              Launch AI Screening Portal <ArrowRight size={18} />
             </Link>
           </div>
 
@@ -386,16 +340,16 @@ export default function LandingPage() {
             Tailored Experiences
           </span>
           <h2 style={{ fontSize: "2.2rem", fontWeight: "800", color: "#ffffff", marginTop: "6px" }}>
-            Dedicated Portals for Every Sports Professional
+            Dedicated Portals for Athletes and Coaches
           </h2>
           <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", maxWidth: "600px", margin: "8px auto 0" }}>
-            Whether you are an individual athlete, a head coach, or a sports physiotherapist, KineticAI provides role-specific tools to safeguard musculoskeletal health.
+            Whether you are an individual athlete or a head coach, KineticAI provides role-specific tools to safeguard musculoskeletal health.
           </p>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "1.75rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(380px, 1fr))", gap: "2rem" }}>
           {/* 1. Athlete Card */}
-          <div className="glass-panel" style={{ padding: "2rem", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+          <div className="glass-panel" style={{ padding: "2.25rem", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
             <div>
               <div
                 style={{
@@ -413,25 +367,25 @@ export default function LandingPage() {
               >
                 <Activity size={24} />
               </div>
-              <h3 style={{ fontSize: "1.3rem", fontWeight: "800", color: "#ffffff", marginBottom: "0.6rem" }}>
+              <h3 style={{ fontSize: "1.35rem", fontWeight: "800", color: "#ffffff", marginBottom: "0.6rem" }}>
                 Athlete Portal
               </h3>
-              <p style={{ fontSize: "0.88rem", color: "var(--text-muted)", lineHeight: 1.5, marginBottom: "1.25rem" }}>
+              <p style={{ fontSize: "0.9rem", color: "var(--text-muted)", lineHeight: 1.5, marginBottom: "1.25rem" }}>
                 Track personal physical capacity across Strength, Flexibility, Balance, and Endurance. Record video drop-jumps for instant feedback on ACL and hamstring strain vulnerability.
               </p>
-              <ul style={{ fontSize: "0.82rem", color: "#cbd5e1", paddingLeft: "1.2rem", lineHeight: 1.8, marginBottom: "1.5rem" }}>
+              <ul style={{ fontSize: "0.85rem", color: "#cbd5e1", paddingLeft: "1.2rem", lineHeight: 1.8, marginBottom: "1.75rem" }}>
                 <li>Multi-axial Physical Capacity Radar</li>
                 <li>Video Drop-Jump & Deceleration AI Scan</li>
                 <li>Dynamic Injury Vector Breakdown</li>
               </ul>
             </div>
-            <Link to="/register" className="btn-emerald" style={{ width: "100%", textDecoration: "none", textAlign: "center" }}>
+            <Link to="/register" className="btn-emerald" style={{ width: "100%", textDecoration: "none", textAlign: "center", padding: "12px" }}>
               Join as Athlete →
             </Link>
           </div>
 
           {/* 2. Coach Card */}
-          <div className="glass-panel" style={{ padding: "2rem", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+          <div className="glass-panel" style={{ padding: "2.25rem", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
             <div>
               <div
                 style={{
@@ -449,60 +403,20 @@ export default function LandingPage() {
               >
                 <Users size={24} />
               </div>
-              <h3 style={{ fontSize: "1.3rem", fontWeight: "800", color: "#ffffff", marginBottom: "0.6rem" }}>
+              <h3 style={{ fontSize: "1.35rem", fontWeight: "800", color: "#ffffff", marginBottom: "0.6rem" }}>
                 Coach Command
               </h3>
-              <p style={{ fontSize: "0.88rem", color: "var(--text-muted)", lineHeight: 1.5, marginBottom: "1.25rem" }}>
+              <p style={{ fontSize: "0.9rem", color: "var(--text-muted)", lineHeight: 1.5, marginBottom: "1.25rem" }}>
                 Monitor squad-wide workload accumulation and fatigue hotspots. Identify high-risk athletes before practice and receive AI drill modifications to prevent non-contact injuries.
               </p>
-              <ul style={{ fontSize: "0.82rem", color: "#cbd5e1", paddingLeft: "1.2rem", lineHeight: 1.8, marginBottom: "1.5rem" }}>
+              <ul style={{ fontSize: "0.85rem", color: "#cbd5e1", paddingLeft: "1.2rem", lineHeight: 1.8, marginBottom: "1.75rem" }}>
                 <li>Squad-Wide Workload & Roster Telemetry</li>
                 <li>High-Risk Athlete Automated Alerts</li>
                 <li>Workload vs Risk Correlation Charts</li>
               </ul>
             </div>
-            <Link to="/register" className="btn-primary" style={{ width: "100%", textDecoration: "none", textAlign: "center" }}>
+            <Link to="/register" className="btn-primary" style={{ width: "100%", textDecoration: "none", textAlign: "center", padding: "12px" }}>
               Join as Coach →
-            </Link>
-          </div>
-
-          {/* 3. Physio Card */}
-          <div className="glass-panel" style={{ padding: "2rem", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-            <div>
-              <div
-                style={{
-                  width: "48px",
-                  height: "48px",
-                  borderRadius: "12px",
-                  backgroundColor: "rgba(168, 85, 247, 0.15)",
-                  border: "1px solid rgba(168, 85, 247, 0.3)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#a855f7",
-                  marginBottom: "1.25rem",
-                }}
-              >
-                <Stethoscope size={24} />
-              </div>
-              <h3 style={{ fontSize: "1.3rem", fontWeight: "800", color: "#ffffff", marginBottom: "0.6rem" }}>
-                Physio Clinic & RTP
-              </h3>
-              <p style={{ fontSize: "0.88rem", color: "var(--text-muted)", lineHeight: 1.5, marginBottom: "1.25rem" }}>
-                Track clinical rehabilitation through a standardized 4-Phase Return-to-Play framework. Prescribe corrective drills and monitor joint Range of Motion (ROM) progression.
-              </p>
-              <ul style={{ fontSize: "0.82rem", color: "#cbd5e1", paddingLeft: "1.2rem", lineHeight: 1.8, marginBottom: "1.5rem" }}>
-                <li>4-Phase Return-To-Play Clinical Tracker</li>
-                <li>Corrective Exercise Prescription Builder</li>
-                <li>Joint ROM & Bilateral Symmetry Ratios</li>
-              </ul>
-            </div>
-            <Link
-              to="/register"
-              className="btn-subtle"
-              style={{ width: "100%", textDecoration: "none", textAlign: "center", color: "#c084fc", borderColor: "rgba(168,85,247,0.3)" }}
-            >
-              Join as Physiotherapist →
             </Link>
           </div>
         </div>

@@ -39,7 +39,7 @@ def get_email_from_token(authorization: Optional[str]):
 def get_all_athletes(
     authorization: Optional[str] = Header(None), db: Session = Depends(get_db)
 ):
-    """Retrieve all athletes for Coach and Physio dashboards."""
+    """Retrieve all athletes for Coach dashboard."""
     email = get_email_from_token(authorization)
     current_user = db.query(User).filter(User.email == email).first()
     if not current_user:
@@ -205,3 +205,36 @@ def update_my_profile(
         "riskStatus": latest_video.risk_status if latest_video else "Not Screened",
         "lastAssessment": latest_video.created_at.strftime("%Y-%m-%d %H:%M") if latest_video and latest_video.created_at else "Never",
     }
+
+
+class CoachNotesUpdate(BaseModel):
+    coach_notes: str
+
+
+@router.put("/{athlete_id}/notes")
+def update_athlete_coach_notes(
+    athlete_id: str,
+    payload: CoachNotesUpdate,
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
+):
+    """Allows Coaches to save guidance observations for an athlete."""
+    email = get_email_from_token(authorization)
+    author_user = db.query(User).filter(User.email == email).first()
+    if not author_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    target_athlete = db.query(Athlete).filter(Athlete.user_id == athlete_id).first()
+    if not target_athlete:
+        raise HTTPException(status_code=404, detail="Target athlete profile not found")
+
+    target_athlete.coach_notes = payload.coach_notes
+    db.commit()
+    db.refresh(target_athlete)
+
+    return {
+        "message": "Coach observations updated successfully",
+        "athlete_id": athlete_id,
+        "coach_notes": target_athlete.coach_notes,
+    }
+
