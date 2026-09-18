@@ -1,0 +1,20 @@
+{
+  "name": "motionguard-sports-injury-ai",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "frontend": "vite --host 127.0.0.1 --port 5175",
+    "preview": "vite preview --host 127.0.0.1 --port 5175",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "vite": "latest",
+    "typescript": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "lucide-react": "latest"
+  },
+  "devDependencies": {}
+}
