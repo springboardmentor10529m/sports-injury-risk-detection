@@ -765,7 +765,7 @@
                 My Profile
             </a>
 
-            <a href="assessments.html">
+            <a href=""assessments.html"">
                 Assessments
             </a>
 
@@ -780,150 +780,35 @@
 
         <main class="content">
 
-            <!-- Welcome -->
+            <!-- Page Header -->
 
             <div class="welcome">
 
-                <h1 id="welcomeMessage">
-                    Welcome to Smart Athlete
+                <h1>
+                    Assessment History
                 </h1>
 
                 <p>
-                    Monitor your athletic performance and
-                    assess potential injury risk.
+                    View all your sports injury risk assessments
+                    and detailed analysis reports.
                 </p>
 
             </div>
 
 
-            <!-- Assessment Card -->
-
-            <div class="assessment-card">
-
-                <h2>
-                    Start a New Injury Assessment
-                </h2>
-
-                <p>
-                    Provide your athlete information and upload
-                    a sports video to analyze movement patterns
-                    and identify potential injury risk.
-                </p>
-
-                <a
-                    href="athlete-details.html"
-                    class="assessment-btn"
-                >
-                    My Athlete Profile →
-                </a>
-
-                <a
-                    href="#"
-                    class="assessment-btn"
-                    id="uploadVideoButton"
-                    style="margin-left: 10px;"
-                >
-                    Upload Sports Video →
-                </a>
-
-            </div>
-
-
-            <!-- Athlete Profile -->
+            <!-- Assessment History -->
 
             <div class="profile-card">
 
                 <h2>
-                    Athlete Profile
+                    All Assessments
                 </h2>
 
                 <div
-                    id="profileContent"
+                    id="assessmentsContent"
                     class="profile-loading"
                 >
-                    Loading athlete details...
-                </div>
-
-            </div>
-
-
-            <!-- My Videos -->
-
-            <div class="profile-card">
-
-                <h2>
-                    My Videos
-                </h2>
-
-                <div
-                    id="videosContent"
-                    class="profile-loading"
-                >
-                    Loading videos...
-                </div>
-
-            </div>
-
-            <!-- Notifications -->
-
-            <div 
-                class="profile-card"
-                id="notificationsSection"
-            >
-
-                <h2>
-                    Notifications
-                </h2>
-
-                <div
-                    id="notificationsContent"
-                    class="profile-loading"
-                >
-                    Loading notifications...
-                </div>
-
-            </div>
-
-            <!-- Statistics -->
-
-            <div class="stats">
-
-                <div class="stat-card">
-
-                    <h3>
-                        Total Assessments
-                    </h3>
-
-                    <strong id="totalAssessments">
-                        0
-                    </strong>
-
-                </div>
-
-
-                <div class="stat-card">
-
-                    <h3>
-                        Last Assessment
-                    </h3>
-
-                    <strong id="lastAssessment">
-                        —
-                    </strong>
-
-                </div>
-
-
-                <div class="stat-card">
-
-                    <h3>
-                        Current Risk
-                    </h3>
-
-                    <strong id="currentRisk">
-                        —
-                    </strong>
-
+                    Loading assessments...
                 </div>
 
             </div>
@@ -1360,121 +1245,7 @@
         }
 
 
-        /*
-         * Upload Video button
-         */
-
-        uploadVideoButton.addEventListener(
-            "click",
-            async function(event) {
-
-                event.preventDefault();
-
-
-                /*
-                 * Check profile first
-                 */
-
-                try {
-
-                    const response =
-                        await fetch(
-                            "http://127.0.0.1:8000/api/athlete/profile/",
-                            {
-                                method: "GET",
-
-                                headers: {
-                                    "Authorization":
-                                        "Token " + authToken,
-
-                                    "Content-Type":
-                                        "application/json"
-                                }
-                            }
-                        );
-
-
-                    /*
-                     * Profile exists
-                     */
-
-                    if (response.ok) {
-
-                        window.location.href =
-                            "upload.html";
-
-                        return;
-
-                    }
-
-
-                    /*
-                     * Profile doesn't exist
-                     */
-
-                    if (response.status === 404) {
-
-                        alert(
-                            "Please complete your athlete profile before uploading a video."
-                        );
-
-                        window.location.href =
-                            "athlete-details.html";
-
-                        return;
-
-                    }
-
-
-                    /*
-                     * Invalid login
-                     */
-
-                    if (response.status === 401) {
-
-                        localStorage.removeItem(
-                            "authToken"
-                        );
-
-                        localStorage.removeItem(
-                            "user"
-                        );
-
-                        alert(
-                            "Your login session has expired. Please login again."
-                        );
-
-                        window.location.href =
-                            "login.html";
-
-                        return;
-
-                    }
-
-
-                    alert(
-                        "Unable to verify your athlete profile."
-                    );
-
-                }
-
-
-                catch (error) {
-
-                    console.error(
-                        "Profile check error:",
-                        error
-                    );
-
-                    alert(
-                        "Unable to connect to the server. Please make sure Django is running."
-                    );
-
-                }
-
-            }
-        );
-
+        
 
         /*
          * Load uploaded videos
@@ -1500,7 +1271,7 @@
                         }
                     );
 
-
+             
                 /*
                  * Authentication failed
                  */
@@ -1541,7 +1312,7 @@
                     return;
 
                 }
-
+                
 
                 /*
                  * Other error
@@ -2624,8 +2395,223 @@
             }
 
         }
+        
 
-        /*
+            
+        async function loadAssessments() {
+
+            const assessmentsContent =
+                document.getElementById("assessmentsContent");
+
+            const authToken =
+                localStorage.getItem("authToken");
+
+            if (!authToken) {
+                assessmentsContent.innerHTML =
+                    `<p class="video-error">
+                        Please log in again.
+                    </p>`;
+                return;
+            }
+
+            try {
+
+                const response =
+                    await fetch(
+                        "http://127.0.0.1:8000/api/athlete/videos/",
+                        {
+                            headers: {
+                                "Authorization":
+                                    "Token " + authToken
+                            }
+                        }
+                    );
+
+                if (response.status === 401) {
+                    assessmentsContent.innerHTML =
+                        `<p class="video-error">
+                            Your session has expired.
+                            Please log in again.
+                        </p>`;
+                    return;
+                }
+
+                if (!response.ok) {
+                    assessmentsContent.innerHTML =
+                        `<p class="video-error">
+                            Unable to load assessments.
+                        </p>`;
+                    return;
+                }
+
+                const assessments =
+                    await response.json();
+
+                if (
+                    !assessments ||
+                    assessments.length === 0
+                ) {
+                    assessmentsContent.innerHTML =
+                        `<p class="profile-loading">
+                            No assessments found.
+                        </p>`;
+                    return;
+                }
+
+                assessmentsContent.innerHTML = "";
+
+                assessments.forEach(
+                    function(assessment) {
+
+                        const card =
+                            document.createElement("div");
+
+                        card.className =
+                            "assessment-history-card";
+
+                        const date =
+                            assessment.uploaded_at
+                                ? new Date(
+                                    assessment.uploaded_at
+                                ).toLocaleString()
+                                : "Date unavailable";
+
+                        const riskLevel =
+                            assessment.risk_level ||
+                            "Not available";
+
+                        const riskScore =
+                            assessment.risk_score !== null &&
+                            assessment.risk_score !== undefined
+                                ? assessment.risk_score + "/100"
+                                : "N/A";
+
+                        const breakdown =
+                            assessment.risk_breakdown || {};
+
+                        const movementQuality =
+                            breakdown.movement_quality_score;
+
+                        const biomechanicalEfficiency =
+                            breakdown.biomechanical_efficiency_score;
+
+                        card.innerHTML = `
+
+                            <div class="assessment-history-header">
+
+                                <div>
+
+                                    <h3>
+                                        Assessment #${assessment.id}
+                                    </h3>
+
+                                    <p>
+                                        Uploaded: ${date}
+                                    </p>
+
+                                </div>
+
+                                <span class="risk-level">
+                                    Risk: ${riskLevel}
+                                </span>
+
+                            </div>
+
+                            <div class="assessment-history-scores">
+
+                                <div class="analysis-score">
+
+                                    <span>
+                                        Risk Score
+                                    </span>
+
+                                    <strong>
+                                        ${riskScore}
+                                    </strong>
+
+                                </div>
+
+                                <div class="analysis-score">
+
+                                    <span>
+                                        Movement Quality
+                                    </span>
+
+                                    <strong>
+                                        ${
+                                            movementQuality !== undefined
+                                                ? movementQuality + "/100"
+                                                : "N/A"
+                                        }
+                                    </strong>
+
+                                </div>
+
+                                <div class="analysis-score">
+
+                                    <span>
+                                        Biomechanical Efficiency
+                                    </span>
+
+                                    <strong>
+                                        ${
+                                            biomechanicalEfficiency !== undefined
+                                                ? biomechanicalEfficiency + "/100"
+                                                : "N/A"
+                                        }
+                                    </strong>
+
+                                </div>
+
+                            </div>
+
+                            <div class="assessment-history-actions">
+
+                                <button
+                                    class="view-video-btn"
+                                    onclick="viewAssessmentVideo(${assessment.id})"
+                             >
+                                    View Video
+                                </button>
+
+                                <button
+                                    class="view-video-btn"
+                                    onclick="viewAssessmentReport(${assessment.id})"
+                            >
+                                    Generate Report
+                                </button>
+
+                                <button
+                                    class="delete-video-btn"
+                                    onclick="deleteAssessment(${assessment.id})"
+                                >
+                                    Delete
+                                </button>
+
+                            </div>
+
+                        `;
+
+                        assessmentsContent.appendChild(card);
+
+                    }
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Assessment loading error:",
+                error
+            );
+
+            assessmentsContent.innerHTML =
+                `<p class="video-error">
+                    Unable to load assessments.
+                </p>`;
+
+        }
+
+    }/*    
          * Load notifications
          */
 
@@ -3025,7 +3011,111 @@
          */
 
         loadVideos();
+        loadAssessments();
         loadNotifications();
+
+        function viewAssessmentVideo(assessmentId) {
+
+            window.open(
+                "video-viewer.html?id=" +
+                encodeURIComponent(assessmentId),
+                "_blank"
+            );
+
+        }
+
+
+        function viewAssessmentReport(assessmentId) {
+
+            window.open(
+                "report.html?id=" +
+                encodeURIComponent(assessmentId),
+                "_blank"
+            );
+
+        }
+
+
+        async function deleteAssessment(assessmentId) {
+
+            const confirmed =
+                confirm(
+                    "Are you sure you want to delete this assessment?"
+                );
+
+            if (!confirmed) {
+                return;
+            }
+
+
+            const authToken =
+                localStorage.getItem("authToken");
+
+
+            if (!authToken) {
+
+                alert(
+                    "Please log in again."
+                );
+
+                return;
+            }
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        "http://127.0.0.1:8000/api/athlete/videos/"
+                        + assessmentId
+                        + "/",
+                        {
+                            method: "DELETE",
+
+                            headers: {
+                                "Authorization":
+                                    "Token " + authToken
+                            }
+                        }
+                    );
+
+
+                if (response.status === 401) {
+
+                    alert(
+                        "Your session has expired. Please log in again."
+                    );
+
+                    return;
+                }
+
+
+                if (!response.ok) {
+
+                    alert(
+                        "Unable to delete the assessment."
+                    );
+
+                    return;
+                }
+
+
+                await loadAssessments();
+
+            } catch (error) {
+
+                console.error(
+                    "Delete assessment error:",
+                    error
+                );
+
+                alert(
+                    "Unable to delete the assessment."
+                );
+
+            }
+
+        }
     </script>
 
 </body>
