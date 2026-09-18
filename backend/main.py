@@ -30,10 +30,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Ensure uploads directory exists and mount static files
+# Ensure uploads and pose_results directories exist and mount static files
 UPLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+
+POSE_RESULTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "pose_results")
+os.makedirs(POSE_RESULTS_DIR, exist_ok=True)
+app.mount("/pose_results", StaticFiles(directory=POSE_RESULTS_DIR), name="pose_results")
 
 # Include Routers
 app.include_router(auth_router.router)

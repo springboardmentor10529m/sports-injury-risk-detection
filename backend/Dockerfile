@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libsm6 \
     libxext6 \
     libxrender-dev \
+    libgl1 \
     ffmpeg \
     curl \
     && rm -rf /var/lib/apt/lists/*
@@ -27,9 +28,9 @@ ARG PYTORCH_EXTRA_INDEX_URL="https://download.pytorch.org/whl/cpu"
 # Install PyTorch and TorchVision first in an isolated layer for optimal build caching
 RUN pip install --no-cache-dir torch torchvision --index-url ${PYTORCH_EXTRA_INDEX_URL}
 
-# Install remaining Python dependencies
+# Install remaining Python dependencies ensuring CPU PyTorch wheels are preserved
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt --extra-index-url ${PYTORCH_EXTRA_INDEX_URL}
 
 # Create necessary runtime directories
 RUN mkdir -p /app/uploads/processed /app/pose_results /app/data /app/models_cache
