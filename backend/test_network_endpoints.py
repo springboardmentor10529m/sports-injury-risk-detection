@@ -1,6 +1,11 @@
 import os
 import random
-import requests
+try:
+    # pyrefly: ignore [missing-import]
+    import httpx as requests  # type: ignore
+except ImportError:
+    # pyrefly: ignore [missing-import]
+    import requests  # type: ignore
 
 BASE_URL = "http://127.0.0.1:8000/api"
 

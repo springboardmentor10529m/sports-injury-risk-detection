@@ -8,7 +8,7 @@ class UserCreate(BaseModel):
     name: str = Field(..., min_length=2, max_length=100)
     email: EmailStr
     password: str = Field(..., min_length=6)
-    role: str = Field("athlete", description="athlete, coach, physiotherapist, admin")
+    role: str = Field("athlete", description="athlete, coach, physiotherapist, sports_scientist, admin")
     phone: Optional[str] = None
     profile_image: Optional[str] = None
 
@@ -67,6 +67,7 @@ class AthleteResponse(BaseModel):
     balance: Optional[float] = None
     endurance: Optional[float] = None
     coach_notes: Optional[str] = None
+    user: Optional[UserResponse] = None
 
     class Config:
         from_attributes = True
@@ -89,6 +90,13 @@ class AthleteDetailedResponse(BaseModel):
     endurance: Optional[float] = None
     coach_notes: Optional[str] = None
     user: UserResponse
+    risk_score: Optional[float] = None
+    risk_level: Optional[str] = None
+    valgus_angle: Optional[str] = None
+    asymmetry: Optional[str] = None
+    status: Optional[str] = None
+    acwr: Optional[float] = None
+    last_assessment: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -125,6 +133,13 @@ class InjuryPredictionResponse(BaseModel):
     overall_risk_score: float
     risk_category: str
     anomaly_score: float
+    rf_risk_prob: Optional[float] = None
+    xgb_risk_prob: Optional[float] = None
+    factor_kinematics: Optional[float] = None
+    factor_load: Optional[float] = None
+    factor_asymmetry: Optional[float] = None
+    factor_velocity: Optional[float] = None
+    factor_prior_injury: Optional[float] = None
     created_at: datetime
 
     class Config:
@@ -147,4 +162,66 @@ class VideoResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# --- Notification Schemas ---
+class NotificationCreate(BaseModel):
+    user_id: str
+    title: str
+    message: str
+    type: Optional[str] = "system"
+    severity: Optional[str] = "info"
+
+class NotificationResponse(BaseModel):
+    notification_id: str
+    user_id: str
+    title: str
+    message: str
+    type: str
+    severity: str
+    is_read: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# --- Corrective Recommendation Schemas ---
+class CorrectiveRecommendationCreate(BaseModel):
+    target_injury_risk: str
+    title: str
+    category: Optional[str] = "Mobility"
+    sets_reps: Optional[str] = "3 sets x 10 reps"
+    frequency: Optional[str] = "3x per week"
+    description: str
+
+class CorrectiveRecommendationResponse(BaseModel):
+    recommendation_id: str
+    athlete_id: str
+    video_id: Optional[str] = None
+    target_injury_risk: str
+    title: str
+    category: str
+    sets_reps: str
+    frequency: str
+    description: str
+    completed: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# --- Admin & Analytics Schemas ---
+class RoleUpdateRequest(BaseModel):
+    role: str
+
+class SystemMetricsResponse(BaseModel):
+    total_users: int
+    total_athletes: int
+    total_videos: int
+    total_analyses: int
+    total_predictions: int
+    risk_distribution: dict
+    role_distribution: dict
 

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api, { getErrorMessage } from '../api';
-import { Save, Award, User, ChevronLeft, Shield } from 'lucide-react';
+import AthleteLayout from '../components/AthleteLayout';
+import { Save, Award, User, Shield, CheckCircle2, AlertCircle } from 'lucide-react';
 
 const Profile = () => {
   const [formData, setFormData] = useState({
@@ -17,47 +18,73 @@ const Profile = () => {
     endurance: '',
     coach_notes: ''
   });
+  const [userInfo, setUserInfo] = useState({
+    name: localStorage.getItem('name') || '',
+    email: ''
+  });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   
   const navigate = useNavigate();
-  const role = localStorage.getItem('role');
+  const role = localStorage.getItem('role') || 'athlete';
+  const isStaff = ['coach', 'physiotherapist', 'sports_scientist', 'admin'].includes(role.toLowerCase());
 
   useEffect(() => {
-    if (role !== 'athlete') {
-      navigate('/dashboard');
-      return;
-    }
+    const fetchProfileAndUser = async () => {
+      // Fetch user profile info
+      try {
+        const userRes = await api.get('/auth/me');
+        if (userRes.data) {
+          setUserInfo({
+            name: userRes.data.name,
+            email: userRes.data.email
+          });
+          localStorage.setItem('name', userRes.data.name);
+        }
+      } catch (err) {
+        // Ignore if unauthenticated handled below
+      }
 
-    const fetchProfile = async () => {
       try {
         const response = await api.get('/athlete/profile');
         const data = response.data;
-        // Parse and populate if profile exists
-        setFormData({
-          sport: data.sport || '',
-          position: data.position || '',
-          age: data.age || '',
-          height: data.height || '',
-          weight: data.weight || '',
-          training_load: data.training_load || '0.0',
-          flexibility: data.flexibility || '',
-          strength: data.strength || '',
-          balance: data.balance || '',
-          endurance: data.endurance || '',
-          coach_notes: data.coach_notes || ''
-        });
+        if (data) {
+          setFormData({
+            sport: data.sport || '',
+            position: data.position || '',
+            age: data.age || '',
+            height: data.height || '',
+            weight: data.weight || '',
+            training_load: data.training_load || '0.0',
+            flexibility: data.flexibility || '',
+            strength: data.strength || '',
+            balance: data.balance || '',
+            endurance: data.endurance || '',
+            coach_notes: data.coach_notes || ''
+          });
+          if (data.user?.name) {
+            setUserInfo(prev => ({
+              ...prev,
+              name: data.user.name,
+              email: data.user.email || prev.email
+            }));
+            localStorage.setItem('name', data.user.name);
+          }
+        }
       } catch (err) {
-        // Profile not created yet - swallow 404 since it's expected for new athletes
+        if (err.response?.status === 401) {
+          navigate('/login');
+          return;
+        }
         if (err.response?.status !== 404) {
-          setError('Failed to fetch profile details.');
+          setError(getErrorMessage(err, 'Failed to connect to backend server.'));
         }
       }
     };
 
-    fetchProfile();
-  }, [role, navigate]);
+    fetchProfileAndUser();
+  }, [navigate]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -69,7 +96,6 @@ const Profile = () => {
     setSuccess('');
     setLoading(true);
 
-    // Convert numeric strings to actual numbers
     const payload = {
       ...formData,
       age: formData.age ? parseInt(formData.age) : null,
@@ -85,7 +111,7 @@ const Profile = () => {
     try {
       await api.post('/athlete/profile', payload);
       setSuccess('Athlete profile updated successfully!');
-      setTimeout(() => navigate('/dashboard'), 1500);
+      setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       setError(getErrorMessage(err, 'Failed to save athlete profile.'));
     } finally {
@@ -93,222 +119,211 @@ const Profile = () => {
     }
   };
 
-
   return (
-    <div className="min-h-screen bg-[#070b13] py-12 px-4 relative overflow-hidden">
-      {/* Background glowing decorations */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-500/10 rounded-full blur-[100px] pointer-events-none"></div>
-      
-      <div className="max-w-4xl mx-auto relative z-10">
-        <button
-          onClick={() => navigate('/dashboard')}
-          className="inline-flex items-center text-sm font-semibold text-gray-400 hover:text-white transition-colors mb-6 gap-1"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Back to Dashboard
-        </button>
+    <AthleteLayout>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Athlete Profile Configuration</h1>
+        <p className="text-slate-500 text-sm mt-0.5">
+          Manage your body measurements, position, and sports attributes.
+        </p>
+      </div>
 
-        <div className="bg-[#0e1726]/80 backdrop-blur-xl border border-white/5 p-8 rounded-2xl shadow-2xl">
-          <div className="flex items-center gap-4 mb-8 pb-6 border-b border-white/5">
-            <div className="p-3 bg-brand-500/10 rounded-xl border border-brand-500/20 text-brand-400">
-              <Award className="h-7 w-7" />
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 max-w-4xl shadow-xs">
+        {error && (
+          <div className="mb-6 p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {success && (
+          <div className="mb-6 p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-xs flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <span>{success}</span>
+          </div>
+        )}
+
+        {/* User Identity Header */}
+        <div className="mb-6 p-4 bg-slate-50 border border-slate-200/80 rounded-xl flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-base shadow-xs">
+              {(userInfo.name || 'A').charAt(0).toUpperCase()}
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">Athlete Profile Configuration</h2>
-              <p className="text-sm text-gray-400">Manage your body stats, sports attributes, and performance metrics</p>
+              <div className="font-bold text-slate-900 text-sm">{userInfo.name || 'Athlete'}</div>
+              <div className="text-xs text-slate-500">{userInfo.email || 'Registered Athlete Account'}</div>
+            </div>
+          </div>
+          <span className="uppercase text-[10px] font-bold px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+            {role}
+          </span>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+              <Shield className="w-4 h-4 text-blue-600" />
+              <span>Sport & Position Information</span>
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+                  Sport Category
+                </label>
+                <input
+                  type="text"
+                  name="sport"
+                  value={formData.sport}
+                  onChange={handleChange}
+                  placeholder="e.g. Football, Basketball, Track"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+                  Position / Role
+                </label>
+                <input
+                  type="text"
+                  name="position"
+                  value={formData.position}
+                  onChange={handleChange}
+                  placeholder="e.g. Striker, Point Guard, Sprinter"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                />
+              </div>
             </div>
           </div>
 
-          {error && (
-            <div className="mb-6 p-4 bg-red-950/50 border border-red-500/30 rounded-xl text-red-200 text-sm">
-              {error}
-            </div>
-          )}
+          <div className="pt-4 border-t border-slate-100">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+              <User className="w-4 h-4 text-blue-600" />
+              <span>Anthropometric & Physical Metrics</span>
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+                  Age (Years)
+                </label>
+                <input
+                  type="number"
+                  name="age"
+                  value={formData.age}
+                  onChange={handleChange}
+                  placeholder="24"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                />
+              </div>
 
-          {success && (
-            <div className="mb-6 p-4 bg-emerald-950/50 border border-emerald-500/30 rounded-xl text-emerald-200 text-sm">
-              {success}
-            </div>
-          )}
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+                  Height (cm)
+                </label>
+                <input
+                  type="number"
+                  name="height"
+                  value={formData.height}
+                  onChange={handleChange}
+                  placeholder="182"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                />
+              </div>
 
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Section 1: Sport & Position */}
-            <div>
-              <h3 className="text-md font-semibold text-white mb-4 flex items-center gap-2">
-                <Shield className="h-4 w-4 text-brand-400" /> Sport Information
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Sport Category</label>
-                  <input
-                    type="text"
-                    name="sport"
-                    value={formData.sport}
-                    onChange={handleChange}
-                    placeholder="e.g., Football, Basketball"
-                    className="w-full bg-[#152033]/50 border border-white/5 rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Playing Position</label>
-                  <input
-                    type="text"
-                    name="position"
-                    value={formData.position}
-                    onChange={handleChange}
-                    placeholder="e.g., Striker, Point Guard"
-                    className="w-full bg-[#152033]/50 border border-white/5 rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm"
-                  />
-                </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+                  Weight (kg)
+                </label>
+                <input
+                  type="number"
+                  name="weight"
+                  value={formData.weight}
+                  onChange={handleChange}
+                  placeholder="76.5"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                />
               </div>
             </div>
+          </div>
 
-            {/* Section 2: Biometrics */}
-            <div>
-              <h3 className="text-md font-semibold text-white mb-4 flex items-center gap-2">
-                <User className="h-4 w-4 text-brand-400" /> Physical Biometrics
+          {/* Biomechanical Baselines: Removed from athlete, only available for clinical staff / coaches */}
+          {isStaff && (
+            <div className="pt-4 border-t border-slate-100">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Award className="w-4 h-4 text-blue-600" />
+                  <span>Biomechanical Baselines (Scale 1 - 10)</span>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800">
+                  Staff Evaluation Only
+                </span>
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Age</label>
-                  <input
-                    type="number"
-                    name="age"
-                    value={formData.age}
-                    onChange={handleChange}
-                    placeholder="e.g., 22"
-                    className="w-full bg-[#152033]/50 border border-white/5 rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Height (cm)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    name="height"
-                    value={formData.height}
-                    onChange={handleChange}
-                    placeholder="e.g., 180"
-                    className="w-full bg-[#152033]/50 border border-white/5 rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Weight (kg)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    name="weight"
-                    value={formData.weight}
-                    onChange={handleChange}
-                    placeholder="e.g., 75"
-                    className="w-full bg-[#152033]/50 border border-white/5 rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Section 3: Performance Attributes */}
-            <div>
-              <h3 className="text-md font-semibold text-white mb-4 flex items-center gap-2">
-                <Award className="h-4 w-4 text-brand-400" /> Performance & Assessment Metrics (1 - 10 Score)
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Flexibility</label>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Flexibility</label>
                   <input
                     type="number"
                     step="0.1"
                     name="flexibility"
                     value={formData.flexibility}
                     onChange={handleChange}
-                    placeholder="e.g., 8.5"
-                    min="1" max="10"
-                    className="w-full bg-[#152033]/50 border border-white/5 rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm"
+                    placeholder="7.5"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-800 text-sm"
                   />
-                  <p className="text-[10px] text-gray-500 mt-2 leading-relaxed">
-                    Joint range of motion (e.g., Sit & Reach). <br/>
-                    1 = Stiff, 10 = Hypermobile.
-                  </p>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Strength</label>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Strength</label>
                   <input
                     type="number"
                     step="0.1"
                     name="strength"
                     value={formData.strength}
                     onChange={handleChange}
-                    placeholder="e.g., 7.0"
-                    min="1" max="10"
-                    className="w-full bg-[#152033]/50 border border-white/5 rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm"
+                    placeholder="8.0"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-800 text-sm"
                   />
-                  <p className="text-[10px] text-gray-500 mt-2 leading-relaxed">
-                    General muscle power (e.g., Push-ups / 1RM). <br/>
-                    1 = Low, 10 = Elite.
-                  </p>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Balance</label>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Balance</label>
                   <input
                     type="number"
                     step="0.1"
                     name="balance"
                     value={formData.balance}
                     onChange={handleChange}
-                    placeholder="e.g., 8.0"
-                    min="1" max="10"
-                    className="w-full bg-[#152033]/50 border border-white/5 rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm"
+                    placeholder="8.5"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-800 text-sm"
                   />
-                  <p className="text-[10px] text-gray-500 mt-2 leading-relaxed">
-                    Postural stability (e.g., Single-Leg Stand). <br/>
-                    1 = Unstable, 10 = Perfect balance.
-                  </p>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Endurance</label>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Endurance</label>
                   <input
                     type="number"
                     step="0.1"
                     name="endurance"
                     value={formData.endurance}
                     onChange={handleChange}
-                    placeholder="e.g., 9.0"
-                    min="1" max="10"
-                    className="w-full bg-[#152033]/50 border border-white/5 rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm"
+                    placeholder="8.2"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-800 text-sm"
                   />
-                  <p className="text-[10px] text-gray-500 mt-2 leading-relaxed">
-                    Stamina capacity (e.g., Beep test / VO2 Max). <br/>
-                    1 = Low stamina, 10 = Elite.
-                  </p>
                 </div>
               </div>
             </div>
+          )}
 
-            {/* Coach notes */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Injury History / Remarks</label>
-              <textarea
-                name="coach_notes"
-                value={formData.coach_notes}
-                onChange={handleChange}
-                rows="3"
-                placeholder="List any past ACL, ankle, or muscle strains, and treatment protocols..."
-                className="w-full bg-[#152033]/50 border border-white/5 rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm"
-              />
-            </div>
-
+          <div className="pt-4 flex justify-end">
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-brand-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-6 rounded-xl text-xs flex items-center gap-2 transition-colors shadow-xs"
             >
-              <Save className="h-5 w-5" />
-              {loading ? 'Saving Profile...' : 'Save Profile Details'}
+              <Save className="w-4 h-4" />
+              <span>{loading ? 'Saving Changes...' : 'Save Profile Changes'}</span>
             </button>
-          </form>
-        </div>
+          </div>
+        </form>
       </div>
-    </div>
+    </AthleteLayout>
   );
 };
 

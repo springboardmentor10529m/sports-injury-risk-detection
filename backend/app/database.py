@@ -1,7 +1,7 @@
 # pyrefly: ignore [missing-import]
 from sqlalchemy import create_engine
 # pyrefly: ignore [missing-import]
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from .config import settings
 
 # Adjust sqlite connection configuration if necessary
@@ -16,7 +16,8 @@ engine = create_engine(
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-Base = declarative_base()
+class Base(DeclarativeBase):
+    pass
 
 # Dependency to get db session
 def get_db():

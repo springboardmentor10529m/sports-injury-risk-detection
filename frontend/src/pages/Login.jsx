@@ -31,7 +31,10 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await api.post('/auth/login', formData);
+      const response = await api.post('/auth/login', {
+        email: formData.email.trim(),
+        password: formData.password
+      });
       const { access_token, role, name } = response.data;
       
       localStorage.setItem('token', access_token);
@@ -110,16 +113,16 @@ const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-2 bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-brand-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full mt-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <LogIn className="h-5 w-5" />
             {loading ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-400 mt-8">
+        <p className="text-center text-sm text-gray-400 mt-6">
           Don't have an account?{' '}
-          <Link to="/register" className="text-brand-400 hover:text-brand-300 font-semibold transition-colors">
+          <Link to="/register" className="text-blue-400 hover:text-blue-300 font-semibold transition-colors">
             Register
           </Link>
         </p>

@@ -18,6 +18,22 @@ api.interceptors.request.use(
   }
 );
 
+// Response interceptor to handle expired/invalid tokens
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      localStorage.removeItem('name');
+      if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const getErrorMessage = (err, defaultMsg = 'An error occurred.') => {
   const detail = err.response?.data?.detail;
   if (Array.isArray(detail)) {

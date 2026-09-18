@@ -26,7 +26,7 @@ def get_athlete_predictions(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You do not have access to this athlete's data."
             )
-    elif current_user.role not in ["coach", "physiotherapist", "admin"]:
+    elif current_user.role not in ["coach", "physiotherapist", "sports_scientist", "admin"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied."
@@ -60,7 +60,7 @@ def get_video_prediction(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied."
             )
-    elif current_user.role not in ["coach", "physiotherapist", "admin"]:
+    elif current_user.role not in ["coach", "physiotherapist", "sports_scientist", "admin"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied."
@@ -74,7 +74,7 @@ def get_team_predictions(
     db: Session = Depends(get_db)
 ):
     """Retrieve the latest injury risk prediction for all athletes."""
-    if current_user.role not in ["coach", "physiotherapist", "admin"]:
+    if current_user.role not in ["coach", "physiotherapist", "sports_scientist", "admin"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied."

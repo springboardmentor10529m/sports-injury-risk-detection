@@ -5,8 +5,7 @@ from app.main import app
 from app.database import engine, Base
 from app import models
 
-# Setup clean test tables
-Base.metadata.drop_all(bind=engine)
+# Setup tables if not present
 Base.metadata.create_all(bind=engine)
 
 client = TestClient(app)
@@ -15,10 +14,13 @@ def test_injury_prediction_workflow():
     print("🚀 Starting Injury Prediction verification...")
 
     # 1. Register Athlete
+    import time
+    uid = int(time.time() * 1000)
+    athlete_email = f"jordan_{uid}@example.com"
     print("👉 Registering new athlete...")
     athlete_register_payload = {
         "name": "Jordan Spieth",
-        "email": "jordan.spieth@example.com",
+        "email": athlete_email,
         "password": "password123",
         "role": "athlete",
         "phone": "+15551234"
@@ -28,7 +30,7 @@ def test_injury_prediction_workflow():
     
     # Login Athlete
     response = client.post("/api/auth/login", json={
-        "email": "jordan.spieth@example.com",
+        "email": athlete_email,
         "password": "password123"
     })
     assert response.status_code == 200
@@ -61,7 +63,7 @@ def test_injury_prediction_workflow():
     # pyrefly: ignore [missing-import]
     import numpy as np
     temp_video_path = "temp_test_video.mp4"
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    fourcc = cv2.VideoWriter.fourcc(*'mp4v')
     out = cv2.VideoWriter(temp_video_path, fourcc, 10.0, (100, 100))
     for _ in range(3):
         frame = np.zeros((100, 100, 3), dtype=np.uint8)
@@ -110,10 +112,11 @@ def test_injury_prediction_workflow():
     print("✅ Athlete injury history retrieved successfully.")
 
     # 6. Register & Login Coach to verify team predictions
+    coach_email = f"coach_{uid}@example.com"
     print("👉 Registering coach...")
     coach_register_payload = {
         "name": "Coach K",
-        "email": "coach.k@example.com",
+        "email": coach_email,
         "password": "password123",
         "role": "coach"
     }
@@ -121,7 +124,7 @@ def test_injury_prediction_workflow():
     assert response.status_code == 201
 
     response = client.post("/api/auth/login", json={
-        "email": "coach.k@example.com",
+        "email": coach_email,
         "password": "password123"
     })
     assert response.status_code == 200
@@ -133,8 +136,8 @@ def test_injury_prediction_workflow():
     response = client.get("/api/injury/predictions/team", headers=coach_headers)
     assert response.status_code == 200
     team_predictions = response.json()
-    assert len(team_predictions) == 1
-    assert team_predictions[0]["athlete_id"] == athlete_id
+    assert len(team_predictions) >= 1
+    assert any(p["athlete_id"] == athlete_id for p in team_predictions)
     print("✅ Team predictions successfully retrieved by coach.")
 
     print("\n🎉 ALL INJURY PREDICTION TEST CASESS PASSED SUCCESSFULLY!")

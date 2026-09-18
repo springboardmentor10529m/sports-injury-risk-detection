@@ -1,5 +1,9 @@
 # Python virtual environment
 backend/venv/
+backend/.venv/
+.venv
+.venv/
+venv/
 **/__pycache__/
 *.pyc
 backend/sports_injury.db
@@ -18,5 +22,7 @@ frontend/*.local
 Thumbs.db
 .vscode/
 
-# Other
+# Test output artifacts
+backend/*.jpg
 dummy_video.mp4
+/sample_video.mp4

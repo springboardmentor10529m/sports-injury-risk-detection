@@ -40,7 +40,8 @@ def upload_video(
         
     # File type validation (MP4, AVI, MOV, etc.)
     allowed_extensions = {".mp4", ".mov", ".avi", ".mkv"}
-    _, ext = os.path.splitext(file.filename)
+    filename = file.filename or ""
+    _, ext = os.path.splitext(filename)
     if ext.lower() not in allowed_extensions:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -94,7 +95,10 @@ def list_videos(
     if not athlete:
         return []
         
-    videos = db.query(models.Video).filter(models.Video.athlete_id == athlete.athlete_id).all()
+    videos = db.query(models.Video)\
+        .filter(models.Video.athlete_id == athlete.athlete_id)\
+        .order_by(models.Video.uploaded_at.desc())\
+        .all()
     return videos
 
 @router.get("/{video_id}/analysis", response_model=schemas.BiomechanicsAnalysisResponse)

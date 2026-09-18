@@ -60,18 +60,21 @@ const Register = () => {
           <div>
             <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Select Your Role</label>
             <div className="grid grid-cols-2 gap-3">
-              {['athlete', 'coach', 'physiotherapist', 'admin'].map((role) => (
+              {[
+                { id: 'athlete', label: 'Athlete' },
+                { id: 'coach', label: 'Coach' }
+              ].map((item) => (
                 <button
-                  key={role}
+                  key={item.id}
                   type="button"
-                  onClick={() => setFormData({ ...formData, role })}
-                  className={`py-3 px-4 rounded-xl text-sm font-semibold border capitalize transition-all duration-200 ${
-                    formData.role === role
+                  onClick={() => setFormData({ ...formData, role: item.id })}
+                  className={`py-2.5 px-3 rounded-xl text-xs font-semibold border transition-all duration-200 ${
+                    formData.role === item.id
                       ? 'bg-brand-600/20 border-brand-500 text-white shadow-lg shadow-brand-500/10'
                       : 'bg-[#152033]/50 border-white/5 text-gray-400 hover:border-white/10 hover:text-white'
                   }`}
                 >
-                  {role}
+                  {item.label}
                 </button>
               ))}
             </div>

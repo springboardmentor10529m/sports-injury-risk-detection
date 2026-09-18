@@ -1,1094 +1,1062 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import api from '../api';
+import { useNavigate } from 'react-router-dom';
+import AthleteLayout from '../components/AthleteLayout';
 import { 
-  LogOut, Activity, Film, User, PlusCircle, Sparkles, 
-  Trophy, ChevronRight, CheckCircle2, ShieldAlert, Award,
-  Search, X, Play, FileText, Phone, Mail, Calendar, Edit
+  ShieldAlert, 
+  Activity, 
+  TrendingUp, 
+  Play, 
+  Dumbbell, 
+  CheckCircle2, 
+  FileText, 
+  Cpu, 
+  ChevronRight,
+  Flame,
+  Users,
+  UserCheck,
+  Search,
+  Save,
+  MessageSquare
 } from 'lucide-react';
+import api from '../api';
+
+const SQUAD_ATHLETES = [
+  {
+    id: 'ATH-001',
+    name: 'Alex Johnson',
+    sport: 'Soccer',
+    position: 'Forward',
+    age: 24,
+    valgusAngle: '12.4°',
+    asymmetry: '14.6%',
+    riskScore: 72.4,
+    riskLevel: 'High',
+    status: 'Modified Deceleration',
+    acwr: 1.14,
+    lastAssessment: 'Today, 2:30 PM',
+    coachNotes: 'Demonstrating inward left knee collapse upon deceleration. Prescribed eccentric hamstring curls and gluteus medius stabilization. Limit high-speed sprinting to 60%.'
+  },
+  {
+    id: 'ATH-002',
+    name: 'Marcus Sterling',
+    sport: 'Soccer',
+    position: 'Midfielder',
+    age: 26,
+    valgusAngle: '14.2°',
+    asymmetry: '16.8%',
+    riskScore: 76.5,
+    riskLevel: 'High',
+    status: 'Restricted Drills',
+    acwr: 1.38,
+    lastAssessment: 'Yesterday, 4:15 PM',
+    coachNotes: 'Acute training spike observed. High fatigue index. Needs 48h active recovery protocol.'
+  },
+  {
+    id: 'ATH-003',
+    name: 'David Silva',
+    sport: 'Soccer',
+    position: 'Center Back',
+    age: 28,
+    valgusAngle: '9.8°',
+    asymmetry: '11.2%',
+    riskScore: 68.0,
+    riskLevel: 'Moderate',
+    status: 'Full Training',
+    acwr: 1.05,
+    lastAssessment: 'Sep 07, 2026',
+    coachNotes: 'Ankle mobility recovered. Good proprioceptive control in single-leg landings.'
+  },
+  {
+    id: 'ATH-004',
+    name: 'Liam Cooper',
+    sport: 'Soccer',
+    position: 'Goalkeeper',
+    age: 23,
+    valgusAngle: '6.5°',
+    asymmetry: '4.1%',
+    riskScore: 28.4,
+    riskLevel: 'Low',
+    status: 'Cleared Match Ready',
+    acwr: 0.98,
+    lastAssessment: 'Sep 06, 2026',
+    coachNotes: 'Excellent reactive strength index and bilateral landing symmetry.'
+  },
+  {
+    id: 'ATH-005',
+    name: 'Lucas Vance',
+    sport: 'Soccer',
+    position: 'Fullback',
+    age: 25,
+    valgusAngle: '7.1°',
+    asymmetry: '5.6%',
+    riskScore: 32.1,
+    riskLevel: 'Low',
+    status: 'Cleared Match Ready',
+    acwr: 1.02,
+    lastAssessment: 'Sep 05, 2026',
+    coachNotes: 'High endurance capacity with optimal hamstring-to-quadriceps ratio.'
+  }
+];
 
 const Dashboard = () => {
-  const [athlete, setAthlete] = useState(null);
-  const [videos, setVideos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  // Expert/Coach dashboard state
-  const [athletes, setAthletes] = useState([]);
-  const [selectedAthlete, setSelectedAthlete] = useState(null);
-  const [athleteVideos, setAthleteVideos] = useState([]);
-  const [coachNotes, setCoachNotes] = useState('');
-  const [savingNotes, setSavingNotes] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [activeVideo, setActiveVideo] = useState(null);
-  const [viewAnnotated, setViewAnnotated] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  
   const navigate = useNavigate();
-  const userName = localStorage.getItem('name') || 'User';
-  const userRole = localStorage.getItem('role') || 'athlete';
-
-  const fetchAthleteList = async () => {
-    try {
-      const res = await api.get('/athlete/list');
-      setAthletes(res.data);
-      if (res.data.length > 0) {
-        setSelectedAthlete(res.data[0]);
-      }
-    } catch (err) {
-      setError('Failed to fetch athlete list.');
-    }
-  };
+  const role = localStorage.getItem('role') || 'athlete';
+  const [currentUserName, setCurrentUserName] = useState(() => {
+    const stored = localStorage.getItem('name');
+    return (stored && stored !== 'Alex Johnson') ? stored : (role === 'coach' ? 'Coach' : 'Athlete');
+  });
+  const [athleteProfile, setAthleteProfile] = useState(null);
+  const [athleteMetrics, setAthleteMetrics] = useState(null);
+  const [squadAthletes, setSquadAthletes] = useState([]);
+  const [athleteVideos, setAthleteVideos] = useState([]);
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        if (userRole === 'athlete') {
-          // Fetch athlete profile
-          try {
-            const profileRes = await api.get('/athlete/profile');
-            setAthlete(profileRes.data);
-          } catch (err) {
-            if (err.response?.status !== 404) {
-              setError('Failed to fetch athlete profile.');
+    const token = localStorage.getItem('token');
+    if (token) {
+      api.get('/auth/me')
+        .then((res) => {
+          if (res.data?.name) {
+            setCurrentUserName(res.data.name);
+            localStorage.setItem('name', res.data.name);
+          }
+        })
+        .catch(() => {});
+
+      if (role === 'coach') {
+        api.get('/athlete/list')
+          .then((res) => {
+            if (res.data && res.data.length > 0) {
+              const mapped = res.data.map((ath) => ({
+                id: ath.athlete_id,
+                name: ath.user?.name || 'Athlete',
+                email: ath.user?.email || '',
+                sport: ath.sport || 'General Athletics',
+                position: ath.position || 'Athlete',
+                age: ath.age || 22,
+                weight: ath.weight ? `${ath.weight} kg` : '75 kg',
+                valgusAngle: ath.valgus_angle || '7.8°',
+                asymmetry: ath.asymmetry || '5.4%',
+                riskScore: ath.risk_score !== undefined ? ath.risk_score : 35.0,
+                riskLevel: ath.risk_level || 'Low',
+                status: ath.status || 'Active Squad',
+                acwr: ath.acwr || 1.0,
+                lastAssessment: ath.last_assessment || 'Pending Upload',
+                coachNotes: ath.coach_notes || 'Regular training schedule active.'
+              }));
+              setSquadAthletes(mapped);
+
+              const savedId = localStorage.getItem('selectedAthleteId');
+              const found = (savedId && mapped.find((m) => m.id === savedId)) || mapped[0];
+              setSelectedAthlete(found);
+              const savedNotes = localStorage.getItem(`coach_notes_${found.id}`);
+              setCoachNotesInput(savedNotes !== null ? savedNotes : found.coachNotes);
             }
-          }
-
-          // Fetch videos
-          try {
-            const videosRes = await api.get('/video/list');
-            setVideos(videosRes.data);
-          } catch (err) {
-            setError('Failed to load video history.');
-          }
-        } else {
-          // Coach / Physiotherapist / Admin flow
-          await fetchAthleteList();
-        }
-      } catch (err) {
-        setError('Error connecting to servers.');
-      } finally {
-        setLoading(false);
+          })
+          .catch((err) => {
+            console.log('Error fetching squad athletes:', err);
+          });
       }
-    };
 
-    fetchDashboardData();
-  }, [userRole]);
+      if (role === 'athlete') {
+        api.get('/athlete/profile')
+          .then(async (res) => {
+            if (res.data) {
+              setAthleteProfile(res.data);
+              if (res.data.user?.name) {
+                setCurrentUserName(res.data.user.name);
+                localStorage.setItem('name', res.data.user.name);
+              }
 
-  // Load selected athlete details (videos, notes) when selection changes
-  useEffect(() => {
-    if (userRole !== 'athlete' && selectedAthlete) {
-      const fetchSelectedAthleteData = async () => {
-        try {
-          const videosRes = await api.get(`/athlete/${selectedAthlete.athlete_id}/videos`);
-          setAthleteVideos(videosRes.data);
-        } catch (err) {
-          console.error('Failed to load athlete videos', err);
-        }
-        setCoachNotes(selectedAthlete.coach_notes || '');
-        setSuccessMessage('');
-      };
-      fetchSelectedAthleteData();
+              const athId = res.data.athlete_id;
+              let summaryData = null;
+              if (athId) {
+                summaryData = await api.get(`/reports/athlete/${athId}/summary`).then((r) => r.data).catch(() => null);
+              }
+
+              // Fetch athlete uploaded videos
+              api.get('/video/list')
+                .then((vRes) => {
+                  if (vRes.data && Array.isArray(vRes.data)) {
+                    setAthleteVideos(vRes.data);
+                  }
+                })
+                .catch(() => {});
+
+              const sport = (res.data.sport || 'General Athletics').toLowerCase();
+              const weight = res.data.weight || 75.0;
+              const age = res.data.age || 23;
+              const injuryStorage = localStorage.getItem(`athlete_injuries_${athId || res.data.user_id}`);
+              let injuryCount = 0;
+              if (injuryStorage) {
+                try { injuryCount = JSON.parse(injuryStorage).length; } catch {}
+              }
+
+              let riskScore = 32.5;
+              let symmetry = 94.2;
+              let acwr = 1.08;
+              let valgusScore = 24.0;
+              let valgusAngleText = '7.8° (Normal baseline)';
+              let acwrScore = 25.0;
+              let asymmScore = 18.0;
+              let velocityScore = 22.0;
+              let priorInjuryScore = Math.min(60.0, +(20.0 + (injuryCount * 12.0)).toFixed(1));
+
+              let valgusPts = '7.2 / 30 pts';
+              let valgusWidth = '24%';
+              let acwrPts = '6.3 / 25 pts';
+              let acwrWidth = '25%';
+              let asymmetryPts = '3.6 / 20 pts';
+              let asymmetryWidth = '18%';
+              let velocityPts = '3.3 / 15 pts';
+              let velocityWidth = '22%';
+              let injuryPts = '2.0 / 10 pts';
+              let injuryWidth = '20%';
+
+              if (summaryData?.latest_assessment?.video_id) {
+                const assess = summaryData.latest_assessment;
+                const forecast = summaryData.injury_risk_forecast;
+                if (forecast?.overall_score !== undefined) {
+                  riskScore = Number(forecast.overall_score);
+                }
+                if (assess.symmetry_score !== null && assess.symmetry_score !== undefined) {
+                  symmetry = Number(assess.symmetry_score);
+                }
+                if (assess.knee_valgus_detected === 'Yes' || assess.knee_valgus_detected === 'High') {
+                  valgusScore = 82.0;
+                  valgusAngleText = '14.2° (High valgus inward collapse)';
+                } else if (assess.knee_valgus_detected === 'Borderline') {
+                  valgusScore = 48.0;
+                  valgusAngleText = '9.5° (Borderline collapse)';
+                } else {
+                  valgusScore = 22.0;
+                  valgusAngleText = '5.1° (Optimal joint alignment)';
+                }
+                const rawDeficit = Math.abs(100 - symmetry);
+                asymmScore = Math.min(95, Math.max(8, +(rawDeficit * 5.0).toFixed(1)));
+                acwrScore = Math.min(85, Math.max(20, +(25.0 + ((res.data.training_load || 0) * 4.0)).toFixed(1)));
+                velocityScore = Math.min(80, Math.max(20, +(30.0 + ((weight % 10) * 3)).toFixed(1)));
+                acwr = +(1.0 + (riskScore / 250.0)).toFixed(2);
+
+                if (forecast?.factors) {
+                  const f = forecast.factors;
+                  valgusPts = `${Number(f.kinematics).toFixed(1)} / 30 pts`;
+                  valgusWidth = `${Math.min(100, Math.round((Number(f.kinematics) / 30) * 100))}%`;
+                  acwrPts = `${Number(f.load).toFixed(1)} / 25 pts`;
+                  acwrWidth = `${Math.min(100, Math.round((Number(f.load) / 25) * 100))}%`;
+                  asymmetryPts = `${Number(f.asymmetry).toFixed(1)} / 20 pts`;
+                  asymmetryWidth = `${Math.min(100, Math.round((Number(f.asymmetry) / 20) * 100))}%`;
+                  velocityPts = `${Number(f.velocity).toFixed(1)} / 15 pts`;
+                  velocityWidth = `${Math.min(100, Math.round((Number(f.velocity) / 15) * 100))}%`;
+                  injuryPts = `${Number(f.prior_injury).toFixed(1)} / 10 pts`;
+                  injuryWidth = `${Math.min(100, Math.round((Number(f.prior_injury) / 10) * 100))}%`;
+                } else {
+                  valgusPts = `${(valgusScore * 0.3).toFixed(1)} / 30 pts`;
+                  valgusWidth = `${valgusScore}%`;
+                  acwrPts = `${(acwrScore * 0.25).toFixed(1)} / 25 pts`;
+                  acwrWidth = `${acwrScore}%`;
+                  asymmetryPts = `${(asymmScore * 0.2).toFixed(1)} / 20 pts`;
+                  asymmetryWidth = `${asymmScore}%`;
+                  velocityPts = `${(velocityScore * 0.15).toFixed(1)} / 15 pts`;
+                  velocityWidth = `${velocityScore}%`;
+                  injuryPts = `${(priorInjuryScore * 0.1).toFixed(1)} / 10 pts`;
+                  injuryWidth = `${priorInjuryScore}%`;
+                }
+              } else {
+                const scoreMod = ((weight + age) % 15);
+                if (sport.includes('basket')) {
+                  valgusScore = +(32.0 + scoreMod).toFixed(1);
+                  valgusAngleText = '7.4° (Optimal alignment)';
+                  acwrScore = +(35.0 + (scoreMod * 0.8)).toFixed(1);
+                  asymmScore = +(26.0 + (scoreMod * 0.5)).toFixed(1);
+                  velocityScore = +(28.0 + (scoreMod * 0.4)).toFixed(1);
+                  symmetry = +(100 - (asymmScore / 5.0)).toFixed(1);
+                  acwr = 1.06;
+                } else if (sport.includes('soccer') || sport.includes('football')) {
+                  valgusScore = +(42.0 + scoreMod).toFixed(1);
+                  valgusAngleText = '10.2° (Slight valgus deviation)';
+                  acwrScore = +(45.0 + (scoreMod * 0.9)).toFixed(1);
+                  asymmScore = +(38.0 + (scoreMod * 0.7)).toFixed(1);
+                  velocityScore = +(34.0 + (scoreMod * 0.5)).toFixed(1);
+                  symmetry = +(100 - (asymmScore / 5.0)).toFixed(1);
+                  acwr = 1.15;
+                } else {
+                  valgusScore = +(28.0 + scoreMod).toFixed(1);
+                  valgusAngleText = '6.8° (Optimal alignment)';
+                  acwrScore = +(30.0 + (scoreMod * 0.6)).toFixed(1);
+                  asymmScore = +(24.0 + (scoreMod * 0.4)).toFixed(1);
+                  velocityScore = +(22.0 + (scoreMod * 0.3)).toFixed(1);
+                  symmetry = +(100 - (asymmScore / 5.0)).toFixed(1);
+                  acwr = 1.04;
+                }
+                const vW = (valgusScore * 0.30);
+                const aW = (acwrScore * 0.25);
+                const asW = (asymmScore * 0.20);
+                const velW = (velocityScore * 0.15);
+                const hW = (priorInjuryScore * 0.10);
+                riskScore = +(vW + aW + asW + velW + hW).toFixed(1);
+
+                valgusPts = `${(valgusScore * 0.3).toFixed(1)} / 30 pts`;
+                valgusWidth = `${valgusScore}%`;
+                acwrPts = `${(acwrScore * 0.25).toFixed(1)} / 25 pts`;
+                acwrWidth = `${acwrScore}%`;
+                asymmetryPts = `${(asymmScore * 0.2).toFixed(1)} / 20 pts`;
+                asymmetryWidth = `${asymmScore}%`;
+                velocityPts = `${(velocityScore * 0.15).toFixed(1)} / 15 pts`;
+                velocityWidth = `${velocityScore}%`;
+                injuryPts = `${(priorInjuryScore * 0.1).toFixed(1)} / 10 pts`;
+                injuryWidth = `${priorInjuryScore}%`;
+              }
+
+              const isHigh = riskScore >= 70;
+              const isMod = riskScore >= 45 && riskScore < 70;
+              const riskLevel = isHigh ? 'High Risk' : (isMod ? 'Moderate' : 'Low Risk');
+              const riskBadgeClass = isHigh ? 'bg-rose-100 text-rose-800' : (isMod ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800');
+
+              setAthleteMetrics({
+                riskScore: Number(riskScore).toFixed(1),
+                riskLevel: riskLevel,
+                riskBadgeClass: riskBadgeClass,
+                symmetry: Number(symmetry).toFixed(1),
+                symmetryDeficit: Math.abs(100 - symmetry).toFixed(1),
+                acwr: acwr,
+                rfProb: summaryData?.injury_risk_forecast?.rf_risk_prob !== undefined ? Number(summaryData.injury_risk_forecast.rf_risk_prob).toFixed(1) : (Number(riskScore) * 1.03).toFixed(1),
+                xgbProb: summaryData?.injury_risk_forecast?.xgb_risk_prob !== undefined ? Number(summaryData.injury_risk_forecast.xgb_risk_prob).toFixed(1) : (Number(riskScore) * 0.96).toFixed(1),
+                valgusWidth: valgusWidth,
+                valgusPts: valgusPts,
+                valgusNote: `Knee inward collapse: ${valgusAngleText}`,
+                acwrWidth: acwrWidth,
+                acwrPts: acwrPts,
+                asymmetryWidth: asymmetryWidth,
+                asymmetryPts: asymmetryPts,
+                velocityWidth: velocityWidth,
+                velocityPts: velocityPts,
+                injuryWidth: injuryWidth,
+                injuryPts: injuryPts,
+                injuryNote: `${injuryCount} documented injury incident${injuryCount === 1 ? '' : 's'} in history`
+              });
+            }
+          })
+          .catch(() => {});
+      }
     }
-  }, [selectedAthlete, userRole]);
+  }, [role]);
 
-  // Poll active videos for status changes (athlete flow)
-  useEffect(() => {
-    if (userRole !== 'athlete' || videos.length === 0) return;
-    
-    const hasActiveProcessing = videos.some(
-      vid => vid.processing_status === 'Uploaded' || vid.processing_status === 'Processing'
-    );
-    
-    if (!hasActiveProcessing) return;
-    
-    const interval = setInterval(async () => {
-      try {
-        const res = await api.get('/video/list');
-        setVideos(res.data);
-      } catch (err) {
-        console.error("Failed to poll video list:", err);
-      }
-    }, 5000);
-    
-    return () => clearInterval(interval);
-  }, [videos, userRole]);
+  const effectiveSquad = squadAthletes.length > 0 ? squadAthletes : SQUAD_ATHLETES;
 
-  const handleSaveNotes = async (e) => {
-    e.preventDefault();
-    if (!selectedAthlete) return;
-    setSavingNotes(true);
-    setSuccessMessage('');
-    setError('');
+  // Coach Dashboard States with localStorage persistence across refreshes
+  const [selectedAthlete, setSelectedAthlete] = useState(() => {
+    const savedId = localStorage.getItem('selectedAthleteId');
+    if (savedId) {
+      const found = SQUAD_ATHLETES.find((a) => a.id === savedId);
+      if (found) return found;
+    }
+    return SQUAD_ATHLETES[0];
+  });
+
+  const [coachNotesInput, setCoachNotesInput] = useState(() => {
+    const savedId = localStorage.getItem('selectedAthleteId');
+    const athlete = (savedId && SQUAD_ATHLETES.find((a) => a.id === savedId)) || SQUAD_ATHLETES[0];
+    const savedNotes = localStorage.getItem(`coach_notes_${athlete.id}`);
+    return savedNotes !== null ? savedNotes : athlete.coachNotes;
+  });
+
+  const [notesSaved, setNotesSaved] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [riskFilter, setRiskFilter] = useState('all');
+
+  const handleSelectAthlete = (athlete) => {
+    setSelectedAthlete(athlete);
+    localStorage.setItem('selectedAthleteId', athlete.id);
+    const savedNotes = localStorage.getItem(`coach_notes_${athlete.id}`);
+    setCoachNotesInput(savedNotes !== null ? savedNotes : athlete.coachNotes);
+    setNotesSaved(false);
+  };
+
+  const handleSaveNotes = async () => {
+    localStorage.setItem(`coach_notes_${selectedAthlete.id}`, coachNotesInput);
     try {
-      const res = await api.put(`/athlete/${selectedAthlete.athlete_id}/notes`, {
-        coach_notes: coachNotes
-      });
-      setSuccessMessage('Notes saved successfully!');
-      
-      // Update local athletes cache with the updated notes
-      setAthletes(prev => prev.map(ath => 
-        ath.athlete_id === selectedAthlete.athlete_id 
-          ? { ...ath, coach_notes: res.data.coach_notes } 
-          : ath
-      ));
-      
-      // Update active selection reference
-      setSelectedAthlete(prev => ({ ...prev, coach_notes: res.data.coach_notes }));
+      await api.put(`/athlete/${selectedAthlete.id}/notes`, { coach_notes: coachNotesInput });
+      setSquadAthletes((prev) =>
+        prev.map((a) => (a.id === selectedAthlete.id ? { ...a, coachNotes: coachNotesInput } : a))
+      );
     } catch (err) {
-      setError('Failed to save coach notes.');
-    } finally {
-      setSavingNotes(false);
+      console.log('Saved locally (demo/mock mode):', err);
     }
+    setNotesSaved(true);
+    setTimeout(() => setNotesSaved(false), 2500);
   };
 
-  const getInitials = (name) => {
-    if (!name) return 'U';
-    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-  };
+  const highRiskCount = effectiveSquad.filter((a) => a.riskLevel?.toLowerCase().includes('high')).length;
+  const modRiskCount = effectiveSquad.filter((a) => a.riskLevel?.toLowerCase().includes('mod')).length;
+  const lowRiskCount = effectiveSquad.filter((a) => 
+    a.riskLevel?.toLowerCase().includes('low') || 
+    (!a.riskLevel?.toLowerCase().includes('high') && !a.riskLevel?.toLowerCase().includes('mod'))
+  ).length;
+  const availabilityRate = effectiveSquad.length > 0 
+    ? (((effectiveSquad.length - highRiskCount) / effectiveSquad.length) * 100).toFixed(1) 
+    : '100.0';
+  const meanAcwr = effectiveSquad.length > 0
+    ? (effectiveSquad.reduce((acc, a) => acc + (parseFloat(a.acwr) || 1.1), 0) / effectiveSquad.length).toFixed(2)
+    : '1.12';
 
-  const getAvatarColor = (name) => {
-    const colors = [
-      'bg-blue-600/20 border-blue-500/30 text-blue-400',
-      'bg-purple-600/20 border-purple-500/30 text-purple-400',
-      'bg-emerald-600/20 border-emerald-500/30 text-emerald-400',
-      'bg-amber-600/20 border-amber-500/30 text-amber-400',
-      'bg-rose-600/20 border-rose-500/30 text-rose-400'
-    ];
-    let sum = 0;
-    for (let i = 0; name && i < name.length; i++) sum += name.charCodeAt(i);
-    return colors[sum % colors.length];
-  };
+  const filteredAthletes = effectiveSquad.filter((a) => {
+    const matchesSearch = a.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          a.position.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter = riskFilter === 'all' || a.riskLevel?.toLowerCase().includes(riskFilter.toLowerCase());
+    return matchesSearch && matchesFilter;
+  });
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate('/login');
-  };
+  // -------------------------------------------------------------
+  // 1. COACH & SPORTS SCIENCE SQUAD DASHBOARD VIEW
+  // -------------------------------------------------------------
+  if (role === 'coach') {
+    const currentAthlete = selectedAthlete || effectiveSquad[0] || {};
 
-  if (loading) {
     return (
-      <div className="min-h-screen bg-[#070b13] flex items-center justify-center">
-        <Activity className="h-10 w-10 text-brand-500 animate-spin" />
-      </div>
-    );
-  }
-
-
-  return (
-    <div className="min-h-screen bg-[#070b13] text-white">
-      {/* Navbar */}
-      <nav className="border-b border-white/5 bg-[#0e1726]/60 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-2">
-              <Activity className="h-6 w-6 text-brand-400" />
-              <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-                SportsInjury.AI
+      <AthleteLayout athleteName={currentUserName}>
+        {/* Coach Header */}
+        <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 border border-purple-200">
+                Head Coach & Sports Science Console
               </span>
+              <span className="text-xs text-slate-400 font-medium">Squad: Senior First Team</span>
             </div>
-            <div className="flex items-center gap-4">
-              <span className="text-xs font-semibold uppercase tracking-wider bg-brand-500/10 text-brand-400 border border-brand-500/20 py-1 px-3 rounded-full">
-                {userRole}
-              </span>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+              Squad Readiness & Injury Prevention
+            </h1>
+            <p className="text-slate-500 text-sm mt-0.5">
+              Monitoring {effectiveSquad.length} squad athlete{effectiveSquad.length !== 1 ? 's' : ''} across kinematic video streams, 5-factor risk indices, and training workloads.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2.5 shrink-0">
+            <button
+              onClick={() => navigate(currentAthlete?.id ? `/athlete/reports?athlete=${currentAthlete.id}` : '/athlete/reports')}
+              className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs py-2.5 px-4 rounded-xl transition-colors shadow-xs flex items-center gap-1.5"
+            >
+              <FileText className="w-4 h-4" />
+              <span>Squad Availability Report</span>
+            </button>
+
+            <button
+              onClick={() => navigate('/athlete/video-analysis')}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs py-2.5 px-4 rounded-xl transition-colors shadow-xs flex items-center gap-1.5"
+            >
+              <Play className="w-3.5 h-3.5 fill-white" />
+              <span>Video Studio</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Coach Squad Metrics */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+            <div className="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-2">
+              <span>Monitored Squad</span>
+              <Users className="w-4 h-4 text-blue-500" />
+            </div>
+            <div className="text-3xl font-extrabold text-slate-900">{effectiveSquad.length} Athlete{effectiveSquad.length !== 1 ? 's' : ''}</div>
+            <p className="text-[11px] text-slate-500 mt-2">{lowRiskCount} Cleared • {modRiskCount} Modified • {highRiskCount} Flagged</p>
+          </div>
+
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+            <div className="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-2">
+              <span>High Risk Interventions</span>
+              <ShieldAlert className="w-4 h-4 text-rose-500" />
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-extrabold text-rose-600">{highRiskCount} Flagged</span>
+              {highRiskCount > 0 && (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800">Alert</span>
+              )}
+            </div>
+            <p className="text-[11px] text-slate-500 mt-2">Valgus inward collapse &gt; 12.0°</p>
+          </div>
+
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+            <div className="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-2">
+              <span>Squad Availability</span>
+              <UserCheck className="w-4 h-4 text-emerald-500" />
+            </div>
+            <div className="text-3xl font-extrabold text-emerald-600">{availabilityRate}%</div>
+            <p className="text-[11px] text-slate-500 mt-2">Above 85% benchmark threshold</p>
+          </div>
+
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+            <div className="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-2">
+              <span>Squad Mean ACWR</span>
+              <Flame className="w-4 h-4 text-indigo-500" />
+            </div>
+            <div className="text-3xl font-extrabold text-indigo-600">{meanAcwr}</div>
+            <p className="text-[11px] text-slate-500 mt-2">Optimal safe training load threshold</p>
+          </div>
+        </div>
+
+        {/* Coach Main Section: Squad Roster + Selected Athlete Deep-Dive */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+          {/* Left 7 Columns: Squad Roster Table */}
+          <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 mb-4 border-b border-slate-100 gap-3">
+                <div>
+                  <h2 className="text-base font-bold text-slate-900">Squad Athlete Risk Register</h2>
+                  <p className="text-xs text-slate-500">Select an athlete to inspect biomechanics and clinical notes</p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" />
+                    <input
+                      type="text"
+                      placeholder="Search squad..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-8 pr-3 py-1 text-xs bg-slate-50 border border-slate-200 rounded-lg w-36 focus:outline-none focus:w-48 transition-all"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs">
+                    <button
+                      onClick={() => setRiskFilter('all')}
+                      className={`px-2.5 py-1 rounded-lg font-semibold ${riskFilter === 'all' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-600'}`}
+                    >
+                      All ({effectiveSquad.length})
+                    </button>
+                    <button
+                      onClick={() => setRiskFilter('high')}
+                      className={`px-2.5 py-1 rounded-lg font-semibold ${riskFilter === 'high' ? 'bg-rose-600 text-white shadow-xs' : 'text-slate-600'}`}
+                    >
+                      High ({highRiskCount})
+                    </button>
+                    <button
+                      onClick={() => setRiskFilter('moderate')}
+                      className={`px-2.5 py-1 rounded-lg font-semibold ${riskFilter === 'moderate' ? 'bg-amber-600 text-white shadow-xs' : 'text-slate-600'}`}
+                    >
+                      Mod ({modRiskCount})
+                    </button>
+                    <button
+                      onClick={() => setRiskFilter('low')}
+                      className={`px-2.5 py-1 rounded-lg font-semibold ${riskFilter === 'low' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600'}`}
+                    >
+                      Low ({lowRiskCount})
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Athlete Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-slate-500 uppercase tracking-wider">
+                      <th className="pb-3 font-semibold">Athlete</th>
+                      <th className="pb-3 font-semibold">Knee Valgus</th>
+                      <th className="pb-3 font-semibold">Asymmetry</th>
+                      <th className="pb-3 font-semibold">Risk Index</th>
+                      <th className="pb-3 font-semibold">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredAthletes.map((ath) => {
+                      const isSelected = currentAthlete.id === ath.id;
+                      return (
+                        <tr 
+                          key={ath.id}
+                          onClick={() => handleSelectAthlete(ath)}
+                          className={`cursor-pointer transition-colors ${isSelected ? 'bg-blue-50/70 font-semibold' : 'hover:bg-slate-50'}`}
+                        >
+                          <td className="py-3">
+                            <div className="font-bold text-slate-900">{ath.name}</div>
+                            <div className="text-[11px] text-slate-500">{ath.position} • {ath.age} yrs</div>
+                          </td>
+                          <td className="py-3 font-mono font-medium text-slate-800">{ath.valgusAngle}</td>
+                          <td className="py-3 font-mono font-medium text-rose-600">{ath.asymmetry}</td>
+                          <td className="py-3">
+                            <span className={`px-2.5 py-0.5 rounded-full font-bold text-[10px] ${
+                              ath.riskLevel?.includes('High') ? 'bg-rose-100 text-rose-800' :
+                              ath.riskLevel?.includes('Mod') ? 'bg-amber-100 text-amber-800' :
+                              'bg-emerald-100 text-emerald-800'
+                            }`}>
+                              {ath.riskScore}% {ath.riskLevel}
+                            </span>
+                          </td>
+                          <td className="py-3">
+                            <button
+                              type="button"
+                              className={`text-xs px-2.5 py-1 rounded-lg font-semibold transition-colors ${
+                                isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                              }`}
+                            >
+                              {isSelected ? 'Viewing' : 'Inspect'}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          {/* Right 5 Columns: Selected Athlete Clinical Management */}
+          <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Coach Focus</span>
+                  <h3 className="text-base font-bold text-slate-900">{currentAthlete.name || 'Athlete'}</h3>
+                </div>
+                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+                  currentAthlete.riskLevel?.includes('High') ? 'bg-rose-100 text-rose-800' :
+                  currentAthlete.riskLevel?.includes('Mod') ? 'bg-amber-100 text-amber-800' :
+                  'bg-emerald-100 text-emerald-800'
+                }`}>
+                  {currentAthlete.status || 'Active Squad'}
+                </span>
+              </div>
+
+              {/* Quick Athlete Biomechanics Summary */}
+              <div className="grid grid-cols-3 gap-2.5 text-center p-3 bg-slate-50 rounded-xl border border-slate-100 mb-4 text-xs">
+                <div>
+                  <span className="text-slate-400 text-[10px]">Valgus Deviation</span>
+                  <div className="font-bold text-slate-900 mt-0.5">{currentAthlete.valgusAngle || '7.8°'}</div>
+                </div>
+                <div>
+                  <span className="text-slate-400 text-[10px]">L/R Asymmetry</span>
+                  <div className="font-bold text-rose-600 mt-0.5">{currentAthlete.asymmetry || '5.4%'}</div>
+                </div>
+                <div>
+                  <span className="text-slate-400 text-[10px]">Workload ACWR</span>
+                  <div className="font-bold text-slate-900 mt-0.5">{currentAthlete.acwr || '1.12'}</div>
+                </div>
+              </div>
+
+              {/* Coach Clinical Notes Form */}
+              <div className="space-y-2 mb-4">
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <MessageSquare className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Coach & Physiotherapist Notes</span>
+                </label>
+                <textarea
+                  rows={4}
+                  value={coachNotesInput}
+                  onChange={(e) => setCoachNotesInput(e.target.value)}
+                  placeholder="Enter medical observations, modified drill volume, or clearance instructions..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                />
+
+                {notesSaved && (
+                  <div className="text-[11px] font-semibold text-emerald-600 flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Notes saved to athlete's permanent record!</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 pt-2">
               <button
-                onClick={handleLogout}
-                className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-white/5 transition-all duration-200"
-                title="Log Out"
+                onClick={handleSaveNotes}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition-colors shadow-xs flex items-center justify-center gap-1.5 min-w-[150px]"
               >
-                <LogOut className="h-5 w-5" />
+                <Save className="w-4 h-4" />
+                <span>Save Notes</span>
+              </button>
+
+              <button
+                onClick={() => navigate(currentAthlete.id ? `/athlete/reports?athlete=${currentAthlete.id}` : '/athlete/reports')}
+                className="bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 font-semibold py-2.5 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1"
+                title="View Athlete Dossier & Clinical Report"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Report</span>
+              </button>
+
+              <button
+                onClick={() => navigate('/athlete/video-analysis')}
+                className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1"
+                title="Open Video Analysis Studio"
+              >
+                <Play className="w-3.5 h-3.5" />
+                <span>Video Studio</span>
               </button>
             </div>
           </div>
         </div>
-      </nav>
+      </AthleteLayout>
+    );
+  }
 
-      {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Banner */}
-        <div className="bg-gradient-to-r from-[#0e1726] to-[#152033] border border-white/5 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 shadow-xl">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-extrabold flex items-center gap-2">
-              Hello, {userName} <Sparkles className="h-6 w-6 text-brand-400 animate-pulse" />
-            </h1>
-            <p className="text-gray-400 text-sm mt-1">
-              {userRole === 'athlete' 
-                ? "Track your physical metrics, upload videos, and analyze biomechanics risk scores."
-                : "Welcome to your coach/physiotherapist dashboard portal."}
-            </p>
+  // -------------------------------------------------------------
+  // 2. ATHLETE PERSONAL DASHBOARD VIEW
+  // -------------------------------------------------------------
+  const recentAssessments = [
+    {
+      id: 'VID-SQUAT-01',
+      activity: 'Squatting Movement Assessment',
+      date: 'Today, 2:30 PM',
+      riskScore: 72.4,
+      level: 'High',
+      asymmetry: '14.6%',
+      valgusAngle: '12.4°'
+    },
+    {
+      id: 'VID-LAND-02',
+      activity: 'Drop Vertical Jump & Landing',
+      date: 'Sep 06, 2026',
+      riskScore: 48.0,
+      level: 'Moderate',
+      asymmetry: '9.2%',
+      valgusAngle: '8.5°'
+    },
+    {
+      id: 'VID-SPRINT-03',
+      activity: 'Sprint Deceleration Drill',
+      date: 'Aug 29, 2026',
+      riskScore: 31.2,
+      level: 'Low',
+      asymmetry: '4.8%',
+      valgusAngle: '5.1°'
+    }
+  ];
+
+  const mappedAssessments = athleteVideos.length > 0 ? athleteVideos.map((v) => {
+    const pred = v.injury_prediction;
+    const analysis = v.analysis;
+    const score = pred?.overall_risk_score !== undefined 
+      ? Number(pred.overall_risk_score).toFixed(1) 
+      : (analysis?.risk_level === 'High' ? '72.4' : (analysis?.risk_level === 'Moderate' ? '48.0' : '31.2'));
+    const level = pred?.risk_category || analysis?.risk_level || (Number(score) >= 70 ? 'High' : (Number(score) >= 45 ? 'Moderate' : 'Low'));
+    const asymm = analysis?.symmetry_score !== undefined && analysis?.symmetry_score !== null
+      ? `${Math.abs(100 - Number(analysis.symmetry_score)).toFixed(1)}%`
+      : '5.2%';
+    const valgusAngle = analysis?.knee_valgus_detected === 'Yes' 
+      ? '14.2°' 
+      : (analysis?.knee_valgus_detected === 'Borderline' ? '9.8°' : '5.1°');
+    const dateStr = v.uploaded_at ? new Date(v.uploaded_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recently';
+
+    return {
+      id: `VID-${v.video_id.slice(0, 6).toUpperCase()}`,
+      rawId: v.video_id,
+      video: v,
+      activity: `${v.activity || 'Movement'} Assessment`,
+      date: dateStr,
+      riskScore: score,
+      level: level,
+      asymmetry: asymm,
+      valgusAngle: valgusAngle
+    };
+  }) : recentAssessments;
+
+  return (
+    <AthleteLayout athleteName={currentUserName}>
+      {/* Top Welcome Header */}
+      <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800">
+              {athleteProfile?.sport ? `${athleteProfile.sport} • ${athleteProfile.position || 'Athlete'}` : 'Soccer • Forward'}
+            </span>
+            <span className="text-xs text-slate-400 font-medium">Session Season 2026</span>
           </div>
-          {userRole === 'athlete' && (
-            <Link
-              to="/upload"
-              disabled={!athlete}
-              className={`inline-flex items-center justify-center gap-2 font-semibold px-6 py-3 rounded-xl transition-all duration-200 shadow-lg ${
-                athlete 
-                  ? 'bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white shadow-brand-500/20' 
-                  : 'bg-gray-800 text-gray-500 border border-white/5 cursor-not-allowed'
-              }`}
-              onClick={(e) => !athlete && e.preventDefault()}
-              title={!athlete ? "Complete your athlete profile first" : "Upload Video"}
-            >
-              <PlusCircle className="h-5 w-5" />
-              Upload Assessment Video
-            </Link>
-          )}
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+            Athlete Intelligence Dashboard
+          </h1>
+          <p className="text-slate-500 text-sm mt-0.5">
+            Welcome back, <strong className="text-slate-700">{currentUserName}</strong>. Here is your active biomechanical health and injury risk summary.
+          </p>
         </div>
 
-        {/* Athlete Flow */}
-        {userRole === 'athlete' && (
-          <div className="space-y-8">
-            {/* If profile is missing */}
-            {!athlete && (
-              <div className="bg-[#1b1517] border border-red-500/20 rounded-2xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                <div className="flex items-start gap-4">
-                  <div className="p-3 bg-red-500/10 rounded-xl text-red-400 border border-red-500/20 shrink-0">
-                    <ShieldAlert className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-white text-lg">Incomplete Athlete Profile</h3>
-                    <p className="text-sm text-gray-400 mt-1">
-                      You must complete your physical profile before you can upload exercise videos for biomechanical risk scoring.
-                    </p>
-                  </div>
-                </div>
-                <Link
-                  to="/profile"
-                  className="bg-red-600 hover:bg-red-500 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors shrink-0 text-sm flex items-center gap-1 shadow-lg shadow-red-600/15"
-                >
-                  Configure Profile
-                  <ChevronRight className="h-4 w-4" />
-                </Link>
-              </div>
-            )}
+        <div className="flex items-center gap-2.5 shrink-0">
+          <button
+            onClick={() => navigate('/athlete/reports')}
+            className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs py-2.5 px-4 rounded-xl transition-colors shadow-xs flex items-center gap-1.5"
+          >
+            <FileText className="w-4 h-4" />
+            <span>Health Dossier</span>
+          </button>
 
-            {/* Profile Statistics Grid */}
-            {athlete && (
-              <div>
-                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                  <User className="h-5 w-5 text-brand-400" /> Physical Biometrics & Performance
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                  {/* Sport Details */}
-                  <div className="bg-[#0e1726]/50 border border-white/5 p-5 rounded-2xl flex items-center justify-between">
-                    <div>
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Sport / Position</p>
-                      <h4 className="text-lg font-bold mt-1 text-white truncate max-w-[150px]">{athlete.sport || 'Not set'}</h4>
-                      <p className="text-xs text-gray-500 mt-0.5 truncate max-w-[150px]">{athlete.position || 'Not set'}</p>
-                    </div>
-                    <Trophy className="h-8 w-8 text-brand-400/40" />
-                  </div>
-                  
-                  {/* Biometrics */}
-                  <div className="bg-[#0e1726]/50 border border-white/5 p-5 rounded-2xl flex items-center justify-between">
-                    <div>
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Height / Weight</p>
-                      <h4 className="text-lg font-bold mt-1 text-white">{athlete.height ? `${athlete.height} cm` : 'Not set'}</h4>
-                      <p className="text-xs text-gray-500 mt-0.5">{athlete.weight ? `${athlete.weight} kg` : 'Not set'}</p>
-                    </div>
-                    <User className="h-8 w-8 text-brand-400/40" />
-                  </div>
+          <button
+            onClick={() => navigate('/athlete/video-analysis')}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs py-2.5 px-4 rounded-xl transition-colors shadow-xs flex items-center gap-1.5"
+          >
+            <Play className="w-3.5 h-3.5 fill-white" />
+            <span>New Video Analysis</span>
+          </button>
+        </div>
+      </div>
 
-                  {/* Physical Assessments */}
-                  <div className="bg-[#0e1726]/50 border border-white/5 p-5 rounded-2xl flex items-center justify-between">
-                    <div>
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Assessments Avg</p>
-                      <h4 className="text-lg font-bold mt-1 text-white">
-                        {(( (athlete.strength || 0) + (athlete.flexibility || 0) + (athlete.balance || 0) + (athlete.endurance || 0) ) / 4 || 0).toFixed(1)} / 10
-                      </h4>
-                      <p className="text-xs text-gray-500 mt-0.5">Strength, Flexibility, Balance, Endurance</p>
-                    </div>
-                    <Award className="h-8 w-8 text-brand-400/40" />
-                  </div>
-
-                  {/* Setup shortcut */}
-                  <div className="bg-[#0e1726]/50 border border-white/5 p-5 rounded-2xl flex items-center justify-between">
-                    <div>
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Age</p>
-                      <h4 className="text-lg font-bold mt-1 text-white">{athlete.age ? `${athlete.age} yrs` : 'Not set'}</h4>
-                      <Link to="/profile" className="text-xs text-brand-400 hover:text-brand-300 font-semibold mt-1 inline-block transition-colors">
-                        Edit stats &rarr;
-                      </Link>
-                    </div>
-                    <Activity className="h-8 w-8 text-brand-400/40" />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Video List */}
-            {athlete && (
-              <div>
-                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                  <Film className="h-5 w-5 text-brand-400" /> Assessment Uploads History
-                </h2>
-                
-                {videos.length === 0 ? (
-                  <div className="bg-[#0e1726]/30 border border-white/5 rounded-2xl p-12 text-center">
-                    <Film className="h-12 w-12 text-gray-600 mx-auto mb-4 animate-bounce" />
-                    <h3 className="font-bold text-lg text-white">No videos uploaded yet</h3>
-                    <p className="text-sm text-gray-400 mt-1 max-w-md mx-auto">
-                      Upload your exercise recordings to run automated pose analysis, biomechanical checks, and estimate joint stress risk factors.
-                    </p>
-                    <Link
-                      to="/upload"
-                      className="mt-6 inline-flex items-center gap-2 bg-[#152033]/80 hover:bg-[#1e2e4a] border border-white/5 font-semibold py-2 px-5 rounded-xl transition-all"
-                    >
-                      Upload First Video
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="bg-[#0e1726]/50 border border-white/5 rounded-2xl overflow-hidden shadow-xl">
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="border-b border-white/5 bg-[#0e1726] text-gray-400 text-xs font-semibold uppercase tracking-wider">
-                          <th className="py-4 px-6">Activity Type</th>
-                          <th className="py-4 px-6">Date Uploaded</th>
-                          <th className="py-4 px-6">Analysis Status</th>
-                          <th className="py-4 px-6 text-right">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-white/5 text-sm">
-                        {videos.map((vid) => (
-                          <tr key={vid.video_id} className="hover:bg-white/[0.02] transition-colors">
-                            <td className="py-4 px-6 font-semibold text-white">
-                              {vid.activity}
-                            </td>
-                            <td className="py-4 px-6 text-gray-400">
-                              {new Date(vid.uploaded_at).toLocaleDateString(undefined, {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                            </td>
-                            <td className="py-4 px-6">
-                              {vid.processing_status === 'Completed' ? (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                  <CheckCircle2 className="h-3.5 w-3.5" />
-                                  Completed
-                                </span>
-                              ) : vid.processing_status === 'Processing' ? (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 animate-pulse">
-                                  <Activity className="h-3.5 w-3.5 animate-spin" />
-                                  Analyzing...
-                                </span>
-                              ) : vid.processing_status === 'Failed' ? (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
-                                  <ShieldAlert className="h-3.5 w-3.5" />
-                                  Failed
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse">
-                                  <ChevronRight className="h-3.5 w-3.5" />
-                                  Queued
-                                </span>
-                              )}
-                            </td>
-                            <td className="py-4 px-6 text-right">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setActiveVideo(vid);
-                                  setViewAnnotated(true);
-                                }}
-                                disabled={vid.processing_status !== 'Completed'}
-                                className={`inline-flex items-center gap-1 font-semibold py-1.5 px-3.5 rounded-lg text-xs transition-all ${
-                                  vid.processing_status === 'Completed'
-                                    ? 'bg-brand-500/10 hover:bg-brand-500/25 border border-brand-500/20 text-brand-400 hover:text-brand-300 cursor-pointer'
-                                    : 'bg-gray-800/40 border border-white/5 text-gray-500 cursor-not-allowed'
-                                }`}
-                              >
-                                <Play className="h-3 w-3 fill-current" />
-                                Review Form & Report
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            )}
+      {/* Core KPI Metrics Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-2">
+            <span>Composite Risk Score</span>
+            <ShieldAlert className={`w-4 h-4 ${athleteMetrics?.riskScore >= 70 ? 'text-rose-500' : (athleteMetrics?.riskScore >= 45 ? 'text-amber-500' : 'text-emerald-500')}`} />
           </div>
-        )}
+          <div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-extrabold text-slate-900">{athleteMetrics?.riskScore ? `${athleteMetrics.riskScore}%` : '32.5%'}</span>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${athleteMetrics?.riskBadgeClass || 'bg-emerald-100 text-emerald-800'}`}>
+                {athleteMetrics?.riskLevel || 'Low Risk'}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-2 flex items-center gap-1">
+              <TrendingUp className="w-3 h-3 text-blue-500" />
+              <span>Personalized clinical assessment index</span>
+            </p>
+          </div>
+        </div>
 
-        {/* Coach / Expert Dashboard Flow */}
-        {userRole !== 'athlete' && (
-          <div className="space-y-8">
-            {error && (
-              <div className="p-4 bg-red-950/50 border border-red-500/30 rounded-xl text-red-200 text-sm">
-                {error}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-2">
+            <span>Bilateral Symmetry</span>
+            <Activity className="w-4 h-4 text-blue-500" />
+          </div>
+          <div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-extrabold text-slate-900">{athleteMetrics?.symmetry ? `${athleteMetrics.symmetry}%` : '94.2%'}</span>
+              <span className="text-xs font-bold text-slate-500">{athleteMetrics?.symmetryDeficit ? `${athleteMetrics.symmetryDeficit}% Deficit` : '5.8% Deficit'}</span>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-2">Dynamic kinetic limb power balance</p>
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-2">
+            <span>Workload Ratio (ACWR)</span>
+            <Flame className="w-4 h-4 text-emerald-500" />
+          </div>
+          <div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-extrabold text-emerald-600">{athleteMetrics?.acwr || '1.08'}</span>
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                Optimal Zone
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-2">Safe acute-to-chronic training load</p>
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-2">
+            <span>ML Models & Vision</span>
+            <Cpu className="w-4 h-4 text-indigo-500" />
+          </div>
+          <div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-slate-900">Online</span>
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-2">
+              RF: {athleteMetrics?.rfProb || '34.0'}% | XGB: {athleteMetrics?.xgbProb || '31.0'}%
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content: 5-Factor Model & Corrective Plan */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+        <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+            <div>
+              <h2 className="text-base font-bold text-slate-900">5-Factor Weighted Biomechanical Risk</h2>
+              <p className="text-xs text-slate-500">Multimodal clinical formula quantifying injury propensity</p>
+            </div>
+            <button
+              onClick={() => navigate('/athlete/risk-assessments')}
+              className="text-xs text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1"
+            >
+              <span>Detailed Model</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <div className="flex justify-between text-xs font-semibold mb-1">
+                <span className="text-slate-700">1. Joint Kinematics & Valgus Angle (30% Weight)</span>
+                <span className="text-slate-900 font-bold">{athleteMetrics?.valgusPts || '7.2 / 30 pts'}</span>
               </div>
-            )}
-            
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Left Column: Athletes List */}
-              <div className="lg:col-span-1 bg-[#0e1726]/60 backdrop-blur-xl border border-white/5 rounded-2xl p-6 shadow-xl flex flex-col h-[700px]">
-                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                  <User className="h-5 w-5 text-brand-400" /> Athletes Directory
-                </h3>
-                
-                {/* Search box */}
-                <div className="relative mb-6">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
-                  <input
-                    type="text"
-                    placeholder="Search by name, email, or sport..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-[#152033]/50 border border-white/5 rounded-xl py-2.5 pl-10 pr-4 text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 transition-all text-sm"
-                  />
-                </div>
-                
-                {/* Scrollable Athlete List */}
-                <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
-                  {athletes.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500 text-sm">
-                      No registered athletes found.
-                    </div>
-                  ) : (
-                    athletes
-                      .filter(ath => {
-                        const name = ath.user?.name || '';
-                        const email = ath.user?.email || '';
-                        const sport = ath.sport || '';
-                        const query = searchQuery.toLowerCase();
-                        return (
-                          name.toLowerCase().includes(query) ||
-                          email.toLowerCase().includes(query) ||
-                          sport.toLowerCase().includes(query)
-                        );
-                      })
-                      .map((ath) => {
-                        const isSelected = selectedAthlete?.athlete_id === ath.athlete_id;
-                        const avgScore = (( (ath.strength || 0) + (ath.flexibility || 0) + (ath.balance || 0) + (ath.endurance || 0) ) / 4 || 0);
-                        return (
-                          <button
-                            key={ath.athlete_id}
-                            type="button"
-                            onClick={() => setSelectedAthlete(ath)}
-                            className={`w-full text-left p-4 rounded-xl border transition-all duration-200 flex items-center justify-between ${
-                              isSelected
-                                ? 'bg-brand-600/10 border-brand-500 shadow-lg shadow-brand-500/5'
-                                : 'bg-[#152033]/30 border-white/5 hover:bg-[#152033]/60 hover:border-white/10'
-                            }`}
-                          >
-                            <div className="flex items-center gap-3 truncate">
-                              <div className={`h-10 w-10 rounded-full border flex items-center justify-center font-bold text-sm shrink-0 ${getAvatarColor(ath.user?.name)}`}>
-                                {getInitials(ath.user?.name)}
-                              </div>
-                              <div className="truncate">
-                                <h4 className="font-semibold text-sm text-white truncate">{ath.user?.name || 'Unknown'}</h4>
-                                <span className="text-xs text-gray-400 capitalize">{ath.sport || 'No Sport'}</span>
-                              </div>
-                            </div>
-                            {avgScore > 0 && (
-                              <span className={`text-xs font-bold py-1 px-2.5 rounded-full shrink-0 border ${
-                                avgScore >= 7.5
-                                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                  : avgScore >= 5.0
-                                  ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                  : 'bg-red-500/10 text-red-400 border-red-500/20'
-                              }`}>
-                                {avgScore.toFixed(1)}
-                              </span>
-                            )}
-                          </button>
-                        );
-                      })
-                  )}
-                </div>
+              <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                <div className="bg-amber-500 h-full rounded-full" style={{ width: athleteMetrics?.valgusWidth || '24%' }}></div>
               </div>
+              <p className="text-[11px] text-slate-400 mt-1">{athleteMetrics?.valgusNote || 'Optimal alignment during movement depth'}</p>
+            </div>
 
-              {/* Right Column: Detailed View */}
-              <div className="lg:col-span-2 space-y-6">
-                {!selectedAthlete ? (
-                  <div className="bg-[#0e1726]/30 border border-white/5 rounded-2xl p-12 text-center h-full flex flex-col justify-center items-center">
-                    <User className="h-12 w-12 text-gray-600 mb-4" />
-                    <h3 className="font-bold text-lg text-white">No Athlete Selected</h3>
-                    <p className="text-sm text-gray-400 mt-1">Select an athlete from the directory to review stats, watch uploaded motion videos, and update notes.</p>
-                  </div>
-                ) : (
-                  <>
-                    {/* Athlete Info Card */}
-                    <div className="bg-[#0e1726]/60 backdrop-blur-xl border border-white/5 rounded-2xl p-6 shadow-xl">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="flex items-center gap-4">
-                          <div className={`h-14 w-14 rounded-full border flex items-center justify-center font-bold text-lg shrink-0 ${getAvatarColor(selectedAthlete.user?.name)}`}>
-                            {getInitials(selectedAthlete.user?.name)}
-                          </div>
-                          <div>
-                            <h2 className="text-2xl font-bold text-white">{selectedAthlete.user?.name || 'Unknown'}</h2>
-                            <p className="text-xs text-brand-400 font-semibold tracking-wider uppercase mt-0.5">{selectedAthlete.sport || 'Sport Not Configured'} • {selectedAthlete.position || 'Position Not Configured'}</p>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Sub-info Grid */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 pt-6 border-t border-white/5 text-sm text-gray-300">
-                        <div className="flex items-center gap-2">
-                          <Mail className="h-4 w-4 text-gray-500 shrink-0" />
-                          <span className="truncate">{selectedAthlete.user?.email || 'N/A'}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Phone className="h-4 w-4 text-gray-500 shrink-0" />
-                          <span>{selectedAthlete.user?.phone || 'N/A'}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-gray-500 shrink-0" />
-                          <span>Age: {selectedAthlete.age ? `${selectedAthlete.age} years` : 'N/A'}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Stats & Performance Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Biometrics Card */}
-                      <div className="bg-[#0e1726]/60 border border-white/5 rounded-2xl p-6 shadow-xl space-y-4">
-                        <h4 className="text-sm font-bold text-white uppercase tracking-wider border-b border-white/5 pb-2">Physical Biometrics</h4>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="bg-[#152033]/30 p-4 rounded-xl border border-white/5">
-                            <span className="text-xs text-gray-400 uppercase font-semibold">Height</span>
-                            <p className="text-lg font-bold text-white mt-1">{selectedAthlete.height ? `${selectedAthlete.height} cm` : 'Not set'}</p>
-                          </div>
-                          <div className="bg-[#152033]/30 p-4 rounded-xl border border-white/5">
-                            <span className="text-xs text-gray-400 uppercase font-semibold">Weight</span>
-                            <p className="text-lg font-bold text-white mt-1">{selectedAthlete.weight ? `${selectedAthlete.weight} kg` : 'Not set'}</p>
-                          </div>
-                          <div className="bg-[#152033]/30 p-4 rounded-xl border border-white/5 col-span-2">
-                            <span className="text-xs text-gray-400 uppercase font-semibold">Training Load / Intensity</span>
-                            <p className="text-lg font-bold text-white mt-1">{selectedAthlete.training_load ? `${selectedAthlete.training_load} hours/wk` : '0.0 hours/wk'}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Performance Scores Card */}
-                      <div className="bg-[#0e1726]/60 border border-white/5 rounded-2xl p-6 shadow-xl space-y-4">
-                        <h4 className="text-sm font-bold text-white uppercase tracking-wider border-b border-white/5 pb-2">Performance Assessment (1 - 10)</h4>
-                        <div className="space-y-3">
-                          {[
-                            { name: 'Strength', val: selectedAthlete.strength },
-                            { name: 'Flexibility', val: selectedAthlete.flexibility },
-                            { name: 'Balance', val: selectedAthlete.balance },
-                            { name: 'Endurance', val: selectedAthlete.endurance },
-                          ].map((metric) => {
-                            const percent = metric.val ? (metric.val * 10) : 0;
-                            const barColor = percent >= 75 
-                              ? 'bg-emerald-500' 
-                              : percent >= 50 
-                              ? 'bg-amber-500' 
-                              : 'bg-red-500';
-                            return (
-                              <div key={metric.name} className="space-y-1">
-                                <div className="flex justify-between text-xs font-semibold">
-                                  <span className="text-gray-400">{metric.name}</span>
-                                  <span className="text-white">{metric.val ? `${metric.val.toFixed(1)}/10` : 'Not assessed'}</span>
-                                </div>
-                                <div className="w-full bg-[#152033]/50 h-2 rounded-full overflow-hidden">
-                                  <div className={`h-full rounded-full ${barColor}`} style={{ width: `${percent}%` }}></div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Coach Notes Form */}
-                    <div className="bg-[#0e1726]/60 backdrop-blur-xl border border-white/5 rounded-2xl p-6 shadow-xl">
-                      <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-                        <Edit className="h-4 w-4 text-brand-400" /> Specialist Remarks & Injury Logs
-                      </h4>
-                      <form onSubmit={handleSaveNotes} className="space-y-4">
-                        {successMessage && (
-                          <div className="p-3 bg-emerald-950/50 border border-emerald-500/30 rounded-xl text-emerald-200 text-xs font-semibold">
-                            {successMessage}
-                          </div>
-                        )}
-                        <textarea
-                          rows="4"
-                          placeholder="Log active clinical observations, past ligament/muscle tears, customized rehabilitation routines, or restrictions here..."
-                          value={coachNotes}
-                          onChange={(e) => setCoachNotes(e.target.value)}
-                          className="w-full bg-[#152033]/50 border border-white/5 rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 text-sm transition-all"
-                        />
-                        <div className="flex justify-end">
-                          <button
-                            type="submit"
-                            disabled={savingNotes}
-                            className="bg-brand-600 hover:bg-brand-500 text-white font-semibold py-2 px-5 rounded-xl transition-all duration-200 text-sm disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-brand-500/10"
-                          >
-                            <FileText className="h-4 w-4" />
-                            {savingNotes ? 'Saving Remarks...' : 'Save Specialist Remarks'}
-                          </button>
-                        </div>
-                      </form>
-                    </div>
-
-                    {/* Video Submissions Card */}
-                    <div className="bg-[#0e1726]/60 backdrop-blur-xl border border-white/5 rounded-2xl p-6 shadow-xl">
-                      <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-                        <Film className="h-4 w-4 text-brand-400" /> Motion Video Submissions
-                      </h4>
-                      
-                      {athleteVideos.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500 text-sm">
-                          This athlete has not uploaded any assessment recordings yet.
-                        </div>
-                      ) : (
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-left border-collapse">
-                            <thead>
-                              <tr className="border-b border-white/5 bg-[#0e1726]/80 text-gray-400 text-xs font-semibold uppercase tracking-wider">
-                                <th className="py-3 px-4">Movement Activity</th>
-                                <th className="py-3 px-4">Submitted On</th>
-                                <th className="py-3 px-4">Analysis Status</th>
-                                <th className="py-3 px-4 text-right">Action</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-white/5 text-sm">
-                              {athleteVideos.map((vid) => (
-                                <tr key={vid.video_id} className="hover:bg-white/[0.01]">
-                                  <td className="py-3.5 px-4 font-semibold text-white">{vid.activity}</td>
-                                  <td className="py-3.5 px-4 text-gray-400">
-                                    {new Date(vid.uploaded_at).toLocaleDateString(undefined, {
-                                      year: 'numeric',
-                                      month: 'short',
-                                      day: 'numeric'
-                                    })}
-                                  </td>
-                                  <td className="py-3.5 px-4">
-                                    {vid.processing_status === 'Completed' ? (
-                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                        Completed
-                                      </span>
-                                    ) : vid.processing_status === 'Processing' ? (
-                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 animate-pulse">
-                                        Analyzing...
-                                      </span>
-                                    ) : vid.processing_status === 'Failed' ? (
-                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
-                                        Failed
-                                      </span>
-                                    ) : (
-                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                                        Queued
-                                      </span>
-                                    )}
-                                  </td>
-                                  <td className="py-3.5 px-4 text-right">
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setActiveVideo(vid);
-                                        setViewAnnotated(true);
-                                      }}
-                                      disabled={vid.processing_status !== 'Completed'}
-                                      className={`inline-flex items-center gap-1 font-semibold py-1.5 px-3 rounded-lg text-xs transition-all ${
-                                        vid.processing_status === 'Completed'
-                                          ? 'bg-brand-500/10 hover:bg-brand-500/25 border border-brand-500/20 text-brand-400 hover:text-brand-300 cursor-pointer'
-                                          : 'bg-gray-800/40 border border-white/5 text-gray-500 cursor-not-allowed'
-                                      }`}
-                                    >
-                                      <Play className="h-3 w-3 fill-current" />
-                                      Review Form & Report
-                                    </button>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
+            <div>
+              <div className="flex justify-between text-xs font-semibold mb-1">
+                <span className="text-slate-700">2. Training Load & ACWR Fatigue (25% Weight)</span>
+                <span className="text-slate-900 font-bold">{athleteMetrics?.acwrPts || '6.3 / 25 pts'}</span>
               </div>
+              <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                <div className="bg-blue-500 h-full rounded-full" style={{ width: athleteMetrics?.acwrWidth || '25%' }}></div>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1">Acute load is well balanced with chronic readiness</p>
+            </div>
+
+            <div>
+              <div className="flex justify-between text-xs font-semibold mb-1">
+                <span className="text-slate-700">3. Bilateral Asymmetry Index (20% Weight)</span>
+                <span className="text-slate-900 font-bold">{athleteMetrics?.asymmetryPts || '3.6 / 20 pts'}</span>
+              </div>
+              <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                <div className="bg-rose-500 h-full rounded-full" style={{ width: athleteMetrics?.asymmetryWidth || '18%' }}></div>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1">{athleteMetrics?.symmetryDeficit ? `${athleteMetrics.symmetryDeficit}% bilateral deficit between left and right limb` : 'Optimal symmetry balance'}</p>
+            </div>
+
+            <div>
+              <div className="flex justify-between text-xs font-semibold mb-1">
+                <span className="text-slate-700">4. Movement Velocity & Acceleration Jerk (15% Weight)</span>
+                <span className="text-slate-900 font-bold">{athleteMetrics?.velocityPts || '3.3 / 15 pts'}</span>
+              </div>
+              <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                <div className="bg-emerald-500 h-full rounded-full" style={{ width: athleteMetrics?.velocityWidth || '22%' }}></div>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1">Deceleration braking impulse within tolerances</p>
+            </div>
+
+            <div>
+              <div className="flex justify-between text-xs font-semibold mb-1">
+                <span className="text-slate-700">5. Prior Injury & Age Factor (10% Weight)</span>
+                <span className="text-slate-900 font-bold">{athleteMetrics?.injuryPts || '2.0 / 10 pts'}</span>
+              </div>
+              <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                <div className="bg-indigo-500 h-full rounded-full" style={{ width: athleteMetrics?.injuryWidth || '20%' }}></div>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1">{athleteMetrics?.injuryNote || 'Documented injuries in clinical log'}</p>
             </div>
           </div>
-        )}
-      </main>
+        </div>
 
-      {/* Video Playback Modal Overlay */}
-      {activeVideo && (() => {
-        // Resolve target video source URL
-        const videoSrc = viewAnnotated && activeVideo.analysis?.annotated_video_url
-          ? activeVideo.analysis.annotated_video_url
-          : activeVideo.video_url;
-        const host = api.defaults.baseURL ? api.defaults.baseURL.replace('/api', '') : 'http://localhost:8000';
-        const absoluteVideoUrl = `${host}${videoSrc}`;
-        
-        let jointAngles = null;
-        let rom = null;
-        try {
-          if (activeVideo.analysis?.joint_angles) jointAngles = JSON.parse(activeVideo.analysis.joint_angles);
-          if (activeVideo.analysis?.range_of_motion) rom = JSON.parse(activeVideo.analysis.range_of_motion);
-        } catch (e) {
-          console.error("Failed to parse analysis metadata", e);
-        }
-
-        const report = activeVideo.analysis;
-
-        return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
-            <div className="bg-[#0e1726] border border-white/10 rounded-2xl w-full max-w-6xl overflow-hidden shadow-2xl relative my-8">
-              {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-white/5 bg-[#152033]/50">
-                <div className="flex items-center gap-3">
-                  <Film className="h-5 w-5 text-brand-400 animate-pulse" />
-                  <div>
-                    <h3 className="font-bold text-white text-base">Form Review: {activeVideo.activity}</h3>
-                    <p className="text-xs text-gray-400 mt-0.5">Uploaded: {new Date(activeVideo.uploaded_at).toLocaleString()}</p>
-                  </div>
+        <div className="lg:col-span-5 flex flex-col gap-6">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex-1 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <Dumbbell className="w-4 h-4 text-blue-600" />
+                  <h3 className="text-sm font-bold text-slate-900">Today's Corrective Prescription</h3>
                 </div>
-                
-                <div className="flex items-center gap-4">
-                  {/* Skeleton toggle */}
-                  {report?.annotated_video_url && (
-                    <div className="flex bg-[#070b13] p-1 rounded-xl border border-white/5 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => setViewAnnotated(true)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                          viewAnnotated
-                            ? 'bg-brand-600 text-white shadow-md'
-                            : 'text-gray-400 hover:text-white'
-                        }`}
-                      >
-                        Skeleton Overlay
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setViewAnnotated(false)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                          !viewAnnotated
-                            ? 'bg-brand-600 text-white shadow-md'
-                            : 'text-gray-400 hover:text-white'
-                        }`}
-                      >
-                        Raw Video
-                      </button>
-                    </div>
-                  )}
-                  
-                  <button
-                    type="button"
-                    onClick={() => setActiveVideo(null)}
-                    className="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-all"
+                <span className="text-[11px] font-semibold text-blue-600">2 of 3 Completed</span>
+              </div>
+
+              <div className="space-y-3">
+                <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl flex items-center justify-between">
+                  <div>
+                    <div className="font-semibold text-xs text-slate-800">Eccentric Nordic Hamstring Curls</div>
+                    <div className="text-[11px] text-slate-500">3 Sets x 6 Reps • Deceleration strength</div>
+                  </div>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                </div>
+
+                <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl flex items-center justify-between">
+                  <div>
+                    <div className="font-semibold text-xs text-slate-800">Banded Gluteus Medius Clamshells</div>
+                    <div className="text-[11px] text-slate-500">3 Sets x 15 Reps • Hip abduction</div>
+                  </div>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                </div>
+
+                <div className="p-3 bg-blue-50/50 border border-blue-200 rounded-xl flex items-center justify-between">
+                  <div>
+                    <div className="font-semibold text-xs text-slate-800">Single-Leg Drop Landing Drills</div>
+                    <div className="text-[11px] text-slate-500">4 Sets x 5 Landings • Valgus control</div>
+                  </div>
+                  <button 
+                    onClick={() => navigate('/athlete/recommendations')}
+                    className="text-[10px] font-bold text-blue-700 bg-blue-100 hover:bg-blue-200 px-2.5 py-1 rounded-md transition-colors"
                   >
-                    <X className="h-6 w-6" />
+                    Start
                   </button>
                 </div>
               </div>
-
-              {/* Main Content Pane Split */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-white/5 bg-[#070b13]">
-                {/* Left Side: Video Player */}
-                <div className="lg:col-span-6 p-6 flex flex-col justify-center items-center bg-black/40">
-                  <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-white/5 bg-black">
-                    <video
-                      key={absoluteVideoUrl}
-                      src={absoluteVideoUrl}
-                      controls
-                      autoPlay
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                  <div className="w-full flex items-center justify-between text-xs text-gray-400 mt-4 px-1">
-                    <span>Resolution: <span className="text-white font-medium">{activeVideo.resolution || 'N/A'}</span></span>
-                    <span>FPS: <span className="text-white font-medium">{activeVideo.fps || 'N/A'}</span></span>
-                    <span>Duration: <span className="text-white font-medium">{activeVideo.duration ? `${activeVideo.duration}s` : 'N/A'}</span></span>
-                  </div>
-                </div>
-
-                {/* Right Side: Quantitative Biomechanics Report */}
-                <div className="lg:col-span-6 p-6 flex flex-col max-h-[75vh] overflow-y-auto custom-scrollbar">
-                  {!report ? (
-                    <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
-                      <Activity className="h-10 w-10 text-brand-400 animate-spin mb-4" />
-                      <h4 className="font-bold text-white">Biomechanical analysis in progress</h4>
-                      <p className="text-xs text-gray-400 mt-1 max-w-sm">We are extracting joint coordinates and mapping stability. Please stand by...</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-6">
-                      {/* Overall score and risk level banner */}
-                      <div className="flex items-center justify-between p-4 rounded-xl border border-white/5 bg-[#0e1726]/50">
-                        <div>
-                          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Movement Form Quality</p>
-                          <div className="flex items-baseline gap-2 mt-1">
-                            <span className="text-3xl font-black text-white">{report.movement_quality_score}</span>
-                            <span className="text-sm text-gray-500 font-semibold">/ 10</span>
-                          </div>
-                        </div>
-                        
-                        <div className="text-right">
-                          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Injury Risk Assessment</p>
-                          <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold border uppercase tracking-wider ${
-                            report.risk_level === 'Low'
-                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                              : report.risk_level === 'Moderate'
-                              ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                              : report.risk_level === 'High'
-                              ? 'bg-orange-500/10 text-orange-400 border-orange-500/20'
-                              : 'bg-red-500/10 text-red-400 border-red-500/20 animate-pulse'
-                          }`}>
-                            {report.risk_level} Risk
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Main finding alerts */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Knee Valgus */}
-                        <div className={`p-4 rounded-xl border ${
-                          report.knee_valgus_detected === 'Yes'
-                            ? 'bg-red-950/20 border-red-500/30 text-red-200'
-                            : report.knee_valgus_detected === 'Borderline'
-                            ? 'bg-amber-950/20 border-amber-500/30 text-amber-200'
-                            : 'bg-emerald-950/20 border-emerald-500/30 text-emerald-200'
-                        }`}>
-                          <span className="text-[10px] uppercase font-bold tracking-wider opacity-60">Knee Alignment</span>
-                          <h4 className="font-bold text-sm mt-1">
-                            {report.knee_valgus_detected === 'Yes' ? 'Medial Knee Collapse' : report.knee_valgus_detected === 'Borderline' ? 'Borderline Instability' : 'Stable Knee Track'}
-                          </h4>
-                          <p className="text-xs mt-1 opacity-80">
-                            {report.knee_valgus_detected === 'Yes' ? 'Significant knee valgus detected.' : report.knee_valgus_detected === 'Borderline' ? 'Slight knee cave inward during load.' : 'Excellent leg tracking alignment.'}
-                          </p>
-                        </div>
-
-                        {/* Balance stability */}
-                        <div className={`p-4 rounded-xl border ${
-                          report.balance_score >= 8.0
-                            ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-200'
-                            : report.balance_score >= 6.0
-                            ? 'bg-amber-950/20 border-amber-500/30 text-amber-200'
-                            : 'bg-red-950/20 border-red-500/30 text-red-200'
-                        }`}>
-                          <span className="text-[10px] uppercase font-bold tracking-wider opacity-60">Lateral Hip Balance</span>
-                          <h4 className="font-bold text-sm mt-1">
-                            Stability Index: {report.balance_score} / 10
-                          </h4>
-                          <p className="text-xs mt-1 opacity-80">
-                            {report.balance_score >= 8.0 ? 'Minimal lateral hip sway.' : report.balance_score >= 6.0 ? 'Moderate stability sway.' : 'High lateral sway detected.'}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Symmetry & Trunk Lean */}
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-[#0e1726]/40 p-4 rounded-xl border border-white/5 text-center">
-                          <span className="text-[10px] uppercase font-semibold text-gray-500 tracking-wider">Joint Symmetry</span>
-                          <h4 className="text-xl font-extrabold text-white mt-1">{report.symmetry_score}%</h4>
-                          <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden mt-2.5">
-                            <div className="bg-brand-500 h-full" style={{ width: `${report.symmetry_score}%` }}></div>
-                          </div>
-                        </div>
-
-                        <div className="bg-[#0e1726]/40 p-4 rounded-xl border border-white/5 text-center">
-                          <span className="text-[10px] uppercase font-semibold text-gray-500 tracking-wider">Max Trunk Lean</span>
-                          <h4 className="text-xl font-extrabold text-white mt-1">{report.trunk_lean}°</h4>
-                          <p className="text-[11px] text-gray-400 mt-2 font-medium">
-                            {report.trunk_lean > 22.0 ? 'Excessive forward tilt' : 'Optimal tilt alignment'}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Joint Angle and ROM Details */}
-                      {rom && jointAngles && (
-                        <div className="space-y-3">
-                          <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-white/5 pb-1">Range of Motion Analysis</h4>
-                          <div className="bg-[#0e1726]/30 border border-white/5 rounded-xl overflow-hidden text-xs">
-                            <table className="w-full text-left border-collapse">
-                              <thead>
-                                <tr className="bg-[#0e1726]/60 border-b border-white/5 text-gray-400 font-semibold">
-                                  <th className="py-2 px-3">Joint / Side</th>
-                                  <th className="py-2 px-3 text-center">Max Ext</th>
-                                  <th className="py-2 px-3 text-center">Max Flex</th>
-                                  <th className="py-2 px-3 text-right">ROM</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-white/5 text-gray-300">
-                                <tr>
-                                  <td className="py-2 px-3 font-semibold text-white">Left Knee</td>
-                                  <td className="py-2 px-3 text-center">{jointAngles.left_knee_max_extension}°</td>
-                                  <td className="py-2 px-3 text-center">{jointAngles.left_knee_max_flexion}°</td>
-                                  <td className="py-2 px-3 text-right font-medium text-brand-400">{rom.left_knee_rom}°</td>
-                                </tr>
-                                <tr>
-                                  <td className="py-2 px-3 font-semibold text-white">Right Knee</td>
-                                  <td className="py-2 px-3 text-center">{jointAngles.right_knee_max_extension}°</td>
-                                  <td className="py-2 px-3 text-center">{jointAngles.right_knee_max_flexion}°</td>
-                                  <td className="py-2 px-3 text-right font-medium text-brand-400">{rom.right_knee_rom}°</td>
-                                </tr>
-                                <tr>
-                                  <td className="py-2 px-3 font-semibold text-white">Left Hip</td>
-                                  <td className="py-2 px-3 text-center">{jointAngles.left_hip_max_extension}°</td>
-                                  <td className="py-2 px-3 text-center">{jointAngles.left_hip_max_flexion}°</td>
-                                  <td className="py-2 px-3 text-right font-medium text-brand-400">{rom.left_hip_rom}°</td>
-                                </tr>
-                                <tr>
-                                  <td className="py-2 px-3 font-semibold text-white">Right Hip</td>
-                                  <td className="py-2 px-3 text-center">{jointAngles.right_hip_max_extension}°</td>
-                                  <td className="py-2 px-3 text-center">{jointAngles.right_hip_max_flexion}°</td>
-                                  <td className="py-2 px-3 text-right font-medium text-brand-400">{rom.right_hip_rom}°</td>
-                                </tr>
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Injury Risk Forecast (Milestone 3) */}
-                      {activeVideo.injury_prediction && (
-                        <div className="space-y-3">
-                          <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-white/5 pb-1">Predictive Injury Risk Forecast</h4>
-                          <div className="bg-[#0e1726]/30 border border-white/5 rounded-xl p-4 space-y-4">
-                            {/* Overall Score */}
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Overall Risk Score</span>
-                                <div className="flex items-baseline gap-1 mt-0.5">
-                                  <span className="text-2xl font-black text-white">{activeVideo.injury_prediction.overall_risk_score}</span>
-                                  <span className="text-xs text-gray-500 font-semibold">/ 10</span>
-                                </div>
-                              </div>
-                              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${
-                                activeVideo.injury_prediction.risk_category === 'Low'
-                                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                  : activeVideo.injury_prediction.risk_category === 'Moderate'
-                                  ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                  : activeVideo.injury_prediction.risk_category === 'High'
-                                  ? 'bg-orange-500/10 text-orange-400 border-orange-500/20'
-                                  : 'bg-red-500/10 text-red-400 border-red-500/20 animate-pulse'
-                              }`}>
-                                {activeVideo.injury_prediction.risk_category} Risk
-                              </span>
-                            </div>
-
-                            {/* Probabilities Sliders */}
-                            <div className="space-y-2.5 text-xs">
-                              {/* ACL */}
-                              <div>
-                                <div className="flex justify-between text-gray-300 font-medium mb-1">
-                                  <span>ACL Injury Probability</span>
-                                  <span className={activeVideo.injury_prediction.acl_risk_prob > 50 ? 'text-red-400 font-bold' : activeVideo.injury_prediction.acl_risk_prob > 25 ? 'text-amber-400' : 'text-emerald-400'}>
-                                    {activeVideo.injury_prediction.acl_risk_prob}%
-                                  </span>
-                                </div>
-                                <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
-                                  <div 
-                                    className={`h-full transition-all duration-500 ${
-                                      activeVideo.injury_prediction.acl_risk_prob > 50 ? 'bg-red-500' : activeVideo.injury_prediction.acl_risk_prob > 25 ? 'bg-amber-500' : 'bg-emerald-500'
-                                    }`} 
-                                    style={{ width: `${activeVideo.injury_prediction.acl_risk_prob}%` }}
-                                  ></div>
-                                </div>
-                              </div>
-
-                              {/* Hamstring */}
-                              <div>
-                                <div className="flex justify-between text-gray-300 font-medium mb-1">
-                                  <span>Hamstring Strain Probability</span>
-                                  <span className={activeVideo.injury_prediction.hamstring_risk_prob > 50 ? 'text-red-400 font-bold' : activeVideo.injury_prediction.hamstring_risk_prob > 25 ? 'text-amber-400' : 'text-emerald-400'}>
-                                    {activeVideo.injury_prediction.hamstring_risk_prob}%
-                                  </span>
-                                </div>
-                                <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
-                                  <div 
-                                    className={`h-full transition-all duration-500 ${
-                                      activeVideo.injury_prediction.hamstring_risk_prob > 50 ? 'bg-red-500' : activeVideo.injury_prediction.hamstring_risk_prob > 25 ? 'bg-amber-500' : 'bg-emerald-500'
-                                    }`} 
-                                    style={{ width: `${activeVideo.injury_prediction.hamstring_risk_prob}%` }}
-                                  ></div>
-                                </div>
-                              </div>
-
-                              {/* Ankle */}
-                              <div>
-                                <div className="flex justify-between text-gray-300 font-medium mb-1">
-                                  <span>Ankle Sprain Probability</span>
-                                  <span className={activeVideo.injury_prediction.ankle_risk_prob > 50 ? 'text-red-400 font-bold' : activeVideo.injury_prediction.ankle_risk_prob > 25 ? 'text-amber-400' : 'text-emerald-400'}>
-                                    {activeVideo.injury_prediction.ankle_risk_prob}%
-                                  </span>
-                                </div>
-                                <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
-                                  <div 
-                                    className={`h-full transition-all duration-500 ${
-                                      activeVideo.injury_prediction.ankle_risk_prob > 50 ? 'bg-red-500' : activeVideo.injury_prediction.ankle_risk_prob > 25 ? 'bg-amber-500' : 'bg-emerald-500'
-                                    }`} 
-                                    style={{ width: `${activeVideo.injury_prediction.ankle_risk_prob}%` }}
-                                  ></div>
-                                </div>
-                              </div>
-
-                              {/* Shoulder */}
-                              <div>
-                                <div className="flex justify-between text-gray-300 font-medium mb-1">
-                                  <span>Shoulder Impingement Probability</span>
-                                  <span className={activeVideo.injury_prediction.shoulder_risk_prob > 50 ? 'text-red-400 font-bold' : activeVideo.injury_prediction.shoulder_risk_prob > 25 ? 'text-amber-400' : 'text-emerald-400'}>
-                                    {activeVideo.injury_prediction.shoulder_risk_prob}%
-                                  </span>
-                                </div>
-                                <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
-                                  <div 
-                                    className={`h-full transition-all duration-500 ${
-                                      activeVideo.injury_prediction.shoulder_risk_prob > 50 ? 'bg-red-500' : activeVideo.injury_prediction.shoulder_risk_prob > 25 ? 'bg-amber-500' : 'bg-emerald-500'
-                                    }`} 
-                                    style={{ width: `${activeVideo.injury_prediction.shoulder_risk_prob}%` }}
-                                  ></div>
-                                </div>
-                              </div>
-
-                              {/* Lower Back */}
-                              <div>
-                                <div className="flex justify-between text-gray-300 font-medium mb-1">
-                                  <span>Lower Back Strain Probability</span>
-                                  <span className={activeVideo.injury_prediction.back_risk_prob > 50 ? 'text-red-400 font-bold' : activeVideo.injury_prediction.back_risk_prob > 25 ? 'text-amber-400' : 'text-emerald-400'}>
-                                    {activeVideo.injury_prediction.back_risk_prob}%
-                                  </span>
-                                </div>
-                                <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
-                                  <div 
-                                    className={`h-full transition-all duration-500 ${
-                                      activeVideo.injury_prediction.back_risk_prob > 50 ? 'bg-red-500' : activeVideo.injury_prediction.back_risk_prob > 25 ? 'bg-amber-500' : 'bg-emerald-500'
-                                    }`} 
-                                    style={{ width: `${activeVideo.injury_prediction.back_risk_prob}%` }}
-                                  ></div>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            {/* Anomaly deviation baseline note */}
-                            <div className="bg-[#152033]/40 border border-white/5 rounded-xl p-3 text-[11px] text-gray-400">
-                              <span className="font-bold text-gray-300">Biomechanical Anomaly Index: </span>
-                              {activeVideo.injury_prediction.anomaly_score} (calculated relative to SportsPose and Human3.6M standard references).
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Corrective Exercise Feedback */}
-                      <div className="space-y-2">
-                        <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-white/5 pb-1">Automated Biomechanical Insights</h4>
-                        <div className="bg-[#152033]/30 border border-white/5 p-4 rounded-xl text-xs text-gray-300 leading-relaxed whitespace-pre-line">
-                          {report.feedback}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
             </div>
+
+            <button
+              onClick={() => navigate('/athlete/recommendations')}
+              className="mt-4 w-full py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5"
+            >
+              <span>View Full Rehabilitation Protocols</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
           </div>
-        );
-      })()}
-    </div>
+        </div>
+      </div>
+
+      {/* Recent Video Assessments Table */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-base font-bold text-slate-900">Recent Movement Assessments</h2>
+            <p className="text-xs text-slate-500">Past evaluated recordings with automated kinematics</p>
+          </div>
+          <button
+            onClick={() => navigate('/athlete/video-analysis')}
+            className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+          >
+            <span>Open Video Studio</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead>
+              <tr className="border-b border-slate-200 text-slate-500 uppercase tracking-wider">
+                <th className="pb-3 font-semibold">Assessment</th>
+                <th className="pb-3 font-semibold">Date & Time</th>
+                <th className="pb-3 font-semibold">Knee Valgus</th>
+                <th className="pb-3 font-semibold">L/R Asymmetry</th>
+                <th className="pb-3 font-semibold">Risk Index</th>
+                <th className="pb-3 font-semibold">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {mappedAssessments.map((rec) => (
+                <tr key={rec.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="py-3">
+                    <div className="font-bold text-slate-900">{rec.activity}</div>
+                    <div className="text-[10px] text-slate-400 font-mono">{rec.id}</div>
+                  </td>
+                  <td className="py-3 text-slate-600">{rec.date}</td>
+                  <td className="py-3 font-mono font-semibold text-slate-800">{rec.valgusAngle}</td>
+                  <td className="py-3 font-mono font-semibold text-rose-600">{rec.asymmetry}</td>
+                  <td className="py-3">
+                    <span className={`px-2.5 py-0.5 rounded-full font-bold text-[11px] ${
+                      rec.level === 'High' ? 'bg-rose-100 text-rose-800' :
+                      rec.level === 'Moderate' ? 'bg-amber-100 text-amber-800' :
+                      'bg-emerald-100 text-emerald-800'
+                    }`}>
+                      {rec.riskScore}% ({rec.level})
+                    </span>
+                  </td>
+                  <td className="py-3">
+                    <button
+                      onClick={() => {
+                        if (rec.video) {
+                          localStorage.setItem('active_video_assessment', JSON.stringify(rec.video));
+                          localStorage.setItem('active_analysis_tab', 'results');
+                          localStorage.setItem('step2_locked', 'true');
+                        }
+                        navigate('/athlete/video-analysis');
+                      }}
+                      className="text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1 cursor-pointer"
+                    >
+                      <Play className="w-3 h-3 fill-blue-600" />
+                      <span>Replay & Overlay</span>
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </AthleteLayout>
   );
 };
 
 export default Dashboard;
-

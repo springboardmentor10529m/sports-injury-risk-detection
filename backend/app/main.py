@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from .database import engine, Base
 from .config import settings
-from .routers import auth, athlete, video, injury
+from .routers import auth, athlete, video, injury, recommendations, notifications, reports, admin
 
 # Create database tables automatically (for sqlite/postgres development)
 Base.metadata.create_all(bind=engine)
@@ -34,6 +34,10 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(athlete.router, prefix="/api")
 app.include_router(video.router, prefix="/api")
 app.include_router(injury.router, prefix="/api")
+app.include_router(recommendations.router, prefix="/api")
+app.include_router(notifications.router, prefix="/api")
+app.include_router(reports.router, prefix="/api")
+app.include_router(admin.router, prefix="/api")
 
 @app.get("/")
 def root():
