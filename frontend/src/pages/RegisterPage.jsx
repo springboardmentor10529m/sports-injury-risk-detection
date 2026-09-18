@@ -21,7 +21,7 @@ export default function RegisterPage() {
     logout();
   }, []);
 
-  const handleSubmit = async (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
 
@@ -32,12 +32,12 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      await registerUser({
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
+      await registerUser(
+        name.trim(),
+        email.trim().toLowerCase(),
         password,
-        role,
-      });
+        role
+      );
       // Redirect to login after successful registration
       navigate("/login?registered=true");
     } catch (err) {

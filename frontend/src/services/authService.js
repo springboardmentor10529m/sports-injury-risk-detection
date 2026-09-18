@@ -6,13 +6,14 @@ const API_BASE_URL =
     ? "/api/v1"
     : "http://127.0.0.1:8000/api/v1");
 
-export const registerUser = async (name, email, password, role) => {
-  const response = await axios.post(`${API_BASE_URL}/auth/register`, {
-    name,
-    email,
-    password,
-    role,
-  });
+export const registerUser = async (nameOrObj, email, password, role) => {
+  let payload;
+  if (typeof nameOrObj === "object" && nameOrObj !== null) {
+    payload = nameOrObj;
+  } else {
+    payload = { name: nameOrObj, email, password, role };
+  }
+  const response = await axios.post(`${API_BASE_URL}/auth/register`, payload);
   return response.data;
 };
 
