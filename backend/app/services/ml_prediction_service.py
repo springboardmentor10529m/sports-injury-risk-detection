@@ -7,8 +7,20 @@ import sys
 import os
 from typing import Dict, Any, List, Optional
 
-# Ensure project root is on Python path to load ml_inference
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+# Robust path resolution to find ml_inference.py in local dev, Docker container (/app), or relative environments
+possible_roots = [
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..")),  # local dev (3 levels up)
+    "/app",                                                                      # Docker container default
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")),       # backend dir
+    os.getcwd(),                                                                 # current working directory
+]
+
+PROJECT_ROOT = possible_roots[0]
+for root_path in possible_roots:
+    if os.path.exists(os.path.join(root_path, "ml_inference.py")):
+        PROJECT_ROOT = root_path
+        break
+
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 

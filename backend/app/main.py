@@ -612,6 +612,87 @@ def upload_video(
     return db_video
 
 
+@app.post("/videos/upload-batch", response_model=List[schemas.VideoResponse])
+def upload_videos_batch(
+    background_tasks: BackgroundTasks,
+    files: List[UploadFile] = File(...),
+    activity: str = Form("Squatting"),
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not files or len(files) == 0:
+        raise HTTPException(status_code=400, detail="No video files uploaded.")
+    if len(files) > 5:
+        raise HTTPException(status_code=400, detail="Maximum 5 videos can be uploaded at once.")
+
+    athlete = db.query(models.Athlete).filter(models.Athlete.user_id == current_user.user_id).first()
+    if not athlete:
+        athlete = models.Athlete(
+            athlete_id=uuid.uuid4(),
+            user_id=current_user.user_id,
+            sport=activity or "General",
+            position="General",
+            age=22,
+            height=175.0,
+            weight=70.0,
+            training_load=10.0,
+            flexibility=75.0,
+            strength=75.0,
+            balance=75.0,
+            endurance=75.0,
+            coach_notes="Auto-created profile on video upload."
+        )
+        db.add(athlete)
+        db.commit()
+        db.refresh(athlete)
+
+    uploaded_videos = []
+
+    for file in files:
+        video_id = uuid.uuid4()
+        file_extension = os.path.splitext(file.filename)[1] or ".mp4"
+        raw_filename = f"{video_id}_raw{file_extension}"
+        processed_filename = f"{video_id}_processed{file_extension}"
+
+        raw_path = os.path.join("uploads", "raw", raw_filename)
+        processed_path = os.path.join("uploads", "processed", processed_filename)
+
+        with open(raw_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        db_video = models.Video(
+            video_id=video_id,
+            athlete_id=athlete.athlete_id,
+            activity=activity or athlete.sport,
+            video_url=f"uploads/processed/{processed_filename}",
+            processing_status="processing"
+        )
+        db.add(db_video)
+        
+        job = models.ProcessingJob(
+            video_id=video_id,
+            status="QUEUED",
+            progress=5.0,
+            current_step="UPLOADED"
+        )
+        db.add(job)
+
+        db.commit()
+        db.refresh(db_video)
+
+        background_tasks.add_task(
+            background_process_video,
+            video_id=video_id,
+            raw_path=raw_path,
+            processed_path=processed_path,
+            athlete_id=athlete.athlete_id
+        )
+
+        uploaded_videos.append(db_video)
+
+    return uploaded_videos
+
+
 @app.get("/videos/{video_id}/status")
 def get_video_status(
     video_id: str,
