@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../../api/client';
 import { AnalysisPipeline } from '../visualization/AnalysisPipeline';
 import { MetricPanel } from '../visualization/MetricPanel';
@@ -13,7 +13,8 @@ import { LoadingState } from '../ui/LoadingState';
 import { 
   ArrowLeft, Download, ShieldCheck, ShieldAlert, FileSpreadsheet, FileJson, 
   FileText, Video, AlertCircle, Activity, TrendingUp, AlertTriangle, 
-  CheckCircle2, Target, Zap, Clock, Sparkles, Filter, ChevronRight, Eye, Layers, Cpu, RotateCw
+  CheckCircle2, Target, Zap, Clock, Sparkles, Filter, ChevronRight, Eye, Layers, Cpu, RotateCw,
+  Play, Pause, StepBack, StepForward, RotateCcw, Repeat, Box, Compass
 } from 'lucide-react';
 
 export const AnalysisDashboard = ({ analysisId, video, onBack }) => {
@@ -34,6 +35,12 @@ export const AnalysisDashboard = ({ analysisId, video, onBack }) => {
   // 14. Viewport Mode Toggle: 'VIDEO' vs '3D SKELETON'
   const [viewMode, setViewMode] = useState('VIDEO'); // 'VIDEO' | '3D_SKELETON'
   const [selectedJoint, setSelectedJoint] = useState('left_knee');
+
+  // 15. 3D Reconstruction Interactive Playback Engine States
+  const [isPlaying3D, setIsPlaying3D] = useState(false);
+  const [playbackSpeed3D, setPlaybackSpeed3D] = useState(1.0);
+  const [isLooping3D, setIsLooping3D] = useState(true);
+  const [cameraPreset3D, setCameraPreset3D] = useState('perspective');
 
   useEffect(() => {
     if (analysisId && analysisId !== currentAnalysisId) {
@@ -111,21 +118,6 @@ export const AnalysisDashboard = ({ analysisId, video, onBack }) => {
     setCurrentTime(anomaly.timestamp);
   };
 
-  // Find active keypoint frame closest to currentTime
-  const currentKeypointFrame = keypointFrames.reduce((closest, frame) => {
-    if (!closest) return frame;
-    return Math.abs(frame.timestamp - currentTime) < Math.abs(closest.timestamp - currentTime)
-      ? frame
-      : closest;
-  }, null);
-
-  // Find active biomechanics frame closest to currentTime
-  const currentBiomechFrame = biomechFrames.reduce((closest, frame) => {
-    if (!closest) return frame;
-    return Math.abs(frame.timestamp - currentTime) < Math.abs(closest.timestamp - currentTime)
-      ? frame
-      : closest;
-  }, null);
 
   const handleDownload = (type) => {
     const token = localStorage.getItem('token');
@@ -218,6 +210,136 @@ export const AnalysisDashboard = ({ analysisId, video, onBack }) => {
   const confidencePct = Math.round((riskInfo.confidence || 0.95) * 100);
   const modelVersion = riskInfo.model_version || '2.0.0-weighted';
   const duration = completeReport?.video?.duration || video?.duration || 10.0;
+  const maxKeypointTime = useMemo(() => {
+    if (!keypointFrames || keypointFrames.length === 0) return 0;
+    return keypointFrames[keypointFrames.length - 1]?.timestamp || 0;
+  }, [keypointFrames]);
+  const effectiveDuration = Math.max(duration, maxKeypointTime, 0.1);
+
+  // Find active keypoint frame closest to currentTime
+  const currentKeypointFrame = useMemo(() => {
+    if (!keypointFrames || keypointFrames.length === 0) return null;
+    return keypointFrames.reduce((closest, frame) => {
+      if (!closest) return frame;
+      return Math.abs(frame.timestamp - currentTime) < Math.abs(closest.timestamp - currentTime)
+        ? frame
+        : closest;
+    }, null);
+  }, [keypointFrames, currentTime]);
+
+  // Find active biomechanics frame closest to currentTime
+  const currentBiomechFrame = useMemo(() => {
+    if (!biomechFrames || biomechFrames.length === 0) return null;
+    return biomechFrames.reduce((closest, frame) => {
+      if (!closest) return frame;
+      return Math.abs(frame.timestamp - currentTime) < Math.abs(closest.timestamp - currentTime)
+        ? frame
+        : closest;
+    }, null);
+  }, [biomechFrames, currentTime]);
+
+  // Active angle for selected joint from biomechanical telemetry
+  const activeSelectedAngle = useMemo(() => {
+    if (!currentBiomechFrame?.joint_angles) return null;
+    const angles = currentBiomechFrame.joint_angles;
+    return (
+      angles[selectedJoint + '_angle'] ??
+      angles[selectedJoint] ??
+      null
+    );
+  }, [currentBiomechFrame, selectedJoint]);
+
+  // 3D Master Playback Ticker: advances currentTime at 60 FPS in lockstep with biomechanics
+  useEffect(() => {
+    if (viewMode !== '3D_SKELETON' || !isPlaying3D) return;
+
+    let lastTime = performance.now();
+    let animId = null;
+
+    const tick = (now) => {
+      const dt = (now - lastTime) / 1000;
+      lastTime = now;
+
+      setCurrentTime((prev) => {
+        let next = prev + dt * playbackSpeed3D;
+        if (next >= effectiveDuration) {
+          if (isLooping3D) {
+            next = 0;
+          } else {
+            setIsPlaying3D(false);
+            return effectiveDuration;
+          }
+        }
+        return next;
+      });
+
+      animId = requestAnimationFrame(tick);
+    };
+
+    animId = requestAnimationFrame(tick);
+    return () => {
+      if (animId) cancelAnimationFrame(animId);
+    };
+  }, [viewMode, isPlaying3D, playbackSpeed3D, isLooping3D, effectiveDuration]);
+
+  // Mode switch handler synchronizing playback time
+  const handleSwitchViewMode = (mode) => {
+    setViewMode(mode);
+    if (mode === '3D_SKELETON') {
+      setIsPlaying3D(true);
+    } else {
+      setIsPlaying3D(false);
+      setSeekTime(currentTime);
+    }
+  };
+
+  const togglePlayPause3D = () => {
+    if (!isPlaying3D && currentTime >= effectiveDuration - 0.05) {
+      setCurrentTime(0);
+    }
+    setIsPlaying3D((prev) => !prev);
+  };
+
+  const handleStepFrame3D = (direction) => {
+    setIsPlaying3D(false);
+    if (!keypointFrames || keypointFrames.length === 0) {
+      setCurrentTime((prev) => Math.max(0, Math.min(effectiveDuration, prev + direction * 0.04)));
+      return;
+    }
+    const currentIdx = keypointFrames.findIndex((f) => f.timestamp >= currentTime - 0.01);
+    const validIdx = currentIdx === -1 ? (direction > 0 ? 0 : keypointFrames.length - 1) : currentIdx;
+    const targetIdx = Math.max(0, Math.min(keypointFrames.length - 1, validIdx + direction));
+    setCurrentTime(keypointFrames[targetIdx].timestamp);
+  };
+
+  const handleScrub3D = (e) => {
+    const newTime = parseFloat(e.target.value);
+    setCurrentTime(newTime);
+    setSeekTime(newTime);
+  };
+
+  // Keyboard shortcut listener (Space = Play/Pause, ArrowLeft/Right = Step Frame)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) {
+        return;
+      }
+      if (viewMode === '3D_SKELETON') {
+        if (e.code === 'Space') {
+          e.preventDefault();
+          togglePlayPause3D();
+        } else if (e.code === 'ArrowLeft') {
+          e.preventDefault();
+          handleStepFrame3D(-1);
+        } else if (e.code === 'ArrowRight') {
+          e.preventDefault();
+          handleStepFrame3D(1);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [viewMode, isPlaying3D, keypointFrames, currentTime, effectiveDuration]);
 
   const filteredRecs = recItems.filter((r) => {
     if (recFilter === 'ALL') return true;
@@ -332,7 +454,7 @@ export const AnalysisDashboard = ({ analysisId, video, onBack }) => {
           {/* VIEW MODE TOGGLE BUTTONS */}
           <div className="flex items-center p-1 bg-slate-950 rounded-xl border border-slate-800 font-mono text-xs">
             <button
-              onClick={() => setViewMode('VIDEO')}
+              onClick={() => handleSwitchViewMode('VIDEO')}
               className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
                 viewMode === 'VIDEO'
                   ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20'
@@ -344,7 +466,7 @@ export const AnalysisDashboard = ({ analysisId, video, onBack }) => {
             </button>
 
             <button
-              onClick={() => setViewMode('3D_SKELETON')}
+              onClick={() => handleSwitchViewMode('3D_SKELETON')}
               className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
                 viewMode === '3D_SKELETON'
                   ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20'
@@ -367,19 +489,177 @@ export const AnalysisDashboard = ({ analysisId, video, onBack }) => {
               seekToTime={seekTime}
             />
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
+              {/* 3D Viewport with Camera Angle Selector built in */}
               <AthleteSkeleton3D
-                mode="live"
+                mode={keypointFrames && keypointFrames.length > 0 ? 'live' : 'demo'}
                 liveKeypoints={currentKeypointFrame?.smoothed_keypoints || currentKeypointFrame?.keypoints}
                 selectedJoint={selectedJoint}
                 onSelectJoint={setSelectedJoint}
                 className="w-full h-[520px]"
                 showHudLabels={false}
+                cameraPreset={cameraPreset3D}
+                onCameraPresetChange={setCameraPreset3D}
               />
+
+              {/* DEDICATED BIOMECHANICAL 3D PLAYBACK CONTROLLER BAR */}
+              <div className="p-4 rounded-2xl bg-slate-950/90 border border-slate-800/90 shadow-2xl space-y-3">
+                {/* 1. Scrubber Slider with Anomaly Markers */}
+                <div className="relative flex items-center group">
+                  <input
+                    type="range"
+                    min="0"
+                    max={effectiveDuration || 10}
+                    step="0.01"
+                    value={currentTime}
+                    onChange={handleScrub3D}
+                    className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400 hover:bg-slate-700 transition-colors"
+                  />
+                  {/* Visual Anomaly Tick Marks */}
+                  {anomalies.map((anom, idx) => {
+                    if (typeof anom.timestamp !== 'number') return null;
+                    const leftPct = Math.min(100, Math.max(0, (anom.timestamp / effectiveDuration) * 100));
+                    const isCrit = (anom.severity || '').toUpperCase() === 'CRITICAL';
+                    return (
+                      <button
+                        key={`anom-tick-${idx}`}
+                        onClick={() => {
+                          setCurrentTime(anom.timestamp);
+                          setSelectedAnomaly(anom);
+                        }}
+                        title={`Biomech Fault @ ${anom.timestamp.toFixed(2)}s: ${anom.fault_type || 'Anomaly'}`}
+                        style={{ left: `${leftPct}%` }}
+                        className={`absolute w-2 h-4 -top-1 rounded-sm -translate-x-1/2 cursor-pointer transition-transform hover:scale-150 z-10 ${
+                          isCrit ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]' : 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]'
+                        }`}
+                      />
+                    );
+                  })}
+                </div>
+
+                {/* 2. Controls Toolbar */}
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                  {/* Left: Play/Pause, Steppers, Reset, Time Readout */}
+                  <div className="flex items-center gap-2">
+                    {/* Big Glowing Play/Pause */}
+                    <button
+                      onClick={togglePlayPause3D}
+                      title={isPlaying3D ? "Pause (Space)" : "Play (Space)"}
+                      className={`flex items-center justify-center w-10 h-10 rounded-xl font-bold transition-all cursor-pointer ${
+                        isPlaying3D
+                          ? 'bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/30 hover:bg-cyan-400'
+                          : 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/30 hover:bg-emerald-400'
+                      }`}
+                    >
+                      {isPlaying3D ? (
+                        <Pause className="w-5 h-5 fill-current" />
+                      ) : (
+                        <Play className="w-5 h-5 fill-current ml-0.5" />
+                      )}
+                    </button>
+
+                    {/* Step -1 Frame */}
+                    <button
+                      onClick={() => handleStepFrame3D(-1)}
+                      title="Step Backward 1 Frame (Left Arrow)"
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-cyan-300 border border-slate-800 text-xs font-mono font-bold transition-colors cursor-pointer"
+                    >
+                      <StepBack className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">-1 Frame</span>
+                    </button>
+
+                    {/* Step +1 Frame */}
+                    <button
+                      onClick={() => handleStepFrame3D(1)}
+                      title="Step Forward 1 Frame (Right Arrow)"
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-cyan-300 border border-slate-800 text-xs font-mono font-bold transition-colors cursor-pointer"
+                    >
+                      <span className="hidden sm:inline">+1 Frame</span>
+                      <StepForward className="w-3.5 h-3.5" />
+                    </button>
+
+                    {/* Reset to Start */}
+                    <button
+                      onClick={() => {
+                        setCurrentTime(0);
+                        setSeekTime(0);
+                      }}
+                      title="Restart from Start"
+                      className="p-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition-colors cursor-pointer"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                    </button>
+
+                    {/* Time & Frame Readout */}
+                    <div className="flex items-center gap-1.5 pl-2 font-mono text-xs text-slate-300">
+                      <Clock className="w-3.5 h-3.5 text-cyan-400" />
+                      <span className="font-bold text-white">
+                        {currentTime.toFixed(2)}s
+                      </span>
+                      <span className="text-slate-500">/</span>
+                      <span className="text-slate-400">
+                        {effectiveDuration.toFixed(2)}s
+                      </span>
+                      <span className="text-slate-600 hidden sm:inline">•</span>
+                      <span className="text-cyan-400 font-bold hidden sm:inline">
+                        Frame #{currentKeypointFrame?.frame_number ?? (Math.round(currentTime * 25))}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Right: Speed Toggles, Loop Toggle, Active Joint Angle */}
+                  <div className="flex items-center gap-2">
+                    {/* Live Joint Angle telemetry badge */}
+                    {activeSelectedAngle !== null && (
+                      <div className="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-900/90 border border-slate-800 text-xs font-mono">
+                        <span className="text-slate-400 capitalize">{selectedJoint.replace(/_/g, ' ')}:</span>
+                        <span className="font-bold text-cyan-400">{activeSelectedAngle.toFixed(1)}°</span>
+                      </div>
+                    )}
+
+                    {/* Playback Speed Selectors */}
+                    <div className="flex items-center bg-slate-900 rounded-xl p-0.5 border border-slate-800 text-[11px] font-mono font-bold">
+                      {[0.25, 0.5, 1.0, 1.5].map((spd) => (
+                        <button
+                          key={`spd-${spd}`}
+                          onClick={() => setPlaybackSpeed3D(spd)}
+                          className={`px-2 py-1 rounded-lg transition-all cursor-pointer ${
+                            playbackSpeed3D === spd
+                              ? 'bg-cyan-500 text-slate-950 font-black shadow-sm'
+                              : 'text-slate-400 hover:text-white'
+                          }`}
+                        >
+                          {spd}x
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Loop Toggle */}
+                    <button
+                      onClick={() => setIsLooping3D((prev) => !prev)}
+                      title="Toggle Looping Playback"
+                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-xs font-mono font-bold transition-all cursor-pointer ${
+                        isLooping3D
+                          ? 'bg-cyan-950/80 text-cyan-400 border-cyan-800/80'
+                          : 'bg-slate-900 text-slate-500 border-slate-800'
+                      }`}
+                    >
+                      <Repeat className="w-3.5 h-3.5" />
+                      <span className="hidden md:inline">{isLooping3D ? 'LOOP ON' : 'LOOP OFF'}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Informational Sub-banner */}
               <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 px-2">
-                <span>Estimated 3D Pose reconstructed from 17 COCO temporal tracking coordinates</span>
-                <span className="text-cyan-400 font-bold">
-                  Frame #{currentKeypointFrame?.frame_number || 0} ({currentTime.toFixed(2)}s)
+                <span>
+                  {keypointFrames && keypointFrames.length > 0
+                    ? `Reconstructed 3D kinematic pose from ${keypointFrames.length} synchronized temporal frames`
+                    : 'Synthetic Biomechanical Reference Model (Click Re-analyze for fresh AI video tracking)'}
+                </span>
+                <span className="text-slate-400 hidden sm:inline">
+                  Controls: <kbd className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-cyan-400">Space</kbd> Play/Pause • <kbd className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-cyan-400">← / →</kbd> Step Frame
                 </span>
               </div>
             </div>
@@ -398,7 +678,7 @@ export const AnalysisDashboard = ({ analysisId, video, onBack }) => {
       {/* 6. SYNCHRONIZED MOVEMENT TIMELINE WITH EVENT MARKERS */}
       <MovementTimeline
         currentTime={currentTime}
-        duration={duration}
+        duration={effectiveDuration}
         anomalies={anomalies}
         selectedAnomaly={selectedAnomaly}
         onSelectAnomaly={handleSelectAnomaly}

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Navbar } from './components/Navbar';
 import { LandingPage } from './components/LandingPage';
 import { AthleteDashboard } from './components/AthleteDashboard';
+import { CoachDashboard } from './components/CoachDashboard';
 import { VideoUploadZone } from './components/VideoUploadZone';
 import { MyVideosPage } from './components/MyVideosPage';
 import { AuthModal } from './components/AuthModal';
@@ -20,6 +21,8 @@ function MainApp() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
+  const isCoach = user?.role === 'COACH';
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#030712] flex items-center justify-center">
@@ -31,7 +34,7 @@ function MainApp() {
     );
   }
 
-  const activeKey = !user ? 'landing' : selectedAnalysis ? `analysis-${selectedAnalysis.analysisId}` : activeTab;
+  const activeKey = !user ? 'landing' : selectedAnalysis ? `analysis-${selectedAnalysis.analysisId}` : `${activeTab}-${user?.role || 'user'}`;
 
   return (
     <div className="min-h-screen flex flex-col bg-[#030712] lab-ambient-bg text-slate-100 selection:bg-cyan-500 selection:text-white">
@@ -69,7 +72,20 @@ function MainApp() {
                 onBack={() => setSelectedAnalysis(null)}
               />
             ) : activeTab === 'dashboard' ? (
-              <AthleteDashboard />
+              isCoach ? (
+                /* Tactical Coach Command Center */
+                <CoachDashboard 
+                  onOpenAnalysis={(analysis) => {
+                    setSelectedAnalysis({
+                      analysisId: analysis.analysis_id,
+                      video: analysis.video
+                    });
+                  }}
+                />
+              ) : (
+                /* Individual Athlete Dashboard */
+                <AthleteDashboard />
+              )
             ) : activeTab === 'analyses' ? (
               <AnalysesOverviewDashboard
                 onOpenAnalysis={(analysis) => {

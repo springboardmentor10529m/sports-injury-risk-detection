@@ -9,34 +9,40 @@
 
 ## 🏛️ System Overview
 
-AthleteGuard uses a modular, high-throughput microservices-ready architecture:
+AthleteGuard is engineered using a modular, high-throughput microservices-ready architecture designed for low-latency computer vision inference, interactive 3D WebGL rendering, and multi-factor clinical risk scoring:
 
 ```
-+-------------------------------------------------------------------+
-|                        Client Web Browser                         |
-|    (React 19 + Vite SPA, Tailwind CSS, Lucide Icons, Canvas)      |
-+-------------------------------------------------------------------+
-                                 |  HTTPS / REST API
-                                 v
-+-------------------------------------------------------------------+
-|                       Nginx Reverse Proxy                         |
-|             (Static Asset Serving + API Proxy Pass)               |
-+-------------------------------------------------------------------+
-                                 |  Proxy Pass (Port 8000)
-                                 v
-+-------------------------------------------------------------------+
-|                      FastAPI Application Server                   |
-|  - Auth Router (JWT, RBAC: Athlete, Coach, Physio, Scientist, Admin)|
-|  - Athlete Router (Profile & Physical Assessment Management)      |
-|  - Video Router (Upload, Security Checks, Metadata Extraction)    |
-|  - Analysis Router (Risk, Anomalies, Biomechanics, Reports)       |
-+-------------------------------------------------------------------+
-           |                     |                      |
-           v                     v                      v
-+--------------------+ +--------------------+ +--------------------+
-| SQLite / Postgres  | |     Pose Cache     | |   Video Storage    |
-| (Relational Data)  | |  (Zero Re-infer)   | |  (Local / S3 Stub) |
-+--------------------+ +--------------------+ +--------------------+
++---------------------------------------------------------------------------------------------+
+|                                    Client Web Browser                                       |
+|  - React 19 + Vite SPA with Tailwind CSS & Lucide Icons                                    |
+|  - 3D Kinematic Reconstruction Studio (Three.js / React Three Fiber / OrbitControls)        |
+|  - Real-Time Scrubbing Timeline & Anomaly Marker Navigation                                |
++---------------------------------------------------------------------------------------------+
+                                              |  HTTPS / REST API
+                                              v
++---------------------------------------------------------------------------------------------+
+|                                    Nginx Reverse Proxy                                      |
+|                  (Static Asset Serving + API Proxy Pass + TLS Termination)                  |
++---------------------------------------------------------------------------------------------+
+                                              |  Proxy Pass (Port 8000)
+                                              v
++---------------------------------------------------------------------------------------------+
+|                                  FastAPI Application Server                                 |
+|  - Auth Router (Flexible ID Resolver: Email, Username, ID; Google OAuth; JWT RBAC)          |
+|  - Athlete Router (Profile, Physical Assessment, Clinical Injury History Registry)          |
+|  - Video Router (Upload, MIME Validation, Metadata Extraction, UUID Storage)                |
+|  - Analysis Router (Async Video Pose Extraction, Anomaly Detection, Explainability)         |
+|  - Model & Dataset Routers (ML Governance, Model Cards, Dataset Metrics)                    |
++---------------------------------------------------------------------------------------------+
+               |                              |                              |
+               v                              v                              v
++------------------------------+ +------------------------------+ +---------------------------+
+| PostgreSQL / SQLite          | | MongoDB Keypoint Cache       | | Video & Artifact Storage  |
+| - Users & Roles              | | - Raw 2D/3D COCO Poses       | | - Source Uploads (UUID)   |
+| - Athletes & Assessments     | | - Interpolated Kinematics    | | - Rendered Pose Overlays  |
+| - Injury History Registry    | | - Joint Angle Sequences      | | - PDF Clinical Reports    |
+| - Analysis Jobs & Results    | | - AI Processing Audit Logs   | | - Excel Analytical Sheets |
++------------------------------+ +------------------------------+ +---------------------------+
 ```
 
 ---
@@ -47,133 +53,224 @@ AthleteGuard uses a modular, high-throughput microservices-ready architecture:
 sequenceDiagram
     autonumber
     actor Athlete as Athlete / Coach
-    participant FE as React 19 Frontend
+    participant FE as React 19 + Three.js UI
     participant API as FastAPI Router
     participant Worker as BackgroundTask (pose_analysis_service)
     participant Pose as RTMPose-M (COCO 17-Keypoint)
-    participant Feat as Feature Engineering (20 2D Metrics)
-    participant Temp as Temporal Aggregator
+    participant Feat as Feature Engineering (20 Metrics)
+    participant ML as Dual Intelligence Risk Engine
     participant Anom as Isolation Forest (Anomaly Detector)
-    participant Risk as Weighted Risk Engine (35/20/20/15/10)
     participant Rec as Recommendation Engine
-    participant SQL as Database (SQLite / PostgreSQL)
+    participant DB as Relational & Mongo Databases
 
     Athlete->>FE: Upload Video & Start Analysis
     FE->>API: POST /api/analysis/videos/{video_id}/analyse
-    API->>SQL: Queue AnalysisJob
+    API->>DB: Queue AnalysisJob
     API-->>FE: Return Job ID (Queued)
     API->>Worker: Dispatch run_pose_analysis_job
     
     loop Frame Extraction (15 FPS Sampling)
         Worker->>Pose: Detect 17 Keypoints (Cached in memory)
         Worker->>Feat: Extract 20 standardized 2D Biomechanical Features
-        Worker->>SQL: Persist PoseFrame & BiomechanicsFrame records
+        Worker->>DB: Persist PoseFrame & BiomechanicsFrame records
     end
 
     Worker->>Worker: Render Annotated Skeleton Video from Cached Poses
-    Worker->>Temp: Aggregate Sequence (mean, std, percentiles, trend, % high risk)
+    Worker->>Worker: Compute Temporal Aggregations (mean, std, percentiles, trend slopes)
     Worker->>Anom: Fit Isolation Forest & Detect Movement Anomalies
-    Worker->>Risk: Compute Weighted Risk (Biomechanical 35%, History 20%, Asymmetry 20%, Load 15%, Fatigue 10%)
+    Worker->>ML: Evaluate Dual Intelligence (Supervised Platt ML + 5-Factor Clinical Formula)
     Worker->>Rec: Generate Prioritized Conditioning & Prevention Recommendations
-    Worker->>SQL: Persist AnalysisResult, InjuryPrediction, RiskFactor, MovementAnomaly, Recommendation
-    Worker->>SQL: Mark Job COMPLETE (100%)
+    Worker->>DB: Persist AnalysisResult, Predictions, Risk Factors, Anomalies, Recommendations
+    Worker->>DB: Mark Job COMPLETE (100%)
     
     FE->>API: GET /api/analysis/{analysis_id}/complete-report
-    FE-->>Athlete: Interactive Video Player, Anomaly Timeline, Risk Gauge & Recommendations
+    API-->>FE: Return Complete Report Payload
+    FE-->>Athlete: 3D Playback Studio, 60 FPS Scrubber, Anomaly Pins, Dual Risk Gauges
 ```
 
 ---
 
-## 📐 20 Reliable 2D Biomechanical Features (Phase 1)
+## 🏃 Interactive 3D Kinematic Reconstruction Studio
 
-All calculations operate strictly in 2D image coordinates and plane projections:
+The 3D Biomechanical Studio (`AthleteSkeleton3D.jsx` and `AnalysisDashboard.jsx`) delivers real-time spatial movement analysis directly inside the web browser using WebGL:
 
-1. **Knee Valgus Angle**: 2D frontal plane medial collapse angle deviation (degrees).
-2. **Left Knee Angle**: 3-point interior angle (hip-knee-ankle, degrees).
-3. **Right Knee Angle**: 3-point interior angle (hip-knee-ankle, degrees).
-4. **Left Hip Angle**: 3-point interior angle (shoulder-hip-knee, degrees).
-5. **Right Hip Angle**: 3-point interior angle (shoulder-hip-knee, degrees).
-6. **Left Ankle Angle**: 3-point ankle dorsiflexion angle (knee-ankle-foot, degrees).
-7. **Right Ankle Angle**: 3-point ankle dorsiflexion angle (knee-ankle-foot, degrees).
-8. **Trunk Lean**: Angle of torso segment relative to true vertical axis (degrees).
-9. **Hip Stability**: Pelvic tilt angle relative to horizontal axis (degrees).
-10. **Bilateral Knee Asymmetry**: Absolute difference between left and right knee flexion (degrees).
-11. **Bilateral Hip Asymmetry**: Absolute difference between left and right hip flexion (degrees).
-12. **Bilateral Ankle Asymmetry**: Absolute difference between left and right ankle angles (degrees).
-13. **Shoulder Asymmetry**: Alignment tilt of shoulder line relative to horizontal (degrees).
-14. **Range of Motion**: Dynamic envelope of joint angular displacement over sequence (degrees).
-15. **Joint-Angle Velocity**: Angular rate of change frame-to-frame (deg/sec).
-16. **Joint-Angle Acceleration**: Angular acceleration frame-to-frame (deg/sec²).
-17. **Movement Variability**: Windowed standard deviation of lower-limb kinematics (degrees_std).
-18. **Postural Stability**: Center-of-mass sway and trunk oscillation stability score (0–100).
-19. **Landing/Deceleration Indicator**: High-speed flexion deceleration spike indicator (binary/index).
-20. **Keypoint Confidence & Movement Quality**: Mean detector confidence and combined composite score (0–100).
+```
++------------------------------------------------------------------------------------+
+|                         3D KINEMATICS PLAYBACK PIPELINE                            |
++------------------------------------------------------------------------------------+
+| Raw 2D Keypoints [(x, y, conf)] from RTMPose-M                                     |
+|                                     │                                              |
+|                                     ▼                                              |
+| 1. Dynamic Coordinate Normalization (normalizeKeypoints)                           |
+|    • Bounds Bounding Box: [minX, maxX], [minY, maxY]                               |
+|    • Scale to standard physiological height (1.62m anatomical reference)            |
+|    • Centers pelvic midpoint at origin (0, 0, 0)                                   |
+|                                     │                                              |
+|                                     ▼                                              |
+| 2. Anatomical Volumetric Depth Estimation                                          |
+|    • Z-axis synthetic projection based on foreshortening & limb constraint vectors  |
+|    • Bilateral symmetry alignment (shoulder and hip coronal plane priors)          |
+|                                     │                                              |
+|                                     ▼                                              |
+| 3. High-Rate 60 FPS Hardware Playback Loop                                         |
+|    • requestAnimationFrame continuous animation engine                             |
+|    • Microsecond-precision frame interpolation between discrete video frames       |
+|    • Dynamic playback speed controls (0.25x, 0.5x, 1.0x, 1.5x)                     |
+|                                     │                                              |
+|                                     ▼                                              |
+| 4. Interactive Scrubber & Anomaly Navigation                                       |
+|    • Full-sequence timeline scrubber with drag & click support                    |
+|    • Color-coded anomaly pins indicating severity (Low, Medium, High, Critical)    |
+|    • Single-frame stepping buttons (◀ -1 Frame / +1 Frame ▶)                       |
+|                                     │                                              |
+|                                     ▼                                              |
+| 5. Multi-Angle Spatial Camera Presets                                              |
+|    • 3D Orbit: Free 360° rotational camera with damping controls                   |
+|    • Frontal (Coronal): Zeroed Z-axis view for knee valgus & pelvic tilt           |
+|    • Lateral (Sagittal): 90° Y-axis profile view for trunk lean & knee flexion     |
++------------------------------------------------------------------------------------+
+```
+
+### Key Anatomical Bones & Connectivity
+The 3D renderer connects 17 COCO landmarks into 12 physiological kinematic segments:
+- **Spine & Torso**: Mid-shoulder to mid-hip spinal column, shoulder girdle, pelvic girdle.
+- **Lower Extremities**: Left/Right Femur (Hip $\to$ Knee), Left/Right Tibia/Fibula (Knee $\to$ Ankle).
+- **Upper Extremities**: Left/Right Humerus (Shoulder $\to$ Elbow), Left/Right Forearm (Elbow $\to$ Wrist).
+- **Ground Force Plate**: Reactive grid positioned at $y = -0.92$, simulating biomechanical force plates.
 
 ---
 
-## 📊 Temporal Feature Aggregation (Phase 2)
+## 🧠 Dual Intelligence Risk Engine
 
-Features are aggregated across the full video sequence:
-- **Central Tendency**: Mean, Median
-- **Dispersion**: Standard Deviation, Minimum, Maximum, Percentiles (P5, P25, P75, P95)
-- **Kinematic Trends**: Linear regression slope across temporal timeline
-- **Variability**: Coefficient of variation (CV)
-- **Threshold Excursions**: Percentage of frames exceeding clinical risk thresholds (e.g. knee valgus > 12°, trunk lean > 10°, knee asymmetry > 15°)
+AthleteGuard combines data-driven machine learning with established clinical sports medicine paradigms:
 
----
+```
+                                  +---------------------------------------+
+                                  |   Video Keypoint Sequence Features    |
+                                  +---------------------------------------+
+                                                      |
+                         +----------------------------+----------------------------+
+                         |                                                         |
+                         v                                                         v
+          +-------------------------------+                         +-------------------------------+
+          |   SUPERVISED MACHINE LEARNING |                         |  5-FACTOR CLINICAL SCREENING  |
+          | - Gradient Boosting / XGBoost |                         | - Biomechanical Deviations 35%|
+          | - 20 Temporal Feature Vectors |                         | - Prior Injury Registry 20%   |
+          | - Platt Probability Calibrator|                         | - Bilateral Asymmetry 20%     |
+          |   (CalibratedClassifierCV)    |                         | - ACWR Training Load 15%      |
+          +-------------------------------+                         | - Temporal Fatigue Drift 10%  |
+                         |                                          +-------------------------------+
+                         | P(Injury) ∈ [0.0, 1.0]                                  |
+                         |                                                         | Risk Score ∈ [0, 100]
+                         +----------------------------+----------------------------+
+                                                      |
+                                                      v
+                                  +---------------------------------------+
+                                  |     HYBRID COMPOSITE RISK SYNTHESIS   |
+                                  | - Categorization: LOW, MOD, HIGH, CRIT|
+                                  | - Explainability & Risk Attribution   |
+                                  | - Targeted Corrective Recommendations |
+                                  +---------------------------------------+
+```
 
-## 🚨 Movement Anomaly Detection (Phase 3)
+### 1. Supervised Machine Learning Model
+- **Algorithm**: Gradient Boosting Classifier / XGBoost.
+- **Calibration**: Platt Scaling via `CalibratedClassifierCV(method='sigmoid')` ensuring output probabilities reflect true empirical injury incidence rates.
+- **Features**: Aggregated statistical metrics (mean, standard deviation, 95th percentiles, linear regression slope trends) computed across 20 biomechanical kinematic channels.
 
-Implemented with an unsupervised **Isolation Forest** paired with statistical z-score and biomechanical threshold attribution:
-- Detects outlier frames across sequence
-- Outputs structured events: `{frame, timestamp, type, score, severity, body_region, explanation}`
-- Categorized as: `knee_valgus`, `excessive_trunk_lean`, `bilateral_asymmetry`, `abnormal_hip_movement`, `abnormal_ankle_movement`, `excessive_movement_variability`, `low_movement_confidence`
+### 2. Clinical 5-Factor Risk Weighting Formula
+The deterministic clinical screening score aggregates 5 foundational sports science pillars:
 
----
+$$\text{Risk Score} = 0.35 \times B + 0.20 \times H + 0.20 \times A + 0.15 \times L + 0.10 \times F$$
 
-## ⚖️ Weighted Risk Scoring Engine (Phase 5)
-
-Replaces simplistic heuristics with an explainable multi-component formula:
-
-| Component | Weight | Key Drivers |
+| Factor | Weight | Formulation & Clinical Rationale |
 |---|---|---|
-| **Biomechanical Deviations** | **35%** | Knee valgus excursions, excessive trunk lean, pelvic drop |
-| **Historical Injury Factors** | **20%** | Prior injury counts, severity (Severe/Moderate/Mild), unresolved recovery |
-| **Movement Asymmetry** | **20%** | Bilateral knee, hip, and ankle discrepancies |
-| **Training Load Indicators** | **15%** | Athlete training load exposure & repetition intensity |
-| **Fatigue Indicators** | **10%** | Temporal trend slopes (worsening asymmetry/valgus over time) |
+| **$B$: Biomechanical Deviations** | **35%** | Percentage of frames exceeding dynamic valgus ($>12^\circ$), trunk tilt ($>10^\circ$), and abnormal hip flexion during landing phases. |
+| **$H$: Prior Injury History** | **20%** | Derived from the **Clinical Injury History Registry**: scored by anatomical recurrence, severity (Severe $=3$, Moderate $=2$, Mild $=1$), and recovery status. |
+| **$A$: Bilateral Asymmetry** | **20%** | Absolute differences between dominant and non-dominant limbs across knee flexion, hip flexion, and ankle dorsiflexion ($|L - R|$). Discrepancies $>15\%$ elevate score. |
+| **$L$: Training Load (ACWR)** | **15%** | Acute:Chronic Workload Ratio ($ACWR = \text{Acute 7d Load} / \text{Chronic 28d Load}$). $ACWR \in [0.8, 1.3]$ is safe; $ACWR > 1.5$ induces exponential risk. |
+| **$F$: Fatigue Drift** | **10%** | Kinematic deterioration slope across the duration of the movement sequence. Indicates loss of neuromuscular motor control. |
 
-**Risk Levels**:
-- `0 – 34`: **LOW**
-- `35 – 59`: **MODERATE**
-- `60 – 79`: **HIGH**
-- `80 – 100`: **CRITICAL**
-
----
-
-## 🎯 Personalized Recommendations (Phase 7)
-
-Generates targeted, actionable drills categorized into:
-- **Strengthening**: Hip abductor band walks, Nordic hamstring curls, single-leg RDLs
-- **Mobility**: Thoracic spine mobilizations, ankle dorsiflexion knee-to-wall drills
-- **Exercise**: Controlled drop landings, multi-directional stability drills
-- **Recovery**: Active recovery protocols, contrast baths
-- **Training Modification**: De-loading maximal impact plyometrics when asymmetry or valgus is high
-
-Every recommendation includes: `reason`, `priority`, `target_region`, `target_biomechanical_problem`, `exercise`, `suggested_frequency`, `suggested_sets_reps`, `expected_objective`, and the standard screening disclaimer.
+**Categorical Risk Thresholds**:
+- `0 – 34`: **LOW RISK** (Safe athletic movement mechanics)
+- `35 – 59`: **MODERATE RISK** (Sub-optimal mechanics; targeted conditioning advised)
+- `60 – 79`: **HIGH RISK** (Elevated injury vulnerability; training modification recommended)
+- `80 – 100`: **CRITICAL RISK** (Severe biomechanical breakdown; immediate clinical review recommended)
 
 ---
 
-## 📑 Report Generation (Phase 12)
+## 🏥 Clinical Injury History Registry & Workload Architecture
 
-- **PDF Reports**: Generated using ReportLab with 9 standardized clinical sections (Athlete Profile, Analysis Information, Overall Risk, Injury Risk Breakdown, Biomechanical Summary, Movement Anomalies, Risk Factors, Recommendations, Regulatory Disclaimer).
-- **Excel Reports**: Multi-sheet analytical workbooks generated via OpenPyXL (Summary, Frame Data, Biomechanics, Injury Risk, Anomalies, Recommendations).
+To capture longitudinal health context, AthleteGuard maintains a dedicated clinical history subsystem:
+
+### Data Model & Endpoints
+- **Endpoints**: `GET /api/athletes/injuries` & `POST /api/athletes/injuries`
+- **Schema**:
+  ```json
+  {
+    "athlete_id": 1,
+    "injury_date": "2025-11-15",
+    "injury_type": "ACL Sprain (Grade II)",
+    "body_region": "Left Knee",
+    "severity": "Moderate",
+    "recovery_status": "Recovered",
+    "notes": "Cleared for functional movement screening with brace."
+  }
+  ```
+- **Dynamic Weight Recalibration**: When screening an athlete with a previous injury in the target body region, the engine automatically adjusts vulnerability baselines and flags historical recurrence risks.
 
 ---
 
-## 🔐 Security & RBAC (Phases 14 & 15)
+## 📐 20 Reliable 2D Biomechanical Features
 
-- JWT authentication with enforced `JWT_SECRET` in production.
-- Reusable RBAC dependency `require_role("ATHLETE", "COACH", "PHYSIOTHERAPIST", "SPORTS_SCIENTIST", "ADMIN")`.
-- Video upload validation: MIME type check, 100MB file size limit, 300s maximum duration, UUID disk naming preventing path traversal.
-- Strict ownership verification on all analysis resources and reports.
+All calculations operate in calibrated coordinate planes with frame-by-frame temporal resolution:
+
+1. **Knee Valgus Angle**: Frontal plane medial knee collapse deviation ($^\circ$).
+2. **Left Knee Angle**: 3-point interior angle (hip-knee-ankle, $^\circ$).
+3. **Right Knee Angle**: 3-point interior angle (hip-knee-ankle, $^\circ$).
+4. **Left Hip Angle**: 3-point interior angle (shoulder-hip-knee, $^\circ$).
+5. **Right Hip Angle**: 3-point interior angle (shoulder-hip-knee, $^\circ$).
+6. **Left Ankle Angle**: Ankle dorsiflexion angle (knee-ankle-foot, $^\circ$).
+7. **Right Ankle Angle**: Ankle dorsiflexion angle (knee-ankle-foot, $^\circ$).
+8. **Trunk Lean**: Torso vertical inclination angle ($^\circ$).
+9. **Hip Stability**: Pelvic tilt angle relative to horizontal plane ($^\circ$).
+10. **Bilateral Knee Asymmetry**: Absolute difference between left and right knee flexion ($^\circ$).
+11. **Bilateral Hip Asymmetry**: Absolute difference between left and right hip flexion ($^\circ$).
+12. **Bilateral Ankle Asymmetry**: Absolute difference between left and right ankle angles ($^\circ$).
+13. **Shoulder Asymmetry**: Shoulder line angle relative to horizontal ($^\circ$).
+14. **Range of Motion**: Peak dynamic envelope of angular displacement ($^\circ$).
+15. **Joint-Angle Velocity**: Angular rate of change frame-to-frame ($^\circ/\text{s}$).
+16. **Joint-Angle Acceleration**: Angular acceleration frame-to-frame ($^\circ/\text{s}^2$).
+17. **Movement Variability**: Windowed standard deviation of lower-limb kinematics.
+18. **Postural Stability**: Center-of-mass sway and trunk oscillation stability index (0–100).
+19. **Landing/Deceleration Indicator**: Rapid flexion deceleration impact index.
+20. **Confidence & Movement Quality**: Mean detector confidence and composite tracking score (0–100).
+
+---
+
+## 🔐 Universal Authentication & RBAC Architecture
+
+### 1. Flexible Multi-Identifier Login
+The authentication system (`backend/routers/auth_router.py`) accepts universal login credentials:
+- Validates inputs against `User.email`, `User.username`, and `User.id`.
+- Automatically maps short identifiers (e.g., `saketh`, `saketh1`) to stored profiles.
+- Supports case-insensitive matching and whitespace sanitization.
+
+### 2. Google OAuth 2.0 Single Sign-On
+- Endpoint: `POST /api/auth/google` with token exchange.
+- Auto-provisions athlete profiles upon first login with default safe permissions.
+
+### 3. Role-Based Access Control (RBAC)
+Enforced via FastAPI dependency injection `require_role(...)`:
+- **ATHLETE**: Access own profile, video uploads, self-assessments, and 3D reports.
+- **COACH**: Access assigned athlete rosters, comparative team analytics, and training plans.
+- **PHYSIOTHERAPIST**: Manage clinical injury registries, rehabilitation exercises, and medical notes.
+- **SPORTS_SCIENTIST**: Access raw biomechanical frame data, model cards, and dataset catalogs.
+- **ADMIN**: Manage users, system configurations, and security audit logs.
+
+---
+
+## 📑 Clinical Report Generation
+
+- **PDF Reports (`ReportLab`)**: Generates 9-page clinical briefs with high-resolution radar plots, anomaly timelines, personalized drills, and regulatory disclaimers.
+- **Excel Analytical Sheets (`OpenPyXL`)**: Multi-sheet workbooks with frame-by-frame joint angles, velocities, anomalies, and model explainability metrics.

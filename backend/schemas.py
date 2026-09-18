@@ -11,7 +11,7 @@ class UserRegister(BaseModel):
     phone: Optional[str] = None
 
 class UserLogin(BaseModel):
-    email: EmailStr
+    email: str
     password: str
 
 class Token(BaseModel):
@@ -22,6 +22,25 @@ class GoogleAuthRequest(BaseModel):
     credential: Optional[str] = None
     code: Optional[str] = None
     role: Optional[str] = "ATHLETE"
+
+# --- Injury History Schemas ---
+class InjuryHistoryBase(BaseModel):
+    injury_type: str
+    body_part: str
+    severity: Optional[str] = "MODERATE"
+    injury_date: Optional[date] = None
+    recovery_date: Optional[date] = None
+    remarks: Optional[str] = None
+
+class InjuryHistoryCreate(InjuryHistoryBase):
+    athlete_id: Optional[str] = None
+
+class InjuryHistoryOut(InjuryHistoryBase):
+    injury_id: str
+    athlete_id: str
+
+    class Config:
+        from_attributes = True
 
 # --- Athlete Schemas ---
 class AthleteBase(BaseModel):
@@ -43,6 +62,7 @@ class AthleteCreate(AthleteBase):
 class AthleteOut(AthleteBase):
     athlete_id: str
     user_id: str
+    injury_histories: List[InjuryHistoryOut] = []
 
     class Config:
         from_attributes = True
@@ -66,25 +86,6 @@ class GoogleAuthResponse(BaseModel):
     token_type: str = "bearer"
     user: UserOut
     is_new_user: bool = False
-
-# --- Injury History Schemas ---
-class InjuryHistoryBase(BaseModel):
-    injury_type: str
-    body_part: str
-    severity: Optional[str] = "MODERATE"
-    injury_date: Optional[date] = None
-    recovery_date: Optional[date] = None
-    remarks: Optional[str] = None
-
-class InjuryHistoryCreate(InjuryHistoryBase):
-    athlete_id: str
-
-class InjuryHistoryOut(InjuryHistoryBase):
-    injury_id: str
-    athlete_id: str
-
-    class Config:
-        from_attributes = True
 
 # --- Video Schemas ---
 class VideoOut(BaseModel):

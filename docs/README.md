@@ -1,46 +1,34 @@
-# Sports Injury Risk Detection - Documentation Portal
+# AthleteGuard: Documentation Portal
 
-Welcome to the documentation for **Sports Injury Risk Detection System**, a full-stack AI platform for video-based biomechanical movement analysis, pose estimation, and injury risk prediction.
-
----
-
-## 📚 Quick Navigation
-
-| Document | Description |
-|---|---|
-| 🏃 [**Pose & Biomechanics Pipeline**](file:///c:/Users/saketh/Msme_Backend/docs/POSE_PIPELINE.md) | Technical guide for RTMPose-M, COCO 17 keypoints, smoothing & joint angles |
-| 🗄️ [**Database Schema Specification**](file:///c:/Users/saketh/Msme_Backend/docs/DATABASE_SCHEMA.md) | Complete reference for PostgreSQL tables & MongoDB collections |
-| 🏗️ [**System Architecture**](file:///c:/Users/saketh/Msme_Backend/docs/ARCHITECTURE.md) | High-level system design, AI processing pipeline, & auth model |
-| 🔌 [**API Documentation**](file:///c:/Users/saketh/Msme_Backend/docs/API_DOCUMENTATION.md) | Comprehensive REST API endpoints, schemas, and request/response payloads |
-| 🐳 [**Deployment & Operations Guide**](file:///c:/Users/saketh/Msme_Backend/docs/DEPLOYMENT_GUIDE.md) | Docker Compose setup, environment variables, and production deployment |
-
+Welcome to the documentation portal for **AthleteGuard: AI Sports Biomechanics & Injury Prevention Platform**.
 
 ---
 
-## 🎯 System Overview
+## 📚 Master Documentation Index
 
-The **Sports Injury Risk Detection** platform enables coaches, sports scientists, medical staff, and athletes to:
-1. **Upload Movement Videos**: Capture high-FPS footage of jumping, landing, cutting drills, squats, and sprints.
-2. **Pose Estimation Overlay**: Extract 2D/3D frame-wise skeletal keypoints (`pose_data` MongoDB collection).
-3. **Biomechanical Movement Analysis**: Calculate dynamic joint angles including **Knee Valgus**, **Hip Stability Index**, **Lateral Trunk Lean**, **Stride Length**, and **Bilateral Symmetry**.
-4. **Predict Injury Risk**: Compute probability scores for **ACL Tear/Sprain**, **Hamstring Strain**, **Ankle Inversion**, **Shoulder Instability**, **Lower Back Stress**, and **Overuse Fatigue**.
-5. **Generate AI Prescriptions**: Output personalized corrective exercises, mobility protocols, strengthening routines, recovery plans, and training load modifications.
+| Document | Category | Description |
+|---|---|---|
+| 🏗️ [**System Architecture**](ARCHITECTURE.md) | Architecture | High-level system design, 3D kinematics pipeline, dual intelligence engine & RBAC |
+| 🔌 [**API Documentation**](API_DOCUMENTATION.md) | API & Integration | Comprehensive REST API endpoints, schemas, request/response payloads & errors |
+| 🗄️ [**Database Schema Specification**](DATABASE_SCHEMA.md) | Database | Complete reference for PostgreSQL relational tables & MongoDB pose collections |
+| 🏃 [**Pose & Biomechanics Pipeline**](POSE_PIPELINE.md) | Computer Vision | RTMPose-M keypoints, 20 standardized biomechanical metrics & temporal features |
+| 🏷️ [**Model Card & Evaluation**](MODEL_CARD.md) | Machine Learning | Model architecture, performance metrics, training data, and clinical validation |
+| ⚠️ [**ML Data Limitations**](ML_DATA_LIMITATIONS.md) | Data Ethics & Safety | Limitations, bias considerations, edge cases, and safety boundaries |
+| 📦 [**Dataset Pipeline**](DATASET_PIPELINE.md) | Data Engineering | Data ingestion, processing, feature engineering, and validation pipelines |
+| 🌐 [**Dataset Sources**](DATASET_SOURCES.md) | Data Sources | Public and proprietary biomechanics dataset sources and benchmark references |
+| 🤖 [**Pretrained Models**](PRETRAINED_MODELS.md) | Model Weights | Details on RTMPose, YOLOX, and classification model weights and checkpoints |
+| 🐳 [**Deployment & Operations Guide**](DEPLOYMENT_GUIDE.md) | DevOps & Infra | Docker Compose setup, environment variables, Nginx, and production builds |
+| 📊 [**Implementation Audit**](IMPLEMENTATION_AUDIT.md) | Quality & Audit | System implementation checklist, test coverage, and security audit |
+| 📋 [**Final Implementation Report**](FINAL_IMPLEMENTATION_REPORT.md) | Executive Summary | Comprehensive deliverable report detailing project milestones and metrics |
 
 ---
 
-## 🛠️ Technology Stack
+## 🎯 Platform Capabilities Overview
 
-```mermaid
-graph TD
-    Client[React 19 + Vite Frontend] -->|HTTP / REST| Nginx[Nginx Reverse Proxy]
-    Nginx -->|Port 8000| FastAPI[FastAPI Backend Python 3.11]
-    FastAPI -->|Relational Data| Postgres[(PostgreSQL 16)]
-    FastAPI -->|Pose Keypoints & Logs| Mongo[(MongoDB 7.0)]
-    FastAPI -->|Video Processing| OpenCV[OpenCV & MediaPipe]
-```
-
-- **Frontend**: React 19, Vite, Tailwind CSS, Chart.js, Lucide Icons
-- **Backend API**: FastAPI (Python 3.11), Uvicorn, SQLAlchemy, PyMongo, Pydantic, PassLib/Bcrypt, PyJWT
-- **Computer Vision & AI**: OpenCV, MediaPipe Pose Estimation, NumPy
-- **Databases**: PostgreSQL 16 (Relational Core), MongoDB 7.0 (Unstructured Keypoints & Logs)
-- **DevOps**: Docker, Docker Compose, Nginx Reverse Proxy
+1. **Video Movement Upload**: High-FPS video capture supporting jumping, landing, cutting, squats, and running gait.
+2. **Interactive 3D Kinematic Studio**: Hardware-accelerated WebGL 3D pose reconstruction with 60 FPS playback, timeline scrubbing, frame stepping, and multi-angle camera views (Orbit, Coronal, Sagittal).
+3. **Biomechanical Movement Analysis**: 20 frame-by-frame kinematic features including knee valgus deviation, trunk lean, hip stability, and bilateral asymmetry.
+4. **Dual Intelligence Risk Engine**: Hybrid risk assessment combining Platt-calibrated supervised machine learning (XGBoost) with clinical 5-factor screening (Biomechanics 35%, Prior Injuries 20%, Asymmetry 20%, ACWR Workload 15%, Fatigue Drift 10%).
+5. **Clinical Injury History Registry**: Complete longitudinal record of athlete injury events, anatomical sites, and recovery stages with dynamic risk recalibration.
+6. **AI Prescriptions & Drills**: Targeted mobility, strengthening, and movement retraining protocols with set/rep recommendations.
+7. **Clinical Export Engine**: Standardized 9-page clinical PDF reports and detailed multi-sheet Excel workbooks.

@@ -2,7 +2,7 @@ import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { 
   Activity, Upload, Video, LogOut, LogIn, LayoutDashboard, 
-  Sparkles, Bell, Settings, User, Cpu, ShieldCheck
+  Sparkles, Bell, Settings, User, Users, Cpu, ShieldCheck
 } from 'lucide-react';
 
 export const Navbar = ({ activeTab, setActiveTab, onOpenAuth, onOpenProfile }) => {
@@ -44,12 +44,12 @@ export const Navbar = ({ activeTab, setActiveTab, onOpenAuth, onOpenProfile }) =
               onClick={() => setActiveTab('dashboard')}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
                 activeTab === 'dashboard'
-                  ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20'
+                  ? (user.role === 'COACH' ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20' : 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20')
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              <LayoutDashboard className="w-3.5 h-3.5" />
-              <span>Dashboard</span>
+              {user.role === 'COACH' ? <Users className="w-3.5 h-3.5" /> : <LayoutDashboard className="w-3.5 h-3.5" />}
+              <span>{user.role === 'COACH' ? 'Coach Command HQ' : 'My Dashboard'}</span>
             </button>
 
             <button
@@ -91,9 +91,10 @@ export const Navbar = ({ activeTab, setActiveTab, onOpenAuth, onOpenProfile }) =
         )}
 
         {/* Right Controls: Profile, Notifications, Logout */}
-        <div className="flex items-center gap-3 font-mono">
+        <div className="flex items-center gap-2 sm:gap-3 font-mono">
           {user ? (
             <div className="flex items-center gap-2 sm:gap-3">
+
               {/* Notification icon */}
               <button
                 title="System Notifications"
@@ -146,9 +147,9 @@ export const Navbar = ({ activeTab, setActiveTab, onOpenAuth, onOpenProfile }) =
         <div className="flex md:hidden items-center justify-between gap-1 pt-2 mt-2 border-t border-slate-900 font-mono text-[11px] overflow-x-auto">
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`px-2.5 py-1 rounded-lg ${activeTab === 'dashboard' ? 'bg-cyan-500 text-slate-950 font-bold' : 'text-slate-400'}`}
+            className={`px-2.5 py-1 rounded-lg ${activeTab === 'dashboard' ? (user.role === 'COACH' ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-cyan-500 text-slate-950 font-bold') : 'text-slate-400'}`}
           >
-            Dashboard
+            {user.role === 'COACH' ? 'Coach HQ' : 'My Dashboard'}
           </button>
           <button
             onClick={() => setActiveTab('upload')}
