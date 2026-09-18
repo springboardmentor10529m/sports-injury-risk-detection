@@ -85,8 +85,8 @@
 
     <script>
         const params = new URLSearchParams(window.location.search);
-        const videoId = params.get("id");
-        let videoUrl = params.get("video");
+        const videoId = params.get("videoId");
+        let videoUrl = params.get("videoUrl");
 
         const videoPlayer = document.getElementById("videoPlayer");
         const poseCanvas = document.getElementById("poseCanvas");
@@ -200,7 +200,7 @@
                 })
                 .then((data) => {
                     poseData = data;
-                    status.textContent = "Pose detection ready";
+                    status.textContent = "Pose detection";
                     resizeCanvas();
                     drawPose();
                 })

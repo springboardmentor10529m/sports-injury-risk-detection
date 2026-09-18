@@ -677,6 +677,90 @@
             }
 
         }
+        
+        .settings-section {
+            margin-top: 10px;
+        }
+
+        .settings-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 20px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .settings-row:last-child {
+            border-bottom: none;
+        }
+
+        .settings-row strong {
+            display: block;
+            font-size: 16px;
+            color: #1f2937;
+            margin-bottom: 6px;
+        }
+
+        .settings-row p {
+            margin: 0;
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .settings-switch {
+            position: relative;
+            display: inline-block;
+            width: 46px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+
+        .settings-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .settings-slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background: #cbd5e1;
+            border-radius: 24px;
+            transition: 0.2s ease;
+        }
+
+        .settings-slider::before {
+            content: "";
+            position: absolute;
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            top: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.2s ease;
+        }
+
+        .settings-switch input:checked + .settings-slider {
+            background: #2563eb;
+        }
+
+        .settings-switch input:checked + .settings-slider::before {
+            transform: translateX(22px);
+        }
+
+        @media (max-width: 600px) {
+            .settings-row {
+                align-items: flex-start;
+            }
+
+            .settings-row button {
+                flex-shrink: 0;
+            }
+        }
 
     </style>
 
@@ -770,12 +854,12 @@
                 My Profile
             </a>
 
-            <a href="assessments.html" class="active">
+            <a href="assessments.html">
                 Assessments
             </a>
 
-            <a href="settings.html">
-                Settings 
+            <a href="settings.html" class="active">
+                Settings
             </a>
 
         </aside>
@@ -790,31 +874,109 @@
             <div class="welcome">
 
                 <h1>
-                    Assessment History
+                    Settings
                 </h1>
 
                 <p>
-                    View all your sports injury risk assessments
-                    and detailed analysis reports.
+                    Manage your Smart Athlete account and preferences.
                 </p>
 
             </div>
 
 
-            <!-- Assessment History -->
+            <!-- Account Settings -->
 
             <div class="profile-card">
 
                 <h2>
-                    All Assessments
+                    Account Settings
                 </h2>
 
-                <div
-                    id="assessmentsContent"
-                    class="profile-loading"
-                >
-                    Loading assessments...
+                <div class="settings-section">
+
+                    <div class="settings-row">
+
+                        <div>
+                            <strong>Account Information</strong>
+
+                            <p>
+                                View and manage your athlete profile details.
+                            </p>
+                        </div>
+
+                        <button
+                            class="view-video-btn"
+                            onclick="window.location.href='athlete-details.html'"
+                        >
+                            Edit Profile
+                        </button>
+
+                    </div>
+
+
+                    <div class="settings-row">
+
+                        <div>
+                            <strong>Notifications</strong>
+
+                            <p>
+                                Manage your injury risk and assessment notifications.
+                            </p>
+                        </div>
+
+                        <label class="settings-switch">
+
+                            <input
+                                type="checkbox"
+                                id="notificationToggle"
+                                checked
+                            >
+
+                            <span class="settings-slider"></span>
+
+                        </label>
+
+                    </div>
+
+
+                    <div class="settings-row">
+
+                        <div>
+                            <strong>Logout</strong>
+
+                            <p>
+                                Sign out of your Smart Athlete account.
+                            </p>
+                        </div>
+
+                        <button
+                            class="delete-video-btn"
+                            onclick="logoutUser()"
+                        >
+                            Logout
+                        </button>
+
+                    </div>
+
                 </div>
+
+            </div>
+
+
+            <!-- About Smart Athlete -->
+
+            <div class="profile-card">
+
+                <h2>
+                    About Smart Athlete
+                </h2>
+
+                <p>
+                    Smart Athlete analyzes athlete movement and
+                    biomechanical characteristics to provide
+                    sports injury risk assessment and corrective
+                    recommendations.
+                </p>
 
             </div>
 
@@ -3014,7 +3176,6 @@
          * when dashboard opens
          */
 
-        loadAssessments();
 
         function viewAssessmentVideo(assessmentId) {
 
@@ -3160,6 +3321,14 @@
 
             }
 
+        }
+        
+
+        function logoutUser() {
+
+            localStorage.removeItem("authToken");
+
+            window.location.href = "login.html";
         }
     </script>
 
