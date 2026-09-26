@@ -35,6 +35,12 @@ api.interceptors.response.use(
 );
 
 export const getErrorMessage = (err, defaultMsg = 'An error occurred.') => {
+  if (!err?.response) {
+    if (err?.code === 'ERR_NETWORK' || err?.message?.includes('Network Error')) {
+      return 'Unable to connect to backend server. Please make sure the FastAPI backend is running on http://localhost:8000.';
+    }
+    return err?.message || defaultMsg;
+  }
   const detail = err.response?.data?.detail;
   if (Array.isArray(detail)) {
     return detail.map(d => {

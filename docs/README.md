@@ -1,28 +1,65 @@
-# Platform Documentation Index
-
-Welcome to the documentation repository for the **AI-Powered Sports Injury Risk Detection Platform**.
-
----
-
-### Core Architecture & Technical Specifications
-- **[System Architecture Specification](SYSTEM_ARCHITECTURE.md):** Complete multi-tier architecture diagram, data layer, AI/ML pipeline, mathematical scoring models, and full 13-module catalog.
-- **[Backend API Documentation](../README.md#how-to-run-the-application):** Endpoints, authentication, video processing pipelines, and data models.
-- **Interactive Swagger Docs:** Accessible at `http://localhost:8000/docs` when the backend service is running.
+# 📚 Sports Injury Risk Detection Platform
+## Comprehensive Technical Documentation Portal
 
 ---
 
-### Key System Highlights
-- **13 Implemented Functional Modules:**
-  1. User Authentication & Role-Based Access (Athlete, Coach, Physiotherapist, Sports Scientist, Admin)
-  2. Athlete Profile Management
-  3. Video Upload & Preprocessing Engine
-  4. Pose Estimation Engine (MediaPipe BlazePose)
-  5. Biomechanical Analysis Engine (Knee Valgus, Trunk Lean, ROM, Symmetry)
-  6. Injury Risk Prediction Engine (ACL, Hamstring, Ankle, Shoulder, Lower Back)
-  7. Movement Anomaly Detection Engine (SportsPose & Human3.6M Baselines)
-  8. Risk Scoring Engine (Weighted Formula: 35% Deviations + 20% History + 20% Asymmetry + 15% Load + 10% Fatigue)
-  9. Corrective Recommendation Engine (Mobility, Strengthening, Recovery, Technique)
-  10. Role-Tailored Dashboards & Analytics
-  11. Notification & Alert System
-  12. Reports & Export System (Longitudinal Athlete CSV, Team Matrix CSV, Research Cohorts)
-  13. Docker & Cloud Deployment
+Welcome to the end-to-end documentation suite for the **AI-Powered Sports Injury Risk Detection Platform**. This directory contains full technical specifications, user manuals, mathematical formulations, deployment configurations, and automated verification procedures.
+
+---
+
+## 📑 Documentation Index
+
+| Document | Target Audience | Summary |
+| :--- | :--- | :--- |
+| **[1. System Architecture Specification](SYSTEM_ARCHITECTURE.md)** | Architects, Engineers | Multi-tier architectural topology, edge ingestion, AI/ML pipeline, 13 core modules catalog, and data models. |
+| **[2. RESTful API Documentation](API_DOCUMENTATION.md)** | Frontend & Mobile Devs | Complete REST endpoint catalog, request/response schemas, JWT auth, status codes, and JSON payloads. |
+| **[3. Biomechanics & ML Models](BIOMECHANICS_AND_ML_MODELS.md)** | ML Engineers, Scientists | BlazePose 33-landmark schema, 3D angle geometry, Knee Valgus ratio, Anomaly scoring, and 5-factor risk decomposition. |
+| **[4. End-to-End User & Clinical Guide](USER_GUIDE.md)** | Athletes, Clinicians, Coaches | User manual covering all 5 personas (Athlete, Coach, Physiotherapist, Scientist, Admin), video upload guidelines, dual-player analysis, and exercise compliance. |
+| **[5. Deployment & Infrastructure Guide](DEPLOYMENT_GUIDE.md)** | DevOps, SysAdmins | Docker Compose orchestration, PostgreSQL config, local development setup, FFMPEG dependencies, Nginx proxy, and troubleshooting. |
+| **[6. Database Schema & ER Specification](DATABASE_SCHEMA.md)** | Database Administrators | Mermaid ER diagrams, table dictionaries, foreign key cascading rules, data integrity constraints, and UUID primary keys. |
+| **[7. Automated Testing & Verification Guide](TESTING_AND_VERIFICATION.md)** | QA Engineers, Developers | Test suite catalog (`pytest`), computer vision validation, ML risk calculation tests, live HTTP network checks, and CI/CD pipelines. |
+
+---
+
+## 🏗 High-Level System Architecture
+
+```
++-------------------------------------------------------------------------------+
+|                                CLIENT CLIENTS                                 |
+|      [ Athlete ]        [ Coach ]     [ Physiotherapist ]   [ Scientist ]     |
+|   Personal Dashboard    Team Radar      Rehab Protocols     Cohort Analytics  |
++-------------------------------------------------------------------------------+
+                                        │
+                                        ▼
++-------------------------------------------------------------------------------+
+|                       API GATEWAY (FASTAPI FRAMEWORK)                         |
+|   - JWT Token Authentication (HS256)                                          |
+|   - Role-Based Access Control (RBAC)                                          |
+|   - CORS Middleware & Request Validation                                      |
++-------------------------------------------------------------------------------+
+                                        │
+                    ┌───────────────────┴───────────────────┐
+                    ▼                                       ▼
++---------------------------------------+   +-----------------------------------+
+|     VIDEO & KINEMATICS ENGINE         |   |    AI & PREDICTIVE ML ENGINE      |
+|  - FFMPEG H.264/yuv420p Transcoding   |   |  - Isolation Forest (Anomaly)     |
+|  - MediaPipe BlazePose (33 Points)    |   |  - Random Forest Classifier       |
+|  - 3D Joint Angles & Knee Valgus      |   |  - XGBoost Gradient Boosting      |
+|  - Bilateral Symmetry & Trunk Lean    |   |  - 5-Factor Risk Decomposition    |
++---------------------------------------+   +-----------------------------------+
+                                        │
+                                        ▼
++-------------------------------------------------------------------------------+
+|                        PERSISTENCE & STORAGE LAYER                            |
+|       - PostgreSQL 15 (Docker) / SQLite 3 (Local) via SQLAlchemy 2.0          |
+|       - Standardized Video Storage & Annotated Overlays (/uploads)            |
++-------------------------------------------------------------------------------+
+```
+
+---
+
+## 🚀 Quick Links & Getting Started
+
+- **Interactive API Documentation (Swagger UI):** `http://localhost:8000/docs`
+- **Frontend Web Application:** `http://localhost:5173` (or `http://localhost:3000` via Docker)
+- **Backend Health Check:** `http://localhost:8000/`

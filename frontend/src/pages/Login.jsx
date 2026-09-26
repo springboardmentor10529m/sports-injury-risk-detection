@@ -120,6 +120,31 @@ const Login = () => {
           </button>
         </form>
 
+        {/* Demo Accounts Quick-Select */}
+        <div className="mt-6 pt-5 border-t border-white/10">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider text-center mb-3">
+            Quick Demo Login
+          </p>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <button
+              type="button"
+              onClick={() => setFormData({ email: 'coach.k@example.com', password: 'password123' })}
+              className="p-2.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-blue-300 transition-colors text-left"
+            >
+              <span className="font-semibold block text-white">Coach Demo</span>
+              coach.k@example.com
+            </button>
+            <button
+              type="button"
+              onClick={() => setFormData({ email: 'jordan.spieth@example.com', password: 'password123' })}
+              className="p-2.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 text-indigo-300 transition-colors text-left"
+            >
+              <span className="font-semibold block text-white">Athlete Demo</span>
+              jordan.spieth@example.com
+            </button>
+          </div>
+        </div>
+
         <p className="text-center text-sm text-gray-400 mt-6">
           Don't have an account?{' '}
           <Link to="/register" className="text-blue-400 hover:text-blue-300 font-semibold transition-colors">

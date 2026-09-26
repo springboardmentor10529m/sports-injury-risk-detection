@@ -246,8 +246,14 @@ Sports/
 │   ├── vite.config.js
 │   └── Dockerfile                   # Frontend Docker container
 ├── docs/
-│   ├── README.md                    # Documentation index
-│   └── SYSTEM_ARCHITECTURE.md       # Comprehensive architectural specification
+│   ├── README.md                    # Master documentation portal
+│   ├── SYSTEM_ARCHITECTURE.md       # Comprehensive architectural specification
+│   ├── API_DOCUMENTATION.md         # Complete RESTful API & endpoint reference
+│   ├── BIOMECHANICS_AND_ML_MODELS.md # 3D BlazePose kinematics, anomaly & ML scoring
+│   ├── USER_GUIDE.md                # End-to-end user manual across all 5 roles
+│   ├── DEPLOYMENT_GUIDE.md          # Docker Compose, bare-metal & production deployment
+│   ├── DATABASE_SCHEMA.md           # ER diagrams, table dictionaries & constraints
+│   └── TESTING_AND_VERIFICATION.md  # Test suites, pytest verification & CI workflows
 ├── docker-compose.yml               # Multi-container orchestration (DB, Backend, Frontend)
 └── README.md
 ```
