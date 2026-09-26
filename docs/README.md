@@ -4,6 +4,18 @@ This directory contains the core technical documentation, architectural specific
 
 ---
 
+## Live Deployment
+
+### Frontend
+https://sports-injury-risk-detection-deployment-1.onrender.com
+
+### Backend API
+https://sports-injury-risk-detection-deployment.onrender.com
+
+### API Documentation
+https://sports-injury-risk-detection-deployment.onrender.com/docs
+
+
 ## 📑 Core Documentation Files
 
 - **[Executive Progress & Implementation Summary (Short Version for Mentor)](file:///c:/Sports_injury_detection/sports-injury-risk-detection/docs/PROJECT_SUMMARY.md):**  
