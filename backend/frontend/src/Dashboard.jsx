@@ -3,6 +3,7 @@ import "./Dashboard.css";
 import Performance from "./Performance";
 import VideoAnalysis from "./VideoAnalysis";
 import Recommendations from "./Recommendations";
+import AnalysisReportModal from "./AnalysisReportModal";
 import API_BASE from "./config/api";
 
 function Dashboard({ athleteData, onNavigate, onLogout }) {
@@ -18,9 +19,32 @@ function Dashboard({ athleteData, onNavigate, onLogout }) {
   const [loadingVideoHistory, setLoadingVideoHistory] = useState(false);
   const [loadingDashboard, setLoadingDashboard] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [reportModalItem, setReportModalItem] = useState(null);
 
   const athleteId = athleteData?.athlete_id || localStorage.getItem("athlete_id");
   const userId = athleteData?.user_id || localStorage.getItem("user_id");
+
+  const handleDeleteHistoryVideo = async (videoId) => {
+    if (!videoId) return;
+    if (!window.confirm("Are you sure you want to permanently delete this video and its analysis result?")) {
+      return;
+    }
+    try {
+      const res = await fetch(`${API_BASE}/videos/${videoId}`, { method: "DELETE" });
+      if (res.ok) {
+        setVideoHistory((prev) => prev.filter((v) => v.video_id !== videoId));
+        const activeVid = localStorage.getItem("active_video_id");
+        if (activeVid === videoId) {
+          localStorage.removeItem("active_video_id");
+        }
+      } else {
+        alert("Could not delete video analysis record.");
+      }
+    } catch (err) {
+      console.error("Error deleting video:", err);
+      alert("Network error while deleting record.");
+    }
+  };
 
   const handleTabSwitch = (tab) => {
     localStorage.setItem("sportshield_current_tab", tab);
@@ -458,16 +482,37 @@ function Dashboard({ athleteData, onNavigate, onLogout }) {
                               </span>
                             </td>
                             <td style={{ textAlign: "right" }}>
-                              {hasAnalysis ? (
+                              <div style={{ display: "inline-flex", gap: "6px", alignItems: "center" }}>
+                                {hasAnalysis ? (
+                                  <>
+                                    <button
+                                      className="table-action-btn"
+                                      onClick={() => handleViewAnalysis(item)}
+                                      title="View in Video Analysis tab"
+                                    >
+                                      View Analysis →
+                                    </button>
+                                    <button
+                                      className="table-action-btn"
+                                      style={{ background: "#eff6ff", color: "#1d4ed8", borderColor: "#bfdbfe" }}
+                                      onClick={() => setReportModalItem(item)}
+                                      title="Download / Export Official Report"
+                                    >
+                                      📄 Report
+                                    </button>
+                                  </>
+                                ) : (
+                                  <span style={{ color: "#cbd5e1" }}>—</span>
+                                )}
                                 <button
                                   className="table-action-btn"
-                                  onClick={() => handleViewAnalysis(item)}
+                                  style={{ background: "#fef2f2", color: "#dc2626", borderColor: "#fecaca", padding: "4px 8px" }}
+                                  onClick={() => handleDeleteHistoryVideo(item.video_id)}
+                                  title="Delete this analysis record"
                                 >
-                                  View Details →
+                                  🗑️
                                 </button>
-                              ) : (
-                                <span style={{ color: "#cbd5e1" }}>—</span>
-                              )}
+                              </div>
                             </td>
                           </tr>
                         );
@@ -1371,6 +1416,16 @@ function Dashboard({ athleteData, onNavigate, onLogout }) {
 
           </main>
         )}
+
+        {/* REPORT MODAL FOR HISTORICAL VIDEO ANALYSES */}
+        <AnalysisReportModal
+          isOpen={!!reportModalItem}
+          onClose={() => setReportModalItem(null)}
+          analysisData={reportModalItem?.analysis}
+          predictionData={reportModalItem?.analysis?.prediction}
+          athleteData={liveAthlete || athleteData}
+          videoName={reportModalItem?.video_url ? reportModalItem.video_url.split("/").pop() : `Session_${reportModalItem?.activity || "Movement"}`}
+        />
 
       </div>
     </div>

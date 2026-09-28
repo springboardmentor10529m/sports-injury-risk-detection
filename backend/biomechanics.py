@@ -387,6 +387,19 @@ def analyze_biomechanics_from_frames(frames_data: List[Dict[str, Any]]) -> Dict[
         }
     ]
 
+    # Build exact frame-by-frame time series from the real landmark calculations
+    time_series = {
+        "frames": [int(f.get("frame_idx", idx + 1)) for idx, f in enumerate(frames_data)],
+        "timestamps": [round(float(f.get("timestamp", idx / 30.0)), 2) for idx, f in enumerate(frames_data)],
+        "knee_valgus": [round(float(v), 1) for v in knee_valgus_list],
+        "trunk_lean": [round(float(t), 1) for t in trunk_lean_list],
+        "left_knee_angles": [round(float(a), 1) for a in left_knee_angles],
+        "right_knee_angles": [round(float(a), 1) for a in right_knee_angles],
+        "knee_angles": [round(float((l + r) / 2.0), 1) for l, r in zip(left_knee_angles, right_knee_angles)] if (left_knee_angles and right_knee_angles) else [],
+        "joint_alignment": [round(float(j), 1) for j in joint_alignment_list],
+        "hip_y_positions": [round(float(h), 4) for h in hip_y_positions]
+    }
+
     return {
         "detected_activity": detected_activity,
         "knee_valgus": round(avg_knee_valgus, 1),
@@ -401,7 +414,8 @@ def analyze_biomechanics_from_frames(frames_data: List[Dict[str, Any]]) -> Dict[
         "knee_angle": round(avg_knee_angle, 1),
         "hip_angle": round(avg_hip_angle, 1),
         "ankle_angle": round(avg_ankle_angle, 1),
-        "biomechanical_details": biomechanical_details
+        "biomechanical_details": biomechanical_details,
+        "time_series": time_series
     }
 
 
@@ -484,7 +498,18 @@ def get_default_biomechanics() -> Dict[str, Any]:
                 "status": "Normal",
                 "is_within_threshold": True
             }
-        ]
+        ],
+        "time_series": {
+            "frames": [],
+            "timestamps": [],
+            "knee_valgus": [],
+            "trunk_lean": [],
+            "left_knee_angles": [],
+            "right_knee_angles": [],
+            "knee_angles": [],
+            "joint_alignment": [],
+            "hip_y_positions": []
+        }
     }
 
 

@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { FilesetResolver, PoseLandmarker } from "@mediapipe/tasks-vision";
 import "./VideoAnalysis.css";
 import API_BASE from "./config/api";
+import KinematicCharts from "./KinematicCharts";
+import AnalysisReportModal from "./AnalysisReportModal";
 
 const PROCESSING_STEPS = [
   { id: 1, label: "Uploading Video" },
@@ -46,6 +48,11 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
   const [analysisResult, setAnalysisResult] = useState(null);
   const [predictionResult, setPredictionResult] = useState(null);
   const [viewingHistory, setViewingHistory] = useState(false);
+
+  // Report Modal State
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [historicalReportItem, setHistoricalReportItem] = useState(null);
+  const [athleteProfile, setAthleteProfile] = useState(null);
 
   // Notifications
   const [errorMsg, setErrorMsg] = useState("");
@@ -146,9 +153,53 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
     }
   };
 
+  // Fetch athlete profile details for report generation
   useEffect(() => {
-    fetchHistory(true);
+    if (!activeAthleteId) return;
+    fetch(`${API_BASE}/athlete/${activeAthleteId}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) setAthleteProfile(data);
+      })
+      .catch((e) => console.log("Athlete profile note:", e));
   }, [activeAthleteId]);
+
+  // Safe delete handler for video and linked analysis
+  const handleDeleteVideo = async (videoId, e) => {
+    if (e) e.stopPropagation();
+    if (!videoId) return;
+
+    if (!window.confirm("Are you sure you want to permanently delete this video analysis record?")) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/videos/${videoId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        const activeVid = localStorage.getItem("active_video_id");
+        if (activeVid === videoId) {
+          handleResetAnalysis();
+        }
+        await fetchHistory(false);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setErrorMsg(data.detail || "Failed to delete video record.");
+      }
+    } catch (err) {
+      console.error("Error deleting video:", err);
+      setErrorMsg("Network error communicating with server during deletion.");
+    }
+  };
+
+  // Open historical report modal
+  const handleOpenHistoricalReport = (item, e) => {
+    if (e) e.stopPropagation();
+    if (!item || !item.analysis) return;
+    setHistoricalReportItem(item);
+    setReportModalOpen(true);
+  };
 
   // Handle local file selection
   const handleFileSelect = (file) => {
@@ -774,15 +825,40 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
             </p>
           </div>
 
-          {/* If viewing completed results, show the ONLY primary action button */}
+          {/* Action buttons when viewing analysis results */}
           {(analysisResult || viewingHistory) && !processing && (
-            <button
-              className="btn btn-primary"
-              onClick={handleResetAnalysis}
-              style={{ padding: "10px 20px", fontSize: "0.9rem", fontWeight: 700 }}
-            >
-              + Analyze New Video
-            </button>
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+              <button
+                className="btn btn-outline"
+                onClick={() => {
+                  setHistoricalReportItem(null);
+                  setReportModalOpen(true);
+                }}
+                style={{
+                  padding: "10px 18px",
+                  fontSize: "0.9rem",
+                  fontWeight: 700,
+                  background: "#eff6ff",
+                  color: "#1d4ed8",
+                  border: "1px solid #bfdbfe",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  transition: "all 0.15s ease"
+                }}
+              >
+                📄 Export / Download Report
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={handleResetAnalysis}
+                style={{ padding: "10px 20px", fontSize: "0.9rem", fontWeight: 700 }}
+              >
+                + Analyze New Video
+              </button>
+            </div>
           )}
         </section>
 
@@ -981,41 +1057,106 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
             {/* Recent Upload History from Database */}
             {videoHistory.length > 0 && !selectedFile && (
               <div className="va-card" style={{ marginTop: "24px", padding: "20px" }}>
-                <h4 style={{ margin: "0 0 12px", fontSize: "0.95rem", color: "#475569" }}>
-                  📁 Recent Video Analyses
-                </h4>
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  {videoHistory.slice(0, 5).map((v) => (
-                    <div
-                      key={v.video_id}
-                      onClick={() => v.analysis && loadHistoryItem(v)}
-                      style={{
-                        padding: "10px 14px", borderRadius: "8px", border: "1px solid #e2e8f0",
-                        display: "flex", justifyContent: "space-between", alignItems: "center",
-                        cursor: v.analysis ? "pointer" : "default", background: "#f8fafc"
-                      }}
-                    >
-                      <div>
-                        <strong style={{ fontSize: "0.85rem", color: "#0f172a" }}>
-                          {v.activity || "Movement Analysis"}
-                        </strong>
-                        <span style={{ fontSize: "0.75rem", color: "#64748b", display: "block" }}>
-                          {v.uploaded_at ? new Date(v.uploaded_at).toLocaleDateString() : "Recent"}
-                        </span>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+                  <h4 style={{ margin: 0, fontSize: "0.95rem", color: "#0f172a", fontWeight: 700 }}>
+                    📁 Recorded Video Analyses ({videoHistory.length})
+                  </h4>
+                  <span style={{ fontSize: "0.75rem", color: "#64748b" }}>
+                    Select a recording to review biomechanics or export report
+                  </span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  {videoHistory.slice(0, 6).map((v) => {
+                    const hasAnalysis = !!v.analysis;
+                    const rLevel = v.analysis?.risk_level || "Pending";
+                    const rScore = v.analysis?.overall_risk_score;
+
+                    return (
+                      <div
+                        key={v.video_id}
+                        onClick={() => hasAnalysis && loadHistoryItem(v)}
+                        style={{
+                          padding: "12px 16px",
+                          borderRadius: "10px",
+                          border: "1px solid #e2e8f0",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          cursor: hasAnalysis ? "pointer" : "default",
+                          background: "#f8fafc",
+                          transition: "all 0.15s ease",
+                          flexWrap: "wrap",
+                          gap: "10px"
+                        }}
+                      >
+                        <div style={{ minWidth: "180px" }}>
+                          <strong style={{ fontSize: "0.88rem", color: "#0f172a", display: "block" }}>
+                            🎬 {v.video_url ? v.video_url.split("/").pop() : `Session (${v.activity || "Movement"})`}
+                          </strong>
+                          <span style={{ fontSize: "0.75rem", color: "#64748b" }}>
+                            {v.uploaded_at ? new Date(v.uploaded_at).toLocaleString() : "Recent"} · {v.activity || "Movement Analysis"}
+                          </span>
+                        </div>
+
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          {hasAnalysis ? (
+                            <>
+                              <span
+                                style={{
+                                  fontSize: "0.78rem",
+                                  fontWeight: 700,
+                                  padding: "3px 9px",
+                                  borderRadius: "6px",
+                                  backgroundColor: riskBg(rLevel),
+                                  color: riskColour(rLevel),
+                                }}
+                              >
+                                {rLevel} Risk ({rScore}/100)
+                              </span>
+                              <button
+                                type="button"
+                                className="btn btn-outline"
+                                onClick={(e) => handleOpenHistoricalReport(v, e)}
+                                style={{
+                                  padding: "4px 10px",
+                                  fontSize: "0.75rem",
+                                  fontWeight: 700,
+                                  background: "#ffffff",
+                                  color: "#2563eb",
+                                  border: "1px solid #bfdbfe",
+                                  borderRadius: "6px",
+                                  cursor: "pointer",
+                                }}
+                                title="Export Report"
+                              >
+                                📄 Report
+                              </button>
+                            </>
+                          ) : (
+                            <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>Pending Analysis</span>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteVideo(v.video_id, e)}
+                            style={{
+                              padding: "4px 8px",
+                              fontSize: "0.75rem",
+                              fontWeight: 700,
+                              background: "#fef2f2",
+                              color: "#dc2626",
+                              border: "1px solid #fecaca",
+                              borderRadius: "6px",
+                              cursor: "pointer",
+                            }}
+                            title="Delete this analysis"
+                          >
+                            🗑️
+                          </button>
+                        </div>
                       </div>
-                      {v.analysis ? (
-                        <span style={{
-                          fontSize: "0.78rem", fontWeight: 700, padding: "3px 8px",
-                          borderRadius: "6px", backgroundColor: riskBg(v.analysis.risk_level),
-                          color: riskColour(v.analysis.risk_level)
-                        }}>
-                          {v.analysis.risk_level} Risk · View Results →
-                        </span>
-                      ) : (
-                        <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>Pending</span>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -1219,31 +1360,109 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
 
               </div>
 
-              {/* Movement Deviations Connected with Injury Risk (Requirement 2) */}
-              <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "14px 16px" }}>
-                <strong style={{ fontSize: "0.85rem", color: "#0f172a", display: "block", marginBottom: "8px" }}>
+              {/* ── KINEMATIC TIME-SERIES VISUALIZATIONS (REQUIREMENT 3) ── */}
+              <KinematicCharts
+                timeSeries={analysisResult.time_series}
+                poseFrames={poseFrames}
+                analysisResult={analysisResult}
+              />
+
+              {/* Movement Deviations Connected with Injury Risk */}
+              <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "16px 18px", marginTop: "16px" }}>
+                <strong style={{ fontSize: "0.88rem", color: "#0f172a", display: "block", marginBottom: "8px" }}>
                   🔍 Detected Biomechanical Deviations &amp; Risk Correlation:
                 </strong>
-                <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "0.8rem", color: "#475569", lineHeight: 1.6 }}>
+                <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "0.82rem", color: "#475569", lineHeight: 1.6 }}>
                   <li>
                     <strong>Knee Valgus ({analysisResult.knee_valgus || 11.5}°):</strong>{" "}
-                    {(analysisResult.knee_valgus || 0) > 12.0
-                      ? "Inward knee collapse during dynamic stance phase acts as a primary risk indicator for ACL strain and patellofemoral shear."
-                      : "Frontal knee alignment is within safe normative tolerances (< 12.0°)."}
+                    {(analysisResult.knee_valgus || 0) > 10.0
+                      ? "Inward medial knee displacement during dynamic stance phase acts as a primary risk indicator for non-contact ACL strain and patellofemoral shear stress."
+                      : "Frontal plane knee alignment is within safe normative limits (< 10.0°)."}
                   </li>
                   <li>
                     <strong>Pelvic Hip Stability ({analysisResult.hip_stability || 82.0}/100):</strong>{" "}
                     {(analysisResult.hip_stability || 0) < 75.0
-                      ? "Pelvic drop indicates gluteus medius fatigue, elevating lower-limb kinematic compensation."
+                      ? "Excessive vertical pelvic drop indicates gluteus medius fatigue or weakness, elevating compensatory knee and lower-back torque."
                       : "Pelvic level control is optimal, mitigating asymmetric hip torque."}
                   </li>
                   <li>
                     <strong>Spinal Trunk Lean ({analysisResult.trunk_lean || 5.8}°):</strong>{" "}
-                    {(analysisResult.trunk_lean || 0) > 6.0
-                      ? "Lateral trunk deviation shifts center of gravity, increasing lumbar spine and contralateral hamstring susceptibility."
-                      : "Spinal alignment remains stable through dynamic movement cycle."}
+                    {(analysisResult.trunk_lean || 0) > 8.0
+                      ? "Lateral trunk deviation shifts center of mass, increasing lumbar spinal shear stress and hamstring strain susceptibility."
+                      : "Spinal alignment remains upright and stable through movement trajectory."}
                   </li>
                 </ul>
+              </div>
+            </div>
+
+            {/* ── SECTION: STRUCTURED RISK EXPLANATION (REQUIREMENT 4) ── */}
+            <div className="va-card" style={{ padding: "20px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+                <h3 style={{ margin: 0, fontSize: "1.05rem", color: "#0f172a", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span>🛡️</span> Risk Factor Explanation &amp; Biomechanical Drivers
+                </h3>
+                <span style={{ fontSize: "0.75rem", padding: "3px 8px", borderRadius: "6px", background: riskBg(predictionResult.risk_level), color: riskColour(predictionResult.risk_level), fontWeight: 700 }}>
+                  {predictionResult.risk_level} Risk · Score {predictionResult.overall_risk_score}/100
+                </span>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", fontSize: "0.84rem" }}>
+                {/* Primary Deviation */}
+                <div style={{ background: "#fef2f2", border: "1px solid #fee2e2", borderRadius: "8px", padding: "12px 14px", color: "#991b1b" }}>
+                  <strong>🔍 Primary Biomechanical Deviation:</strong>
+                  <span style={{ display: "block", marginTop: "2px", color: "#7f1d1d" }}>
+                    {(analysisResult.knee_valgus || 0) > 10.0
+                      ? `Increased Knee Valgus (${analysisResult.knee_valgus}° > 10.0° threshold) during dynamic stance phase, creating inward medial collapse and elevated ACL ligament shear.`
+                      : (analysisResult.trunk_lean || 0) > 8.0
+                      ? `Elevated Trunk Lateral Lean (${analysisResult.trunk_lean}° > 8.0° threshold), shifting center of mass and increasing lumbar spine shear stress.`
+                      : (analysisResult.hip_stability || 0) < 75.0
+                      ? `Reduced Pelvic Hip Stability (${analysisResult.hip_stability}/100 < 75.0 threshold), indicating gluteal fatigue under load.`
+                      : "No critical kinematic deviations detected; movement kinematics remain balanced and within safe tolerances."}
+                  </span>
+                </div>
+
+                {/* Contributing Secondary Factors */}
+                <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "12px 14px" }}>
+                  <strong style={{ color: "#0f172a" }}>⚙️ Contributing Secondary Factors:</strong>
+                  <ul style={{ margin: "4px 0 0 0", paddingLeft: "18px", color: "#475569", lineHeight: 1.5 }}>
+                    {(analysisResult.hip_stability || 0) < 80.0 && (
+                      <li>Pelvic stability index ({analysisResult.hip_stability}/100) indicates moderate center-of-mass oscillation.</li>
+                    )}
+                    {(analysisResult.trunk_lean || 0) > 6.0 && (analysisResult.trunk_lean || 0) <= 8.0 && (
+                      <li>Mild lateral trunk tilt ({analysisResult.trunk_lean}°).</li>
+                    )}
+                    {(analysisResult.symmetry_score || 0) < 80.0 && (
+                      <li>Bilateral limb loading disparity ({(100 - (analysisResult.symmetry_score || 85)).toFixed(1)}% asymmetry).</li>
+                    )}
+                    {(analysisResult.fatigue_score || 0) > 30.0 && (
+                      <li>Kinematic variance decay across frames suggests motor fatigue accumulation.</li>
+                    )}
+                    {(!((analysisResult.hip_stability || 0) < 80.0) && !((analysisResult.symmetry_score || 0) < 80.0) && !((analysisResult.fatigue_score || 0) > 30.0)) && (
+                      <li>Secondary kinetic chain parameters remain within normative physiological baseline limits.</li>
+                    )}
+                  </ul>
+                </div>
+
+                {/* Normal & Stable Parameters */}
+                <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "12px 14px", color: "#166534" }}>
+                  <strong>✓ Normal &amp; Stable Parameters:</strong>
+                  <ul style={{ margin: "4px 0 0 0", paddingLeft: "18px", color: "#14532d", lineHeight: 1.5 }}>
+                    {(analysisResult.symmetry_score || 0) >= 80.0 && (
+                      <li>Bilateral Limb Symmetry is balanced ({analysisResult.symmetry_score}% &gt;= 80.0% standard).</li>
+                    )}
+                    {(analysisResult.range_of_motion_deg || 0) >= 60.0 && (
+                      <li>Joint Range of Motion is adequate ({analysisResult.range_of_motion_deg}° &gt;= 60.0° standard).</li>
+                    )}
+                    {(analysisResult.movement_quality || 0) >= 75.0 && (
+                      <li>Composite Movement Quality Index is optimal ({analysisResult.movement_quality}/100).</li>
+                    )}
+                  </ul>
+                </div>
+              </div>
+
+              {/* Non-Medical Academic Disclaimer */}
+              <div style={{ marginTop: "12px", background: "#fffbeb", border: "1px solid #fef3c7", borderRadius: "8px", padding: "10px 14px", fontSize: "0.75rem", color: "#92400e", lineHeight: 1.5 }}>
+                <strong>Academic / Research Disclaimer:</strong> SportsShield provides biomechanical video analytics for training optimization, movement quality monitoring, and injury risk awareness. It does not provide medical diagnoses or replace licensed clinical assessment.
               </div>
             </div>
 
@@ -1251,7 +1470,7 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
             <div className="va-card" style={{ padding: "20px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
                 <h3 style={{ margin: 0, fontSize: "1.05rem", color: "#0f172a" }}>
-                  🛡️ Injury Risk Categories
+                  🛡️ Injury Risk Categories Breakdown
                 </h3>
                 <div style={{ display: "flex", gap: "12px", fontSize: "0.75rem" }}>
                   <span style={{ color: "#16a34a", fontWeight: 600 }}>● Low &lt; 30%</span>
@@ -1298,11 +1517,11 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
               </div>
             </div>
 
-            {/* Personalized Recommendations with 'Why Generated' */}
+            {/* Targeted Recommendations */}
             <div className="va-card" style={{ padding: "20px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "8px" }}>
                 <h3 style={{ margin: 0, fontSize: "1.05rem", color: "#0f172a" }}>
-                  💡 Targeted Recommendations
+                  💡 Targeted Preventive Recommendations
                 </h3>
                 {onNavigateToRecommendations && (
                   <button
@@ -1339,8 +1558,70 @@ function VideoAnalysis({ athleteId, onNavigateToRecommendations }) {
               </div>
             </div>
 
+            {/* ── SECTION: TECHNICAL PIPELINE ARCHITECTURE (REQUIREMENT 7) ── */}
+            <div className="va-card" style={{ padding: "20px", background: "linear-gradient(135deg, #f8fafc, #eff6ff)", border: "1px solid #bfdbfe" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "8px" }}>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: "0.95rem", color: "#0f172a", fontWeight: 700 }}>
+                    🤖 Technical Pipeline &amp; Model Architecture
+                  </h4>
+                  <span style={{ fontSize: "0.75rem", color: "#64748b" }}>
+                    Verified AI/ML architecture executed on this video session
+                  </span>
+                </div>
+                <span style={{ fontSize: "0.75rem", padding: "3px 9px", borderRadius: "12px", background: "#dbeafe", color: "#1e40af", fontWeight: 700 }}>
+                  Pipeline Active
+                </span>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "10px" }}>
+                <div style={{ background: "#ffffff", padding: "10px 14px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                  <span style={{ fontSize: "0.7rem", color: "#64748b", display: "block" }}>Pose Estimation</span>
+                  <strong style={{ fontSize: "0.85rem", color: "#0f172a" }}>MediaPipe Pose Landmarker</strong>
+                  <span style={{ fontSize: "0.7rem", color: "#16a34a", display: "block", marginTop: "2px" }}>33 3D Keypoints Tracked</span>
+                </div>
+
+                <div style={{ background: "#ffffff", padding: "10px 14px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                  <span style={{ fontSize: "0.7rem", color: "#64748b", display: "block" }}>Feature Engineering</span>
+                  <strong style={{ fontSize: "0.85rem", color: "#0f172a" }}>7 Kinematic Vectors</strong>
+                  <span style={{ fontSize: "0.7rem", color: "#64748b", display: "block", marginTop: "2px" }}>Valgus, Hip, Lean, ROM, Symmetry</span>
+                </div>
+
+                <div style={{ background: "#ffffff", padding: "10px 14px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                  <span style={{ fontSize: "0.7rem", color: "#64748b", display: "block" }}>Supervised ML Classifier</span>
+                  <strong style={{ fontSize: "0.85rem", color: "#0f172a" }}>Random Forest Classifier</strong>
+                  <span style={{ fontSize: "0.7rem", color: "#2563eb", display: "block", marginTop: "2px" }}>100 Trees · Max Depth 5</span>
+                </div>
+
+                <div style={{ background: "#ffffff", padding: "10px 14px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                  <span style={{ fontSize: "0.7rem", color: "#64748b", display: "block" }}>Training Dataset</span>
+                  <strong style={{ fontSize: "0.85rem", color: "#0f172a" }}>Project-Injury-Dataset.csv</strong>
+                  <span style={{ fontSize: "0.7rem", color: "#16a34a", display: "block", marginTop: "2px" }}>Verified Tabular Dataset</span>
+                </div>
+              </div>
+            </div>
+
           </div>
         )}
+
+        {/* =========================================================================
+            REPORT EXPORT MODAL (REQUIREMENT 2)
+            ========================================================================= */}
+        <AnalysisReportModal
+          isOpen={reportModalOpen}
+          onClose={() => {
+            setReportModalOpen(false);
+            setHistoricalReportItem(null);
+          }}
+          analysisData={historicalReportItem ? historicalReportItem.analysis : analysisResult}
+          predictionData={historicalReportItem ? historicalReportItem.analysis?.prediction : predictionResult}
+          athleteData={athleteProfile}
+          videoName={
+            historicalReportItem
+              ? (historicalReportItem.video_url?.split("/").pop() || "Recorded_Session.mp4")
+              : (selectedFile?.name || "Recorded_Session.mp4")
+          }
+        />
 
       </div>
     </main>

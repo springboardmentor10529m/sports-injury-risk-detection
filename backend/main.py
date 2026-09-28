@@ -557,6 +557,7 @@ def create_analysis(
         "sampled_frames_count": len(frames_data),
         "pose_frames": frames_data,
         "biomechanical_details": biomechanics.get("biomechanical_details", []),
+        "time_series": biomechanics.get("time_series", {}),
         "position_applied_msg": risk_eval.get("position_applied_msg", ""),
         "rules_triggered": risk_eval.get("rules_triggered", []),
         "anomalies": anomalies,
@@ -1266,5 +1267,81 @@ def add_athlete_injury_legacy(payload: Dict[str, Any], db: Session = Depends(get
         notes=payload.get("notes", "")
     )
     return add_athlete_injury(athlete_id=athlete_id, payload=create_payload, db=db)
+
+
+# =========================================================
+# DELETE VIDEO AND ANALYSIS RECORDS
+# =========================================================
+
+@app.delete("/videos/{video_id}")
+def delete_video_record(video_id: str, db: Session = Depends(get_db)):
+    """Deletes a video record, all linked analysis results, predictions, recommendations, and local video file."""
+    try:
+        video_uuid = uuid.UUID(video_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid video ID format")
+
+    video_record = db.query(Video).filter(Video.video_id == video_uuid).first()
+    if not video_record:
+        raise HTTPException(status_code=404, detail="Video record not found")
+
+    # Find and delete all analysis results for this video
+    analyses = db.query(AnalysisResult).filter(AnalysisResult.video_id == video_uuid).all()
+    for analysis in analyses:
+        predictions = db.query(InjuryPrediction).filter(InjuryPrediction.analysis_id == analysis.analysis_id).all()
+        for pred in predictions:
+            recs = db.query(Recommendation).filter(Recommendation.prediction_id == pred.prediction_id).all()
+            for r in recs:
+                db.delete(r)
+            db.delete(pred)
+        db.delete(analysis)
+
+    # Clean up local video file if it exists
+    if video_record.video_url:
+        local_path = video_record.video_url
+        if local_path.startswith("/uploads/"):
+            local_path = os.path.join("uploads", os.path.basename(local_path))
+        if os.path.exists(local_path) and os.path.isfile(local_path):
+            try:
+                os.remove(local_path)
+            except Exception as e:
+                print(f"Note: Could not delete local video file: {e}")
+
+    db.delete(video_record)
+    db.commit()
+
+    return {
+        "message": "Video and all associated analysis records deleted successfully",
+        "video_id": video_id
+    }
+
+
+@app.delete("/analysis/{analysis_id}")
+def delete_analysis_record(analysis_id: str, db: Session = Depends(get_db)):
+    """Deletes an analysis result and linked injury predictions and recommendations."""
+    try:
+        analysis_uuid = uuid.UUID(analysis_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid analysis ID format")
+
+    analysis_record = db.query(AnalysisResult).filter(AnalysisResult.analysis_id == analysis_uuid).first()
+    if not analysis_record:
+        raise HTTPException(status_code=404, detail="Analysis record not found")
+
+    predictions = db.query(InjuryPrediction).filter(InjuryPrediction.analysis_id == analysis_uuid).all()
+    for pred in predictions:
+        recs = db.query(Recommendation).filter(Recommendation.prediction_id == pred.prediction_id).all()
+        for r in recs:
+            db.delete(r)
+        db.delete(pred)
+
+    db.delete(analysis_record)
+    db.commit()
+
+    return {
+        "message": "Analysis result and linked predictions deleted successfully",
+        "analysis_id": analysis_id
+    }
+
 
 

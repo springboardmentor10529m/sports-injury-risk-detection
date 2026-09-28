@@ -596,7 +596,7 @@ All core AI/ML pipeline components are now implemented and integrated:
 - ✅ **Full React Frontend** — Dashboard, Video Analysis, Performance, Recommendations views
 
 ---
-
+git status
 # 17. Dataset-to-Feature Mapping Table
 
 The following table documents how dataset features map to video-derived biomechanical features in SportShield:
