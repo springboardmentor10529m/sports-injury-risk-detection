@@ -11,6 +11,9 @@ venv/
 !.env.example
 !.env.production.example
 backups/
+data/external/
+backend/data/models/*.joblib
+experiments/**/*.joblib
 
 # Node
 node_modules/

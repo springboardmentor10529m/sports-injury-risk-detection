@@ -1,0 +1,975 @@
+{
+  "model_type": "day_logistic_regression",
+  "cv_strategy": "GroupKFold by athlete; evaluates generalization to athletes absent from training folds.",
+  "task_status": "event_prediction_research",
+  "dataset_paths": {
+    "day": "backend/data/raw/day_approach_maskedID_timeseries.csv",
+    "week": "backend/data/raw/week_approach_maskedID_timeseries.csv"
+  },
+  "summary": {
+    "rows": 42766,
+    "feature_count": 70,
+    "athlete_count": 74,
+    "positive_rate": 0.013632324743955478,
+    "target_column": "injury",
+    "group_column": "Athlete ID",
+    "best_model": "day_logistic_regression",
+    "best_approach": "day",
+    "best_estimator": "logistic_regression",
+    "model_selection_metric": "mean_average_precision",
+    "model_selection_note": "Candidates are ranked on the same grouped folds used for reporting; selected-candidate performance is exploratory and may be optimistic.",
+    "decision_threshold": 0.5,
+    "prediction_scope": "Event-level injury classification from the preceding workload window, evaluated on held-out athletes.",
+    "source_paper": "L\u00f6vdal et al. (2021), https://doi.org/10.1123/ijspp.2020-0518",
+    "source_dataset": "DataverseNL, https://doi.org/10.34894/UWU9PV",
+    "approaches": {
+      "day": {
+        "rows": 42766,
+        "feature_count": 70,
+        "athlete_count": 74,
+        "positive_rate": 0.013632324743955478,
+        "feature_columns": [
+          "nr. sessions",
+          "total km",
+          "km Z3-4",
+          "km Z5-T1-T2",
+          "km sprinting",
+          "strength training",
+          "hours alternative",
+          "perceived exertion",
+          "perceived trainingSuccess",
+          "perceived recovery",
+          "nr. sessions.1",
+          "total km.1",
+          "km Z3-4.1",
+          "km Z5-T1-T2.1",
+          "km sprinting.1",
+          "strength training.1",
+          "hours alternative.1",
+          "perceived exertion.1",
+          "perceived trainingSuccess.1",
+          "perceived recovery.1",
+          "nr. sessions.2",
+          "total km.2",
+          "km Z3-4.2",
+          "km Z5-T1-T2.2",
+          "km sprinting.2",
+          "strength training.2",
+          "hours alternative.2",
+          "perceived exertion.2",
+          "perceived trainingSuccess.2",
+          "perceived recovery.2",
+          "nr. sessions.3",
+          "total km.3",
+          "km Z3-4.3",
+          "km Z5-T1-T2.3",
+          "km sprinting.3",
+          "strength training.3",
+          "hours alternative.3",
+          "perceived exertion.3",
+          "perceived trainingSuccess.3",
+          "perceived recovery.3",
+          "nr. sessions.4",
+          "total km.4",
+          "km Z3-4.4",
+          "km Z5-T1-T2.4",
+          "km sprinting.4",
+          "strength training.4",
+          "hours alternative.4",
+          "perceived exertion.4",
+          "perceived trainingSuccess.4",
+          "perceived recovery.4",
+          "nr. sessions.5",
+          "total km.5",
+          "km Z3-4.5",
+          "km Z5-T1-T2.5",
+          "km sprinting.5",
+          "strength training.5",
+          "hours alternative.5",
+          "perceived exertion.5",
+          "perceived trainingSuccess.5",
+          "perceived recovery.5",
+          "nr. sessions.6",
+          "total km.6",
+          "km Z3-4.6",
+          "km Z5-T1-T2.6",
+          "km sprinting.6",
+          "strength training.6",
+          "hours alternative.6",
+          "perceived exertion.6",
+          "perceived trainingSuccess.6",
+          "perceived recovery.6"
+        ],
+        "label_timing_audit": {
+          "target_column": "injury",
+          "target_semantics": "Injury event: unable to complete the scheduled training session due to injury.",
+          "healthy_event_definition": "Athlete was fully fit three weeks before and three weeks after the event day.",
+          "injury_event_filter": "Injury events within three weeks of a preceding injury event were treated as the same injury and filtered.",
+          "date_encoding": "Integer day index in the study timeline; rows are sampled event examples, not a complete daily panel.",
+          "date_min": 0,
+          "date_max": 2673,
+          "positive_rows": 583,
+          "positive_athletes": 63,
+          "event_rows": 42766,
+          "approach": "day",
+          "event_date_spacing_median_days": 1.0,
+          "feature_window_precedes_target": true,
+          "feature_window": "Seven preceding days as seven ordered daily feature vectors; day 0 is the day before the event.",
+          "source_paper": "L\u00f6vdal et al. (2021), https://doi.org/10.1123/ijspp.2020-0518",
+          "source_dataset": "DataverseNL, https://doi.org/10.34894/UWU9PV",
+          "prospective_deployment_validated": false,
+          "validation_note": "This pipeline uses athlete-held-out cross-validation; it is not external or prospective deployment validation."
+        }
+      },
+      "week": {
+        "rows": 42798,
+        "feature_count": 69,
+        "athlete_count": 74,
+        "positive_rate": 0.01343520725267536,
+        "feature_columns": [
+          "nr. sessions",
+          "nr. rest days",
+          "total kms",
+          "max km one day",
+          "total km Z3-Z4-Z5-T1-T2",
+          "nr. tough sessions (effort in Z5, T1 or T2)",
+          "nr. days with interval session",
+          "total km Z3-4",
+          "max km Z3-4 one day",
+          "total km Z5-T1-T2",
+          "max km Z5-T1-T2 one day",
+          "total hours alternative training",
+          "nr. strength trainings",
+          "avg exertion",
+          "min exertion",
+          "max exertion",
+          "avg training success",
+          "min training success",
+          "max training success",
+          "avg recovery",
+          "min recovery",
+          "max recovery",
+          "nr. sessions.1",
+          "nr. rest days.1",
+          "total kms.1",
+          "max km one day.1",
+          "total km Z3-Z4-Z5-T1-T2.1",
+          "nr. tough sessions (effort in Z5, T1 or T2).1",
+          "nr. days with interval session.1",
+          "total km Z3-4.1",
+          "max km Z3-4 one day.1",
+          "total km Z5-T1-T2.1",
+          "max km Z5-T1-T2 one day.1",
+          "total hours alternative training.1",
+          "nr. strength trainings.1",
+          "avg exertion.1",
+          "min exertion.1",
+          "max exertion.1",
+          "avg training success.1",
+          "min training success.1",
+          "max training success.1",
+          "avg recovery.1",
+          "min recovery.1",
+          "max recovery.1",
+          "nr. sessions.2",
+          "nr. rest days.2",
+          "total kms.2",
+          "max km one day.2",
+          "total km Z3-Z4-Z5-T1-T2.2",
+          "nr. tough sessions (effort in Z5, T1 or T2).2",
+          "nr. days with interval session.2",
+          "total km Z3-4.2",
+          "max km Z3-4 one day.2",
+          "total km Z5-T1-T2.2",
+          "max km Z5-T1-T2 one day.2",
+          "total hours alternative training.2",
+          "nr. strength trainings.2",
+          "avg exertion.2",
+          "min exertion.2",
+          "max exertion.2",
+          "avg training success.2",
+          "min training success.2",
+          "max training success.2",
+          "avg recovery.2",
+          "min recovery.2",
+          "max recovery.2",
+          "rel total kms week 0_1",
+          "rel total kms week 0_2",
+          "rel total kms week 1_2"
+        ],
+        "label_timing_audit": {
+          "target_column": "injury",
+          "target_semantics": "Injury event: unable to complete the scheduled training session due to injury.",
+          "healthy_event_definition": "Athlete was fully fit three weeks before and three weeks after the event day.",
+          "injury_event_filter": "Injury events within three weeks of a preceding injury event were treated as the same injury and filtered.",
+          "date_encoding": "Integer day index in the study timeline; rows are sampled event examples, not a complete daily panel.",
+          "date_min": 0,
+          "date_max": 2673,
+          "positive_rows": 575,
+          "positive_athletes": 61,
+          "event_rows": 42798,
+          "approach": "week",
+          "event_date_spacing_median_days": 1.0,
+          "feature_window_precedes_target": true,
+          "feature_window": "Three preceding weeks as three ordered weekly aggregates plus relative-volume features.",
+          "source_paper": "L\u00f6vdal et al. (2021), https://doi.org/10.1123/ijspp.2020-0518",
+          "source_dataset": "DataverseNL, https://doi.org/10.34894/UWU9PV",
+          "prospective_deployment_validated": false,
+          "validation_note": "This pipeline uses athlete-held-out cross-validation; it is not external or prospective deployment validation."
+        }
+      }
+    },
+    "candidate_summary": {
+      "day_logistic_regression": {
+        "feature_count": 70,
+        "mean_roc_auc": 0.6369706275636675,
+        "mean_average_precision": 0.02249408920111804,
+        "mean_f1": 0.03960341808175155,
+        "mean_precision": 0.020574015333459175,
+        "mean_recall": 0.5636300366300366,
+        "folds": [
+          {
+            "fold": 1,
+            "train_rows": 34168,
+            "test_rows": 8598,
+            "train_positive_rate": 0.011940997424490752,
+            "test_positive_rate": 0.020353570597813446,
+            "roc_auc": 0.6434429538169297,
+            "average_precision": 0.03245081833477308,
+            "f1": 0.05652680652680653,
+            "precision": 0.029782007982806263,
+            "recall": 0.5542857142857143,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                5263,
+                3160
+              ],
+              [
+                78,
+                97
+              ]
+            ]
+          },
+          {
+            "fold": 2,
+            "train_rows": 34267,
+            "test_rows": 8499,
+            "train_positive_rate": 0.014824758514022237,
+            "test_positive_rate": 0.008824567596187787,
+            "roc_auc": 0.6428157644824312,
+            "average_precision": 0.015830454610850007,
+            "f1": 0.027457098283931357,
+            "precision": 0.014057507987220448,
+            "recall": 0.5866666666666667,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                5338,
+                3086
+              ],
+              [
+                31,
+                44
+              ]
+            ]
+          },
+          {
+            "fold": 3,
+            "train_rows": 34165,
+            "test_rows": 8601,
+            "train_positive_rate": 0.014020196107127177,
+            "test_positive_rate": 0.012091617253807696,
+            "roc_auc": 0.6620470120676075,
+            "average_precision": 0.021788469540653936,
+            "f1": 0.03815869170199879,
+            "precision": 0.019699812382739212,
+            "recall": 0.6057692307692307,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                5362,
+                3135
+              ],
+              [
+                41,
+                63
+              ]
+            ]
+          },
+          {
+            "fold": 4,
+            "train_rows": 34227,
+            "test_rows": 8539,
+            "train_positive_rate": 0.013556548923364595,
+            "test_positive_rate": 0.013936058086426981,
+            "roc_auc": 0.6262460328549472,
+            "average_precision": 0.0205041683848886,
+            "f1": 0.03953488372093023,
+            "precision": 0.020475760313158686,
+            "recall": 0.5714285714285714,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                5167,
+                3253
+              ],
+              [
+                51,
+                68
+              ]
+            ]
+          },
+          {
+            "fold": 5,
+            "train_rows": 34237,
+            "test_rows": 8529,
+            "train_positive_rate": 0.01381546280339983,
+            "test_positive_rate": 0.012897174346347755,
+            "roc_auc": 0.6103013745964215,
+            "average_precision": 0.021896535134424605,
+            "f1": 0.036339610175090846,
+            "precision": 0.01885498800137127,
+            "recall": 0.5,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                5557,
+                2862
+              ],
+              [
+                55,
+                55
+              ]
+            ]
+          }
+        ]
+      },
+      "day_hist_gradient_boosting": {
+        "feature_count": 70,
+        "mean_roc_auc": 0.6152720686848422,
+        "mean_average_precision": 0.019761596937556695,
+        "mean_f1": 0.0,
+        "mean_precision": 0.0,
+        "mean_recall": 0.0,
+        "folds": [
+          {
+            "fold": 1,
+            "train_rows": 34168,
+            "test_rows": 8598,
+            "train_positive_rate": 0.011940997424490752,
+            "test_positive_rate": 0.020353570597813446,
+            "roc_auc": 0.6120415189701667,
+            "average_precision": 0.02848601168714357,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                8423,
+                0
+              ],
+              [
+                175,
+                0
+              ]
+            ]
+          },
+          {
+            "fold": 2,
+            "train_rows": 34267,
+            "test_rows": 8499,
+            "train_positive_rate": 0.014824758514022237,
+            "test_positive_rate": 0.008824567596187787,
+            "roc_auc": 0.5929083570750238,
+            "average_precision": 0.011802657367640206,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                8424,
+                0
+              ],
+              [
+                75,
+                0
+              ]
+            ]
+          },
+          {
+            "fold": 3,
+            "train_rows": 34165,
+            "test_rows": 8601,
+            "train_positive_rate": 0.014020196107127177,
+            "test_positive_rate": 0.012091617253807696,
+            "roc_auc": 0.6538902870696445,
+            "average_precision": 0.02147565825678093,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                8497,
+                0
+              ],
+              [
+                104,
+                0
+              ]
+            ]
+          },
+          {
+            "fold": 4,
+            "train_rows": 34227,
+            "test_rows": 8539,
+            "train_positive_rate": 0.013556548923364595,
+            "test_positive_rate": 0.013936058086426981,
+            "roc_auc": 0.609404878340885,
+            "average_precision": 0.01876183133162147,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                8420,
+                0
+              ],
+              [
+                119,
+                0
+              ]
+            ]
+          },
+          {
+            "fold": 5,
+            "train_rows": 34237,
+            "test_rows": 8529,
+            "train_positive_rate": 0.01381546280339983,
+            "test_positive_rate": 0.012897174346347755,
+            "roc_auc": 0.6081153019684912,
+            "average_precision": 0.0182818260445973,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                8419,
+                0
+              ],
+              [
+                110,
+                0
+              ]
+            ]
+          }
+        ]
+      },
+      "day_random_forest": {
+        "feature_count": 70,
+        "mean_roc_auc": 0.585148113185183,
+        "mean_average_precision": 0.01908492414179417,
+        "mean_f1": 0.0,
+        "mean_precision": 0.0,
+        "mean_recall": 0.0,
+        "folds": [
+          {
+            "fold": 1,
+            "train_rows": 34168,
+            "test_rows": 8598,
+            "train_positive_rate": 0.011940997424490752,
+            "test_positive_rate": 0.020353570597813446,
+            "roc_auc": 0.568088058207968,
+            "average_precision": 0.02364624772943382,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                8423,
+                0
+              ],
+              [
+                175,
+                0
+              ]
+            ]
+          },
+          {
+            "fold": 2,
+            "train_rows": 34267,
+            "test_rows": 8499,
+            "train_positive_rate": 0.014824758514022237,
+            "test_positive_rate": 0.008824567596187787,
+            "roc_auc": 0.5733681544792656,
+            "average_precision": 0.012546004471228958,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                8424,
+                0
+              ],
+              [
+                75,
+                0
+              ]
+            ]
+          },
+          {
+            "fold": 3,
+            "train_rows": 34165,
+            "test_rows": 8601,
+            "train_positive_rate": 0.014020196107127177,
+            "test_positive_rate": 0.012091617253807696,
+            "roc_auc": 0.6266895103249112,
+            "average_precision": 0.025950986252688015,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                8497,
+                0
+              ],
+              [
+                104,
+                0
+              ]
+            ]
+          },
+          {
+            "fold": 4,
+            "train_rows": 34227,
+            "test_rows": 8539,
+            "train_positive_rate": 0.013556548923364595,
+            "test_positive_rate": 0.013936058086426981,
+            "roc_auc": 0.5823559352482086,
+            "average_precision": 0.017684357063317814,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                8420,
+                0
+              ],
+              [
+                119,
+                0
+              ]
+            ]
+          },
+          {
+            "fold": 5,
+            "train_rows": 34237,
+            "test_rows": 8529,
+            "train_positive_rate": 0.01381546280339983,
+            "test_positive_rate": 0.012897174346347755,
+            "roc_auc": 0.5752389076655616,
+            "average_precision": 0.015597025192302258,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                8417,
+                2
+              ],
+              [
+                110,
+                0
+              ]
+            ]
+          }
+        ]
+      },
+      "week_logistic_regression": {
+        "feature_count": 69,
+        "mean_roc_auc": 0.617306318171928,
+        "mean_average_precision": 0.019337741994039127,
+        "mean_f1": 0.03636056842005568,
+        "mean_precision": 0.018832888802432873,
+        "mean_recall": 0.5555919099273893,
+        "folds": [
+          {
+            "fold": 1,
+            "train_rows": 34199,
+            "test_rows": 8599,
+            "train_positive_rate": 0.01213485774437849,
+            "test_positive_rate": 0.018606814745900688,
+            "roc_auc": 0.6056997274558598,
+            "average_precision": 0.026525297545587828,
+            "f1": 0.04679606487636267,
+            "precision": 0.024437656206609277,
+            "recall": 0.55,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                4926,
+                3513
+              ],
+              [
+                72,
+                88
+              ]
+            ]
+          },
+          {
+            "fold": 2,
+            "train_rows": 34262,
+            "test_rows": 8536,
+            "train_positive_rate": 0.01476854824587006,
+            "test_positive_rate": 0.008083411433926898,
+            "roc_auc": 0.6239227144429438,
+            "average_precision": 0.01135333441845686,
+            "f1": 0.02418542156533423,
+            "precision": 0.012379642365887207,
+            "recall": 0.5217391304347826,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                5595,
+                2872
+              ],
+              [
+                33,
+                36
+              ]
+            ]
+          },
+          {
+            "fold": 3,
+            "train_rows": 34199,
+            "test_rows": 8599,
+            "train_positive_rate": 0.013421445071493319,
+            "test_positive_rate": 0.013489940690777998,
+            "roc_auc": 0.628136089623466,
+            "average_precision": 0.02000065075271728,
+            "f1": 0.0380952380952381,
+            "precision": 0.019707375335921172,
+            "recall": 0.5689655172413793,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                5200,
+                3283
+              ],
+              [
+                50,
+                66
+              ]
+            ]
+          },
+          {
+            "fold": 4,
+            "train_rows": 34245,
+            "test_rows": 8553,
+            "train_positive_rate": 0.01354942327347058,
+            "test_positive_rate": 0.012977902490354262,
+            "roc_auc": 0.61382064367139,
+            "average_precision": 0.019763550887637527,
+            "f1": 0.03394495412844037,
+            "precision": 0.017415862555895504,
+            "recall": 0.6666666666666666,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                4267,
+                4175
+              ],
+              [
+                37,
+                74
+              ]
+            ]
+          },
+          {
+            "fold": 5,
+            "train_rows": 34287,
+            "test_rows": 8511,
+            "train_positive_rate": 0.013299501268702423,
+            "test_positive_rate": 0.013981905769004817,
+            "roc_auc": 0.6149524156659804,
+            "average_precision": 0.019045876365796133,
+            "f1": 0.038781163434903045,
+            "precision": 0.020223907547851208,
+            "recall": 0.47058823529411764,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                5679,
+                2713
+              ],
+              [
+                63,
+                56
+              ]
+            ]
+          }
+        ]
+      },
+      "week_hist_gradient_boosting": {
+        "feature_count": 69,
+        "mean_roc_auc": 0.5978992630957073,
+        "mean_average_precision": 0.019273730866021143,
+        "mean_f1": 0.0,
+        "mean_precision": 0.0,
+        "mean_recall": 0.0,
+        "folds": [
+          {
+            "fold": 1,
+            "train_rows": 34199,
+            "test_rows": 8599,
+            "train_positive_rate": 0.01213485774437849,
+            "test_positive_rate": 0.018606814745900688,
+            "roc_auc": 0.5996804271833155,
+            "average_precision": 0.02741942338999435,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                8439,
+                0
+              ],
+              [
+                160,
+                0
+              ]
+            ]
+          },
+          {
+            "fold": 2,
+            "train_rows": 34262,
+            "test_rows": 8536,
+            "train_positive_rate": 0.01476854824587006,
+            "test_positive_rate": 0.008083411433926898,
+            "roc_auc": 0.5671926644449123,
+            "average_precision": 0.01045114232754141,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                8467,
+                0
+              ],
+              [
+                69,
+                0
+              ]
+            ]
+          },
+          {
+            "fold": 3,
+            "train_rows": 34199,
+            "test_rows": 8599,
+            "train_positive_rate": 0.013421445071493319,
+            "test_positive_rate": 0.013489940690777998,
+            "roc_auc": 0.6283606767287109,
+            "average_precision": 0.01978028180795644,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                8483,
+                0
+              ],
+              [
+                116,
+                0
+              ]
+            ]
+          },
+          {
+            "fold": 4,
+            "train_rows": 34245,
+            "test_rows": 8553,
+            "train_positive_rate": 0.01354942327347058,
+            "test_positive_rate": 0.012977902490354262,
+            "roc_auc": 0.6003946377080704,
+            "average_precision": 0.018256256948769534,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                8442,
+                0
+              ],
+              [
+                111,
+                0
+              ]
+            ]
+          },
+          {
+            "fold": 5,
+            "train_rows": 34287,
+            "test_rows": 8511,
+            "train_positive_rate": 0.013299501268702423,
+            "test_positive_rate": 0.013981905769004817,
+            "roc_auc": 0.5938679094135271,
+            "average_precision": 0.02046154985584397,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                8392,
+                0
+              ],
+              [
+                119,
+                0
+              ]
+            ]
+          }
+        ]
+      },
+      "week_random_forest": {
+        "feature_count": 69,
+        "mean_roc_auc": 0.5735429891375404,
+        "mean_average_precision": 0.01867010472449584,
+        "mean_f1": 0.0,
+        "mean_precision": 0.0,
+        "mean_recall": 0.0,
+        "folds": [
+          {
+            "fold": 1,
+            "train_rows": 34199,
+            "test_rows": 8599,
+            "train_positive_rate": 0.01213485774437849,
+            "test_positive_rate": 0.018606814745900688,
+            "roc_auc": 0.5730488653868941,
+            "average_precision": 0.022850365144712264,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                8439,
+                0
+              ],
+              [
+                160,
+                0
+              ]
+            ]
+          },
+          {
+            "fold": 2,
+            "train_rows": 34262,
+            "test_rows": 8536,
+            "train_positive_rate": 0.01476854824587006,
+            "test_positive_rate": 0.008083411433926898,
+            "roc_auc": 0.5020856761887156,
+            "average_precision": 0.007764102878875026,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                8466,
+                1
+              ],
+              [
+                69,
+                0
+              ]
+            ]
+          },
+          {
+            "fold": 3,
+            "train_rows": 34199,
+            "test_rows": 8599,
+            "train_positive_rate": 0.013421445071493319,
+            "test_positive_rate": 0.013489940690777998,
+            "roc_auc": 0.6197511656172385,
+            "average_precision": 0.024350522584950938,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                8483,
+                0
+              ],
+              [
+                116,
+                0
+              ]
+            ]
+          },
+          {
+            "fold": 4,
+            "train_rows": 34245,
+            "test_rows": 8553,
+            "train_positive_rate": 0.01354942327347058,
+            "test_positive_rate": 0.012977902490354262,
+            "roc_auc": 0.5713079817557429,
+            "average_precision": 0.016477946428633115,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                8440,
+                2
+              ],
+              [
+                111,
+                0
+              ]
+            ]
+          },
+          {
+            "fold": 5,
+            "train_rows": 34287,
+            "test_rows": 8511,
+            "train_positive_rate": 0.013299501268702423,
+            "test_positive_rate": 0.013981905769004817,
+            "roc_auc": 0.6015212567391113,
+            "average_precision": 0.02190758658530788,
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "decision_threshold": 0.5,
+            "confusion_matrix": [
+              [
+                8392,
+                0
+              ],
+              [
+                119,
+                0
+              ]
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

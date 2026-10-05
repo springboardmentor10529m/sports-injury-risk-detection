@@ -16,6 +16,12 @@ uploaded videos, real profile data, or real database queries.
 - **Risk scoring**: the exact weighted formula from the spec (35% biomechanical
   deviation / 20% historical injury / 20% asymmetry / 15% training load / 10%
   fatigue), fully deterministic and auditable (`backend/app/services/risk_scoring.py`).
+- **Workload ML prototype**: a separate, reproducible Python pipeline loads
+  published runner training-event data, keeps daily and weekly feature windows
+  separate, compares classifiers with athlete-held-out cross-validation, and
+  saves a trained event-classification artifact (`backend/scripts/`). This was
+  implemented as an experimental extension of KINETIQ; it does not generate
+  the live video risk score.
 - **Recommendations**: rule-based, each one only fires when a specific
   computed metric crosses a documented threshold (`backend/app/services/recommendations.py`).
 - **Role-based access control**: a coach/physio/scientist can only see an
@@ -149,10 +155,12 @@ A few things worth understanding about the pipeline itself:
   metric scale), not true goniometry. They're internally consistent and
   comparable run-to-run for the same athlete/camera setup, but shouldn't be
   read as clinical-grade measurements.
-- **No trained ML risk model.** The risk engine is the deterministic
-  weighted formula from the spec, not a classifier — there's no labeled
-  injury dataset to train one on yet. Every sub-score is traceable to a
-  specific rule in `risk_scoring.py`.
+- **The live video score is rule-based.** A separate workload-event model
+  prototype has been trained and evaluated, but is not connected to video
+  analysis or presented as clinical prediction. Its athlete-held-out day-model
+  baseline reached mean ROC-AUC 0.637 and average precision 0.0225 at a 1.36%
+  event prevalence; this is a modest research result, not a validated product
+  performance claim. See `backend/data/models/real_dataset_evaluation.json`.
 - **No invite/acceptance flow.** A coach/physio/scientist adds an athlete by
   email and the link is created immediately (no athlete-side approval step).
   This was a deliberate scope simplification - add an `AthleteLink.status`

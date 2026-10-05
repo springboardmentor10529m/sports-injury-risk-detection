@@ -247,13 +247,25 @@ It returns `possible_mismatch` or `unknown`. Other selected activities return `u
 
 ## 9. Machine learning and experiments
 
+KINETIQ includes a separately implemented workload-event prediction prototype.
+The public study dataset is its training source; it is not the project itself
+and its published metrics are not claimed as KINETIQ results. The prototype
+demonstrates the project's own data-loading, feature handling, model comparison,
+athlete-held-out evaluation and artifact-generation workflow.
+
 Three distinct systems must not be confused:
 
 1. **Live pose estimation:** pretrained MediaPipe model, used by the video pipeline.
 2. **Live scoring/recommendations:** deterministic Python rules, not a trained injury predictor.
-3. **Separate tabular ML work:** legacy RF utilities and an isolated collegiate-workload experiment; neither supplies the video report's risk score.
+3. **KINETIQ workload ML prototype:** trained on preceding workload windows to classify injury-flagged training events; it does not supply the video report's risk score.
 
-The legacy service `injury_ml_model.py` contains nine-input synthetic-feature support and an optional loader for day/week CSV datasets. It can train and serialize artifacts. Do not call its training endpoint or run its artifact-writing test casually; it can overwrite an existing model. Presence of CSV-loading code does not establish which dataset produced a saved artifact.
+The implementation is in `backend/scripts/real_injury_pipeline.py`, with separate training and evaluation entry points. It keeps the study's day-level and week-level event tables separate, imputes missing numeric values within each fold, compares logistic regression, histogram gradient boosting and random forest, ranks candidates by average precision, and saves the selected research artifact. The legacy service `backend/app/services/injury_ml_model.py` is a separate older utility and is not the integration path for this prototype.
+
+The dataset comes from L\u00f6vdal, den Hartigh and Azzopardi (2021), *Injury Prediction in Competitive Runners With Machine Learning* ([paper](https://doi.org/10.1123/ijspp.2020-0518); [dataset](https://doi.org/10.34894/UWU9PV)). An injury label means the runner could not complete a scheduled session because of injury. The day approach uses 70 features describing the previous seven days; the week approach uses 69 features describing the previous three weeks. The tables are independent approaches, not duplicate rows to combine.
+
+In the current athlete-held-out GroupKFold comparison, day-level logistic regression is the best candidate by mean average precision: ROC-AUC 0.637 and average precision 0.0225, against approximately 1.36% event prevalence. At the fixed 0.5 threshold, mean recall is 0.564 and precision 0.021. This demonstrates a working, reproducible ML prototype but only modest discrimination and very low precision. Candidate choice and reported scores use the same cross-validation folds, so the selected score may be optimistic. It is not an external validation, clinical result, or production capability.
+
+**Resume framing:** “Built a workload-based injury-event prediction prototype for KINETIQ, implementing separate daily and weekly feature pipelines, athlete-held-out validation, imbalanced-class model comparison, and reproducible model artifacts.” Attribute the source data to the published runner study; do not present its published AUC as a result of this project.
 
 ### Collegiate workload experiment
 
@@ -271,7 +283,7 @@ Evaluation used stratified five-fold cross-validation, training-fold preprocessi
 | Random forest, 11 inputs | 0.375 | 0.429 | 0.400 | 0.455 | 0.847 | [[176,10],[8,6]] |
 | Workload logistic | 0.233 | 0.714 | 0.351 | 0.471 | 0.858 | [[153,33],[4,10]] |
 
-These are copied from the recorded experiment, not recomputed in this documentation task. Small positive counts, synthetic labels, and wide fold variability limit interpretation. The related 5,430-row multimodal audit reconstructed every label from five feature thresholds; that demonstrates label dependence, not future injury prediction. Dataset provenance, exact diagnostics, fold results and source links are documented in the experiment report. No experimental fitted model was saved or connected to video analysis.
+These are copied from the recorded collegiate experiment, not recomputed in this documentation task. Small positive counts, synthetic labels, and wide fold variability limit interpretation. The related 5,430-row multimodal audit reconstructed every label from five feature thresholds; that demonstrates label dependence, not future injury prediction. Dataset provenance, exact diagnostics, fold results and source links are documented in the experiment report. These earlier experiments remain separate from the runner-event prototype and the live video score.
 
 ## 10. Database and API
 
